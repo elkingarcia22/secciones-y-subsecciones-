@@ -1,0 +1,2 @@
+Esto es un archivo de texto plano.
+No es una planilla de cálculo.

@@ -1,0 +1,8 @@
+# Ignorar node_modules locales
+node_modules
+.vercel
+
+# Asegurar que se suba la carpeta del proyecto
+!ubits-prototype-playground
+!.vercelignore
+!vercel.json
