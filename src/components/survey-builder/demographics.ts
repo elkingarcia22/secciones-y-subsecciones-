@@ -185,6 +185,8 @@ export interface LibraryDemographic {
    * inventing a date.
    */
   createdAt?: string;
+  /** The name of the user who created this demographic. */
+  createdBy?: string;
 }
 
 /**
@@ -199,6 +201,7 @@ export const LIBRARY_DEMOGRAPHICS: readonly LibraryDemographic[] = [
     type: "single",
     optionLabels: ["Presencial", "Híbrido", "Remoto"],
     createdAt: "2025-02-18",
+    createdBy: "Ana García",
   },
   {
     key: "shift",
@@ -206,6 +209,7 @@ export const LIBRARY_DEMOGRAPHICS: readonly LibraryDemographic[] = [
     type: "single",
     optionLabels: ["Diurno", "Nocturno", "Rotativo"],
     createdAt: "2025-04-07",
+    createdBy: "Carlos López",
   },
   {
     key: "education",
@@ -213,6 +217,7 @@ export const LIBRARY_DEMOGRAPHICS: readonly LibraryDemographic[] = [
     type: "dropdown",
     optionLabels: ["Bachillerato", "Técnico o tecnólogo", "Profesional", "Posgrado"],
     createdAt: "2025-06-23",
+    createdBy: "María Rodríguez",
   },
   {
     key: "maritalStatus",
@@ -220,6 +225,7 @@ export const LIBRARY_DEMOGRAPHICS: readonly LibraryDemographic[] = [
     type: "single",
     optionLabels: ["Soltero/a", "Casado/a", "Unión libre", "Divorciado/a", "Viudo/a"],
     createdAt: "2025-09-15",
+    createdBy: "Juan Martínez",
   },
   {
     key: "dependents",
@@ -227,6 +233,7 @@ export const LIBRARY_DEMOGRAPHICS: readonly LibraryDemographic[] = [
     type: "single",
     optionLabels: ["Ninguna", "1", "2", "3 o más"],
     createdAt: "2026-01-29",
+    createdBy: "Sofia Pérez",
   },
 ];
 

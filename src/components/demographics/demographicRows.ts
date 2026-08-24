@@ -37,6 +37,8 @@ export interface DemographicRow {
   optionCount: number;
   /** The wording of every option, for the row's detail popover. */
   optionLabels: readonly string[];
+  /** The user who created this demographic, or null for system demographics. */
+  createdBy: string | null;
 }
 
 const MONTHS = [
@@ -70,6 +72,7 @@ export function buildDemographicRows(
     createdAt: null,
     optionCount: entry.optionLabels.length,
     optionLabels: entry.optionLabels,
+    createdBy: null,
   }));
 
   const userRows: DemographicRow[] = library.map((entry) => ({
@@ -82,6 +85,7 @@ export function buildDemographicRows(
     createdAt: entry.createdAt ?? null,
     optionCount: entry.optionLabels.length,
     optionLabels: entry.optionLabels,
+    createdBy: entry.createdBy ?? null,
   }));
 
   return [...systemRows, ...userRows];

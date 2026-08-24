@@ -42,7 +42,7 @@ interface DemographicsTableProps {
 /** Matches the pager everywhere else in the app. */
 const PAGE_SIZES = [10, 25, 50] as const;
 
-type SortKey = "name" | "origin" | "createdAt" | "optionCount";
+type SortKey = "name" | "type" | "origin" | "createdAt" | "createdBy" | "optionCount";
 
 const formatCount = (n: number) => new Intl.NumberFormat("es-CO").format(n);
 
@@ -89,10 +89,17 @@ export function DemographicsTable({
       switch (sort.key) {
         case "name":
           return a.name.localeCompare(b.name, "es");
+        case "type":
+          return a.typeLabel.localeCompare(b.typeLabel, "es");
         case "origin":
           return a.originLabel.localeCompare(b.originLabel, "es");
         case "createdAt":
           return createdAtValue(a) - createdAtValue(b);
+        case "createdBy":
+          if (!a.createdBy && !b.createdBy) return 0;
+          if (!a.createdBy) return 1;
+          if (!b.createdBy) return -1;
+          return a.createdBy.localeCompare(b.createdBy, "es");
         case "optionCount":
           return a.optionCount - b.optionCount;
       }
@@ -210,7 +217,7 @@ export function DemographicsTable({
             <EmptyState
               icon={Layers3}
               title="Ningún demográfico coincide"
-              description="Ajusta la búsqueda o el filtro de tipo para volver a verlos."
+              description="Ajusta la búsqueda o el filtro de origen para volver a verlos."
               className="border-none bg-transparent shadow-none"
               action={
                 hasActiveFilters ? (
@@ -251,16 +258,23 @@ export function DemographicsTable({
                       align="start"
                     />
                   </TableHead>
-                  <TableHead className="w-[42%] px-0 py-3.5">
+                  <TableHead className="w-[30%] px-0 py-3.5">
                     <SortOnlyHeader
                       label="Nombre"
                       sortActive={sort.key === "name"}
                       onSort={() => toggleSort("name")}
                     />
                   </TableHead>
-                  <TableHead className="w-[22%] px-0 py-3.5">
-                    <FilterSortHeader
+                  <TableHead className="w-[17%] px-0 py-3.5">
+                    <SortOnlyHeader
                       label="Tipo"
+                      sortActive={sort.key === "type"}
+                      onSort={() => toggleSort("type")}
+                    />
+                  </TableHead>
+                  <TableHead className="w-[17%] px-0 py-3.5">
+                    <FilterSortHeader
+                      label="Origen"
                       options={ORIGIN_OPTIONS}
                       selected={originFilter}
                       onToggleFilter={(value) => {
@@ -282,6 +296,13 @@ export function DemographicsTable({
                       label="Creación"
                       sortActive={sort.key === "createdAt"}
                       onSort={() => toggleSort("createdAt")}
+                    />
+                  </TableHead>
+                  <TableHead className="w-[160px] px-0 py-3.5">
+                    <SortOnlyHeader
+                      label="Creado por"
+                      sortActive={sort.key === "createdBy"}
+                      onSort={() => toggleSort("createdBy")}
                     />
                   </TableHead>
                   <TableHead className="w-[110px] py-3.5 pl-0 pr-7 text-right">
@@ -388,21 +409,19 @@ function DemographicTableRow({
         </div>
       </TableCell>
       <TableCell className="py-3">
-        <div className="flex flex-col gap-0.5">
-          <span className="truncate text-[12.5px] font-semibold text-text-primary" title={row.name}>
-            {row.name}
-          </span>
-          {/* The question type rides under the name rather than taking a column
-              of its own: it qualifies the demographic, it is not a thing anyone
-              sorts a catalog of seven entries by. */}
-          <span className="truncate text-[11.5px] text-muted-foreground">{row.typeLabel}</span>
-        </div>
+        <span className="block truncate text-[12.5px] font-semibold text-text-primary" title={row.name}>
+          {row.name}
+        </span>
       </TableCell>
+      <TableCell className="py-3 text-[12.5px] text-text-secondary">{row.typeLabel}</TableCell>
       <TableCell className="py-3">
         <Badge variant={row.origin === "system" ? "info" : "neutral"}>{row.originLabel}</Badge>
       </TableCell>
       <TableCell className="px-2 py-3 text-[12.5px] tabular-nums text-muted-foreground">
         {formatIsoDay(row.createdAt)}
+      </TableCell>
+      <TableCell className="py-3 text-[12.5px] text-text-secondary">
+        {row.createdBy ?? "—"}
       </TableCell>
       <TableCell className="py-3 pl-0 pr-7 text-right text-[12.5px] font-semibold tabular-nums text-text-primary">
         {row.optionCount}
