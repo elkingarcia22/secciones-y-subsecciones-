@@ -331,7 +331,56 @@
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
+  /* ── Rail action bar micro-interactions ──────────────── */
+  @keyframes railActionAppear {
+    0% {
+      opacity: 0;
+      transform: translateY(8px) scale(0.92);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes railGroupShimmer {
+    0% {
+      box-shadow: inset 0 0 16px 0 rgba(59, 130, 246, 0.4);
+    }
+    100% {
+      box-shadow: inset 0 0 16px 0 rgba(59, 130, 246, 0);
+    }
+  }
+
+  @keyframes railActionColorFlash {
+    0% {
+      background: rgba(59, 130, 246, 0.4);
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+    }
+    60% {
+      background: rgba(59, 130, 246, 0.15);
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+    }
+    100% {
+      background: transparent;
+      box-shadow: none;
+    }
+  }
+
   /* ── Custom Utilities ──────────────────────────────────── */
+
+  /*
+   * Opaque stand-ins for the translucent surfaces, for cells that are frozen
+   * over scrolling content — the heatmap's first column and its header.
+   * `bg-muted/40` reads correctly while it sits still on the page background,
+   * but a frozen cell has the grid sliding underneath it: at 40% the columns
+   * show straight through the thing that is supposed to be covering them.
+   * Same colour, resolved against the surface instead of composited over it.
+   */
+  .bg-muted-solid {
+    background-color: color-mix(in srgb, hsl(var(--muted)) 40%, var(--color-surface));
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Input } from "@/components/ui/input"
 import { Loader2 } from "lucide-react"
 
 export interface ConfirmDialogProps {
@@ -30,6 +31,10 @@ export interface ConfirmDialogProps {
   cancelLabel?: string
   /** Visual style variant */
   variant?: "default" | "warning" | "destructive"
+  /** When set, the confirm button stays disabled until the reader types this
+   * text back exactly — the extra friction a truly irreversible action (like
+   * deleting a named record) needs, that a plain "¿Estás seguro?" doesn't. */
+  confirmationText?: string
   /** Callback when confirmed */
   onConfirm?: () => void
   /** Callback when cancelled */
@@ -51,6 +56,7 @@ export function ConfirmDialog({
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
   variant = "default",
+  confirmationText,
   onConfirm,
   onCancel,
   loading = false,
@@ -59,8 +65,20 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   // Map variant to button variant
   const actionVariant = variant === "destructive" ? "destructive" : "default"
-  
+
   // For now, warning and default use the same button variant but could be extended
+
+  const [typedConfirmation, setTypedConfirmation] = React.useState("")
+  const confirmationInputRef = React.useRef<HTMLInputElement>(null)
+
+  // The typed text is a one-time gate for this open — leaving it behind for
+  // the next confirmation (of a different record, most of the time) would
+  // either pre-arm an unrelated delete or block one that no longer applies.
+  React.useEffect(() => {
+    if (!open) setTypedConfirmation("")
+  }, [open])
+
+  const typedConfirmationMismatch = Boolean(confirmationText) && typedConfirmation !== confirmationText
   
   /**
    * PATRÓN UBITS: Cierre manual tras éxito
@@ -76,7 +94,21 @@ export function ConfirmDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>}
-      <AlertDialogContent className={className} aria-describedby={undefined}>
+      <AlertDialogContent
+        className={className}
+        aria-describedby={undefined}
+        // Radix focuses the dialog surface itself on open, which wins over
+        // the input's own `autoFocus` — so redirect that focus explicitly
+        // when there's a confirmation field, straight to where typing starts.
+        onOpenAutoFocus={
+          confirmationText
+            ? (event) => {
+                event.preventDefault()
+                confirmationInputRef.current?.focus()
+              }
+            : undefined
+        }
+      >
         <AlertDialogHeader>
           <AlertDialogTitle className={cn(
             variant === "destructive" && "text-destructive"
@@ -89,7 +121,31 @@ export function ConfirmDialog({
             </AlertDialogDescription>
           )}
         </AlertDialogHeader>
-        
+
+        {confirmationText && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="confirm-dialog-typed-confirmation" className="text-sm text-muted-foreground">
+              Escribe <span className="font-semibold text-foreground">{confirmationText}</span> para confirmar
+            </label>
+            <Input
+              ref={confirmationInputRef}
+              id="confirm-dialog-typed-confirmation"
+              value={typedConfirmation}
+              onChange={(e) => setTypedConfirmation(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !typedConfirmationMismatch && !loading && !disabled) {
+                  onConfirm?.()
+                }
+              }}
+              // No placeholder: the label right above already spells out
+              // the exact text, so echoing it here would read as if it were
+              // already typed — indistinguishable from what the person is
+              // about to enter themselves.
+              autoComplete="off"
+            />
+          </div>
+        )}
+
         <AlertDialogFooter>
           <AlertDialogCancel 
             onClick={onCancel}
@@ -105,7 +161,7 @@ export function ConfirmDialog({
                 onConfirm()
               }
             }}
-            disabled={loading || disabled}
+            disabled={loading || disabled || typedConfirmationMismatch}
             className="min-w-[100px]"
           >
             {loading ? (

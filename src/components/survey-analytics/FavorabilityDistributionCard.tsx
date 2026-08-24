@@ -8,6 +8,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { ResponseStackedBar } from "./ResponseStackedBar"
+import { DeltaPill } from "./DeltaPill"
 import { MetricComparisonFooter } from "./MetricComparisonFooter"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -23,6 +24,12 @@ import type { FavorabilityDistributionCardProps } from "./surveyAnalyticsTypes"
 export function FavorabilityDistributionCard({
   title,
   description,
+  value,
+  subtitle,
+  delta,
+  deltaLabel,
+  deltaTone,
+  trendDirection,
   segments,
   total,
   showLegend = true,
@@ -75,16 +82,16 @@ export function FavorabilityDistributionCard({
 
   return (
     <Card className={cn("h-full flex flex-col overflow-hidden", className)}>
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             {title && (
-              <CardTitle className="text-sm font-bold leading-snug">
+              <CardTitle className="text-xs font-bold tracking-widest text-muted-foreground/80">
                 {title}
               </CardTitle>
             )}
             {description && (
-              <CardDescription className="text-xs">
+              <CardDescription className="text-xs line-clamp-1">
                 {description}
               </CardDescription>
             )}
@@ -93,7 +100,29 @@ export function FavorabilityDistributionCard({
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 space-y-6">
+      <CardContent className="flex-1 space-y-4">
+        <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mt-1">
+          {value !== undefined && (
+            <span className="text-3xl font-bold tracking-tight text-foreground">
+              {value}
+            </span>
+          )}
+          {subtitle && (
+            <span className="text-xs font-medium text-muted-foreground">
+              {subtitle}
+            </span>
+          )}
+          {(delta !== undefined || deltaLabel) && (
+            <DeltaPill 
+              value={delta} 
+              label={deltaLabel} 
+              tone={deltaTone} 
+              direction={trendDirection}
+              className="ml-auto sm:ml-0"
+            />
+          )}
+        </div>
+
         {!hasData ? (
           <div className="flex flex-col items-center justify-center min-h-[120px] text-center border-2 border-dashed border-border/50 rounded-xl bg-muted/5 p-4">
             <span className="text-sm text-muted-foreground italic font-medium">

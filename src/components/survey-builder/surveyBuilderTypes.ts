@@ -55,6 +55,8 @@ export interface SurveyQuestion {
   scale: ScaleConfig;
   /** Choice types only (single, multiple, dropdown). */
   options: readonly QuestionOption[];
+  /** Indicates if this question was imported from the UBITS question bank. */
+  isBankQuestion?: boolean;
 }
 
 export interface SurveySection {
@@ -264,6 +266,8 @@ export interface DemographicField {
   catalogKey: string | null;
   /** Whether the platform supplies this value. A catalog fact, not a choice. */
   preloadable: boolean;
+  /** True when each option is one person. Set by the collaborator field. */
+  perPerson?: boolean;
   /** Shown to the participant. Also settable on non-preloadable fields — they
    * can be hidden and used only as a filter. */
   visible: boolean;
@@ -335,8 +339,8 @@ export const DEPTH_LABELS: Readonly<Record<number, string>> = {
 
 export const depthLabel = (depth: number): string => DEPTH_LABELS[depth] ?? `Nivel ${depth}`;
 
-/** Shallowest level that may hold questions — level 1 is a container only. */
-export const MIN_QUESTION_DEPTH = 2;
+/** Shallowest level that may hold questions. */
+export const MIN_QUESTION_DEPTH = 1;
 
 /** Whether a section at this depth can hold questions of its own. */
 export const canHaveQuestions = (depth: number): boolean => depth >= MIN_QUESTION_DEPTH;

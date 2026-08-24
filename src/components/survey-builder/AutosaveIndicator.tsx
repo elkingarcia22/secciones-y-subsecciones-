@@ -14,7 +14,7 @@ const TIME_FORMAT = new Intl.DateTimeFormat("es", { hour: "2-digit", minute: "2-
 export function AutosaveIndicator({ status, savedAt }: AutosaveState) {
   if (status === "idle") {
     return (
-      <Row icon={Cloud} className="bg-border/30 text-text-secondary">
+      <Row icon={Cloud} className="bg-surface-muted text-text-secondary">
         Se guarda automáticamente
       </Row>
     );
@@ -22,7 +22,7 @@ export function AutosaveIndicator({ status, savedAt }: AutosaveState) {
 
   if (status === "saving") {
     return (
-      <Row icon={RefreshCw} className="bg-border/50 text-text-primary" spin>
+      <Row icon={RefreshCw} className="bg-surface-muted text-text-primary" spin>
         Guardando…
       </Row>
     );
@@ -67,9 +67,12 @@ function Row({
     <span
       role="status"
       aria-live="polite"
-      className={cn("flex items-center gap-1.5 text-[11.5px] font-bold rounded-full px-3 py-1.5", className)}
+      className={cn(
+        "flex h-[22px] shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-bold leading-none",
+        className
+      )}
     >
-      <Icon className={cn("h-4 w-4 shrink-0", spin && "animate-spin")} strokeWidth={2.5} />
+      <Icon className={cn("h-3.5 w-3.5 shrink-0", spin && "animate-spin")} strokeWidth={2.5} />
       {children}
     </span>
   );

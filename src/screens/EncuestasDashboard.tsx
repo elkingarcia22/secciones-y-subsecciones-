@@ -26,8 +26,16 @@ import {
   X,
   Pencil,
 } from "lucide-react";
+import { toast } from "sonner";
 import { EmptyState } from "@/components/feedback/EmptyState";
-import { DrawerShell } from "@/components/overlays/DrawerShell";
+import { ShellRailSlot } from "@/components/app-shell";
+import { SurveyListActionRail } from "@/components/survey-list/SurveyListActionRail";
+import { SurveyListTable, type SurveyListRow } from "@/components/survey-list/SurveyListTable";
+import type { SurveyListFilters } from "@/components/survey-list/surveyListFilters";
+import type { SurveyActionId } from "@/components/survey-list/surveyListActions";
+import type { CloseDateEditMode } from "@/components/survey-list/SurveyCloseDateCell";
+import { formatSurveyDate } from "@/components/survey-list/surveyListDates";
+import { ConfirmDialog, DrawerShell } from "@/components/overlays";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -221,6 +229,20 @@ interface EncuestasDashboardProps {
  initialStep?: number;
  surveys?: any[];
  onEdit?: (id: string) => void;
+ onViewResults?: (id: string) => void;
+ /** Opens the builder straight on its participants step. */
+ onEditParticipants?: (id: string) => void;
+ onDuplicate?: (id: string) => void;
+ onDelete?: (ids: readonly string[]) => void;
+ /** Closes a running survey for good. */
+ onFinish?: (id: string) => void;
+ /** Puts a finished survey back in the field until the given closing date. */
+ onReopen?: (id: string, endDate: Date) => void;
+ /** Moves a running survey's closing date. */
+ onChangeEndDate?: (id: string, endDate: Date) => void;
+ /** Column filters, owned above so the home metric cards can set them. */
+ listFilters: SurveyListFilters;
+ onListFiltersChange: (filters: SurveyListFilters) => void;
 }
 
 export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
@@ -232,7 +254,16 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
  initialType = null,
  initialStep,
  surveys = [],
- onEdit
+ onEdit,
+ onViewResults,
+ onEditParticipants,
+ onDuplicate,
+ onDelete,
+ onFinish,
+ onReopen,
+ onChangeEndDate,
+ listFilters,
+ onListFiltersChange
 }) => {
  const [isDrawerOpen, setIsDrawerOpen] = React.useState(initialIsDrawerOpen);
  
@@ -262,6 +293,91 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
     return item ? createPublishedSurveyDraft(item) : null;
   }, [previewSurveyId, surveys]);
 
+  // Rows ticked in the table. This is what the floating rail acts on: one row
+  // selected surfaces that survey's own actions, several surfaces the batch
+  // ones — which is why the per-row "⋮" menu is gone.
+  const [checkedIds, setCheckedIds] = React.useState<ReadonlySet<string>>(() => new Set());
+
+  const toggleChecked = (id: string) => {
+    setCheckedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const allChecked = surveys.length > 0 && surveys.every((survey) => checkedIds.has(survey.id));
+  const toggleAllChecked = () =>
+    setCheckedIds(allChecked ? new Set() : new Set(surveys.map((survey) => survey.id)));
+
+  // Rows can disappear (a filter, a deletion) while still ticked, so the rail
+  // reads the survey back from the list rather than trusting a stored copy.
+  const soleCheckedSurvey =
+    checkedIds.size === 1 ? surveys.find((survey) => checkedIds.has(survey.id)) ?? null : null;
+
+
+  // The row whose closing date is being changed. "Editar fechas" and "Reabrir
+  // encuesta" are the same gesture on the table — they differ only in what
+  // saving it means — so they share one piece of state.
+  const [dateEdit, setDateEdit] = React.useState<{
+    surveyId: string;
+    mode: CloseDateEditMode;
+  } | null>(null);
+
+  // Finishing asks first, in a modal — it is irreversible, unlike the
+  // in-place edits above. Held as an id rather than a boolean so the dialog
+  // can name the survey it is about.
+  const [pendingFinishId, setPendingFinishId] = React.useState<string | null>(null);
+  const [pendingDeleteIds, setPendingDeleteIds] = React.useState<readonly string[] | null>(null);
+
+  const surveyById = (id: string) => surveys.find((survey) => survey.id === id) ?? null;
+  const nameOf = (id: string) => surveyById(id)?.name ?? "la encuesta";
+
+  /**
+   * Runs one of a single survey's actions.
+   *
+   * Everything the rail can do to one survey arrives here, so what an action
+   * means lives in one place rather than being spread across a dozen callbacks
+   * threaded through the rail.
+   */
+  const runSurveyAction = (action: SurveyActionId, id: string) => {
+    switch (action) {
+      case "results":
+        onViewResults?.(id);
+        return;
+      case "preview":
+        setPreviewSurveyId(id);
+        return;
+      case "edit":
+        onEdit?.(id);
+        return;
+      case "editParticipants":
+        onEditParticipants?.(id);
+        return;
+      case "duplicate": {
+        const name = nameOf(id);
+        onDuplicate?.(id);
+        toast.success(`${name} duplicada`);
+        return;
+      }
+      case "editDates":
+        setDateEdit({ surveyId: id, mode: "editDates" });
+        return;
+      case "reopen":
+        setDateEdit({ surveyId: id, mode: "reopen" });
+        return;
+      case "finish":
+        setPendingFinishId(id);
+        return;
+      case "delete":
+        setPendingDeleteIds([id]);
+        return;
+      case "share":
+        toast.success(`Enlace de ${nameOf(id)} copiado al portapapeles`);
+        return;
+    }
+  };
 
   const surveyTypes = [
     { title: "Clima", description: "Mide la percepción del ambiente laboral y bienestar.", icon: Sprout },
@@ -343,155 +459,62 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
  };
 
  return (
- <div className="flex flex-col h-full bg-surface rounded-xl border border-border/60 overflow-hidden shadow-sm">
- {/* Dashboard Header */}
- <div className="flex items-center justify-between px-8 py-6 border-b border-border/40 bg-surface">
  <div className="flex flex-col">
- <h2 className="text-xl font-bold text-text-primary tracking-tight">Lista de encuestas</h2>
- <span className="text-[11px] font-medium text-text-secondary/40 tracking-tight">{surveys.length} encuestas encontradas</span>
- </div>
- 
- <div className="flex items-center gap-6">
- <div className="flex items-center gap-2 border-r border-border/40 pr-6">
- <Button variant="ghost" size="icon" className="h-10 w-10 text-text-secondary hover:bg-muted/50 rounded-full transition-all hover:scale-110"><Search className="h-5 w-5" /></Button>
- <Button variant="ghost" size="icon" className="h-10 w-10 text-text-secondary hover:bg-muted/50 rounded-full transition-all hover:scale-110"><RotateCw className="h-5 w-5" /></Button>
- <Button variant="ghost" size="icon" className="h-10 w-10 text-text-secondary hover:bg-muted/50 rounded-full transition-all hover:scale-110"><Filter className="h-5 w-5" /></Button>
- <Button variant="ghost" size="icon" className="h-10 w-10 text-text-secondary hover:bg-muted/50 rounded-full transition-all hover:scale-110"><LayoutGrid className="h-5 w-5" /></Button>
- </div>
- 
- <Button 
- variant="outline" 
- className="h-10 px-5 gap-2.5 text-xs font-semibold rounded-xl hover:bg-primary/5 hover:border-primary/50 transition-all shadow-sm active:scale-95"
- onClick={() => setIsDrawerOpen(true)}
- >
- <BarChart3 className="h-4.5 w-4.5 text-primary" />
- <span>Comparar encuestas</span>
- </Button>
- 
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button className="h-10 px-5 gap-2.5 text-xs font-semibold rounded-xl shadow-lg active:scale-95 group">
-        <span>Crear encuesta</span>
-        <ChevronDown className="h-4 w-4 opacity-50 group-data-[state=open]:rotate-180 transition-transform duration-200" />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent 
-      align="end" 
-      sideOffset={8}
-      className="w-72 p-2 rounded-2xl border border-border/40 shadow-2xl bg-white animate-in fade-in-0 zoom-in-95 z-[100]"
-    >
-      <DropdownMenuLabel className="px-3 py-2 text-[10px] font-bold text-text-secondary/40 uppercase tracking-widest">Opciones de creación</DropdownMenuLabel>
-      <DropdownMenuSeparator className="bg-border/40 mx-1 my-1" />
-      <DropdownMenuItem onSelect={onCreateBlank} className="flex items-center gap-4 p-3 rounded-xl cursor-pointer focus:bg-brand/5 focus:text-brand transition-all group outline-none border border-transparent focus:border-brand/10">
-        <div className="h-10 w-10 rounded-xl bg-muted/40 flex items-center justify-center group-focus:bg-white group-focus:shadow-sm transition-all border border-transparent group-focus:border-brand/10">
-          <Plus className="h-5 w-5 text-text-secondary group-focus:text-brand" />
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[14px] font-bold tracking-tight">Crear en blanco</span>
-          <span className="text-[11px] text-text-secondary/50 font-medium">Empieza desde cero</span>
-        </div>
-      </DropdownMenuItem>
-      <DropdownMenuItem className="flex items-center gap-4 p-3 rounded-xl cursor-pointer focus:bg-brand/5 focus:text-brand transition-all group outline-none border border-transparent focus:border-brand/10">
-        <div className="h-10 w-10 rounded-xl bg-muted/40 flex items-center justify-center group-focus:bg-white group-focus:shadow-sm transition-all border border-transparent group-focus:border-brand/10">
-          <Layout className="h-5 w-5 text-text-secondary group-focus:text-brand" />
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[14px] font-bold tracking-tight">Crear con plantilla</span>
-          <span className="text-[11px] text-text-secondary/50 font-medium">Usa un diseño predefinido</span>
-        </div>
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
- </div>
-  </div>
+  {/* The list is the participation table with survey content: same shell,
+      same header controls, same selection model and pager. */}
+  <SurveyListTable
+    surveys={surveys as SurveyListRow[]}
+    selectedIds={checkedIds}
+    onSelectionChange={setCheckedIds}
+    onOpenSurvey={(id) => {
+      const survey = surveys.find((candidate) => candidate.id === id);
+      // Anything that has been launched opens its results — a measurement in
+      // the field has partial results worth watching, and that is what someone
+      // clicking its name is after. Only a draft, which has nothing to show
+      // yet, opens in the editor instead.
+      if (survey && survey.status !== "Borrador") onViewResults?.(id);
+      else onEdit?.(id);
+    }}
+    filters={listFilters}
+    onFiltersChange={onListFiltersChange}
+    dateEdit={dateEdit}
+    onDateEditCancel={() => setDateEdit(null)}
+    onDateEditSave={(id, date) => {
+      if (dateEdit?.mode === "reopen") onReopen?.(id, date);
+      else onChangeEndDate?.(id, date);
+      setDateEdit(null);
+      toast.success(
+        dateEdit?.mode === "reopen"
+          ? `${nameOf(id)} vuelve a estar en curso hasta el ${formatSurveyDate(date)}`
+          : `${nameOf(id)} ahora cierra el ${formatSurveyDate(date)}`
+      );
+    }}
+  />
 
-  {/* Table Content */}
-  <div className="flex-1 overflow-auto">
-    <Table>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent border-b border-border/40 bg-muted/20">
-          <TableHead className="w-[40px] px-8"><Checkbox className="border-border/60" /></TableHead>
-          <TableHead className="w-[30px] p-0"></TableHead>
-          <TableHead className="text-[11px] font-bold text-text-secondary tracking-tight py-4">Nombre</TableHead>
-          <TableHead className="text-[11px] font-bold text-text-secondary tracking-tight py-4">Tipo</TableHead>
-          <TableHead className="text-[11px] font-bold text-text-secondary tracking-tight py-4">Estado</TableHead>
-          <TableHead className="text-[11px] font-bold text-text-secondary tracking-tight py-4">Inicio</TableHead>
-          <TableHead className="text-[11px] font-bold text-text-secondary tracking-tight py-4">Cierre</TableHead>
-          <TableHead className="text-[11px] font-bold text-text-secondary tracking-tight py-4 text-center">Part.</TableHead>
-          <TableHead className="text-[11px] font-bold text-text-secondary tracking-tight py-4">Avance</TableHead>
-          <TableHead className="w-[40px]"></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {surveys.map((survey) => (
-          <TableRow key={survey.id} className="border-b border-border/40 transition-all group">
-            <TableCell className="px-8 py-4"><Checkbox className="border-border/60" /></TableCell>
-            <TableCell className="p-0"><GripVertical className="h-4 w-4 text-text-secondary opacity-20 group-hover:opacity-50 transition-opacity cursor-grab" /></TableCell>
-            <TableCell className="py-4 text-[12px] font-bold text-text-primary">{survey.name}</TableCell>
-            <TableCell className="text-[11px] font-bold text-text-secondary/70">{survey.type}</TableCell>
-            <TableCell>
-              <Badge variant="outline" className={cn(
-                "text-[10px] font-bold border-none px-2 py-0.5 rounded-full pointer-events-none",
-                survey.statusVariant === "info" && "bg-info/10 text-info",
-                survey.statusVariant === "positive" && "bg-status-positive-bg text-status-positive",
-                survey.statusVariant === "warning" && "bg-status-warning-light/20 text-status-warning",
-                survey.statusVariant === "default" && "bg-muted text-text-secondary"
-              )}>
-                {survey.status}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-[11px] font-bold text-text-secondary/60">{survey.startDate}</TableCell>
-            <TableCell className="text-[11px] font-bold text-text-secondary/60">{survey.endDate}</TableCell>
-            <TableCell className="text-[11px] font-extrabold text-text-primary text-center">{survey.participants}</TableCell>
-            <TableCell className="min-w-[140px]">
-              <div className="flex items-center gap-3">
-                <Progress value={survey.progress} className="h-1.5 flex-1 bg-muted" />
-                <span className="text-[11px] font-bold text-text-primary min-w-[30px]">{survey.progress}%</span>
-              </div>
-            </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label={`Acciones de ${survey.name}`} className="h-8 w-8 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity rounded-full hover:bg-muted"><MoreVertical className="h-4 w-4 text-text-secondary" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52 rounded-xl p-1.5">
-                  <DropdownMenuItem
-                    onSelect={() => onEdit?.(survey.id)}
-                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[12.5px] font-semibold cursor-pointer"
-                  >
-                    <Pencil className="h-4 w-4 text-text-secondary" strokeWidth={2.2} />
-                    Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => setPreviewSurveyId(survey.id)}
-                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[12.5px] font-semibold cursor-pointer"
-                  >
-                    <Eye className="h-4 w-4 text-text-secondary" strokeWidth={2.2} />
-                    Vista previa
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  </div>
-
- {/* Pagination Footer */}
- <div className="px-8 py-4 flex items-center justify-between border-t border-border/60 bg-surface">
- <div className="text-[11px] font-bold text-text-secondary/60">Mostrando 1-8 de {surveys.length}</div>
- <div className="flex items-center gap-2">
- <Button variant="outline" size="icon" className="h-9 w-9 opacity-50 border-2 rounded-lg" disabled><ChevronLeft className="h-4 w-4" /></Button>
- <div className="flex items-center gap-1.5 px-2">
- <Button variant="outline" className="h-9 w-9 p-0 bg-primary/5 border-2 border-primary text-primary font-extrabold text-xs rounded-lg">1</Button>
- <Button variant="ghost" className="h-9 w-9 p-0 text-text-secondary/60 font-bold text-xs rounded-lg hover:bg-muted">2</Button>
- <Button variant="ghost" className="h-9 w-9 p-0 text-text-secondary/60 font-bold text-xs rounded-lg hover:bg-muted">3</Button>
- </div>
- <Button variant="outline" size="icon" className="h-9 w-9 border-2 rounded-lg"><ChevronRight className="h-4 w-4 text-text-primary" /></Button>
- </div>
- <div className="w-[120px]"></div>
-  </div>
+  {/* Floating action rail, anchored by the shell so it stays above the fold
+      while the table scrolls. It carries what the header and the per-row
+      menus used to. */}
+  <ShellRailSlot>
+    <SurveyListActionRail
+      // A row already committed to an in-place date edit cannot also take an
+      // action from the rail; the menu closes rather than let the two compete.
+      locked={dateEdit !== null}
+      selectedCount={checkedIds.size}
+      selectedSurvey={soleCheckedSurvey}
+      onCreateBlank={() => onCreateBlank?.()}
+      onCreateFromTemplate={() => toast.info("Las plantillas llegan en el siguiente paso.")}
+      onCompare={() => setIsDrawerOpen(true)}
+      onAction={runSurveyAction}
+      onClearSelection={() => setCheckedIds(new Set())}
+      onBulkDuplicate={() => {
+        [...checkedIds].forEach((id) => onDuplicate?.(id));
+        toast.success(`${checkedIds.size} encuestas duplicadas`);
+        setCheckedIds(new Set());
+      }}
+      onBulkExport={() => toast.success(`Exportando ${checkedIds.size} encuestas`)}
+      onBulkDelete={() => setPendingDeleteIds([...checkedIds])}
+    />
+  </ShellRailSlot>
 
   {/* Comparison Wizard Drawer */}
   <DrawerShell
@@ -836,6 +859,61 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
     onOpenChange={(open) => !open && setPreviewSurveyId(null)}
   />
 )}
+
+{/* Closing a survey stops collection for good — the responses that would
+    have arrived after it simply never do — so it is asked before it is
+    done, in a modal rather than in the row: unlike a date, there's nothing
+    left to look at in the table once this is confirmed. */}
+<ConfirmDialog
+  open={pendingFinishId !== null}
+  onOpenChange={(open) => !open && setPendingFinishId(null)}
+  title="¿Finalizar esta encuesta?"
+  description={
+    pendingFinishId
+      ? `${nameOf(pendingFinishId)} dejará de admitir respuestas de inmediato. Podrás consultar sus resultados, pero quienes aún no hayan respondido ya no podrán hacerlo.`
+      : undefined
+  }
+  confirmLabel="Finalizar encuesta"
+  cancelLabel="Cancelar"
+  variant="warning"
+  onConfirm={() => {
+    if (!pendingFinishId) return;
+    const name = nameOf(pendingFinishId);
+    onFinish?.(pendingFinishId);
+    setPendingFinishId(null);
+    toast.success(`${name} finalizada`);
+  }}
+/>
+
+<ConfirmDialog
+  open={pendingDeleteIds !== null}
+  onOpenChange={(open) => !open && setPendingDeleteIds(null)}
+  title={
+    pendingDeleteIds && pendingDeleteIds.length > 1
+      ? `¿Eliminar ${pendingDeleteIds.length} encuestas?`
+      : "¿Eliminar esta encuesta?"
+  }
+  description={
+    pendingDeleteIds && pendingDeleteIds.length === 1
+      ? `${nameOf(pendingDeleteIds[0])} y sus respuestas se eliminarán definitivamente. Esta acción no se puede deshacer.`
+      : "Las encuestas seleccionadas y sus respuestas se eliminarán definitivamente. Esta acción no se puede deshacer."
+  }
+  confirmLabel="Eliminar"
+  cancelLabel="Cancelar"
+  variant="destructive"
+  confirmationText={
+    pendingDeleteIds && pendingDeleteIds.length === 1 ? nameOf(pendingDeleteIds[0]) : undefined
+  }
+  onConfirm={() => {
+    if (!pendingDeleteIds) return;
+    const count = pendingDeleteIds.length;
+    const label = count === 1 ? nameOf(pendingDeleteIds[0]) : `${count} encuestas`;
+    onDelete?.(pendingDeleteIds);
+    setPendingDeleteIds(null);
+    setCheckedIds(new Set());
+    toast.success(`${label} ${count === 1 ? "eliminada" : "eliminadas"}`);
+  }}
+/>
 </div>
 );
 };

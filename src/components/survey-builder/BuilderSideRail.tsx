@@ -34,6 +34,7 @@ import {
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { formatCount } from "./participants";
 import { depthLabel } from "./surveyBuilderTypes";
+import { RailSelectionChip } from "@/components/action-rail";
 
 interface BuilderSideRailProps {
   /** Whether the rail should appear at the bottom (horizontal) or right (vertical). */
@@ -68,6 +69,7 @@ interface BuilderSideRailProps {
   onAddLevelTwoSubsection: () => void;
   onAddQuestion: () => void;
   onOpenAnswerBank: () => void;
+  onOpenQuestionBank: () => void;
   onAddDemographic: () => void;
   /** Called once an import file is parsed — only visible on the sections step. */
   onImportSections: (sections: SurveySection[], summary: SectionImportSummary) => void;
@@ -99,6 +101,14 @@ interface BuilderSideRailProps {
   canContinue: boolean;
   continueLabel?: string;
   continueDisabledReason?: string;
+  /** The current wizard step id — drives the open-on-entry and staggered
+   * animation of contextual action buttons. */
+  activeStep: string;
+  participantsSelectionCount?: number;
+  /** Drops the ticks in the participants table. */
+  onClearParticipantsSelection?: (() => void) | null;
+  /** Present only when removing rows differs from clearing the ticks. */
+  onDeleteParticipantsSelection?: (() => void) | null;
 }
 
 interface RailButtonProps {
@@ -142,6 +152,45 @@ function RailButton({
   );
 }
 
+/**
+ * Wraps a contextual action button to apply a staggered slide-in animation
+ * when the wizard step changes. The `animKey` should change on every step
+ * transition so the CSS animation re-fires. Each item gets a progressive
+ * `animation-delay` based on `staggerIndex` to create a cascade effect.
+ *
+ * Also applies a blue→normal color flash so buttons briefly glow indigo
+ * before settling into their resting zinc-400 colour. Set `skipColorFlash`
+ * for non-button elements like dividers.
+ */
+function AnimatedActionItem({
+  animKey,
+  staggerIndex,
+  skipColorFlash = false,
+  children,
+}: {
+  animKey: number;
+  staggerIndex: number;
+  skipColorFlash?: boolean;
+  children: React.ReactNode;
+}) {
+  const delay = staggerIndex * 100;
+  const animations = [
+    `railActionAppear 550ms cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms both`,
+  ];
+  if (!skipColorFlash) {
+    animations.push(`railActionColorFlash 1100ms ease-out ${delay + 150}ms both`);
+  }
+  return (
+    <div
+      key={animKey}
+      className="rounded-xl"
+      style={{ animation: animations.join(", ") }}
+    >
+      {children}
+    </div>
+  );
+}
+
 /** One stat line in the info card: icon-led label on the left, value flush right. */
 function InfoRow({
   icon: Icon,
@@ -154,11 +203,11 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+      <dt className="flex items-center gap-2 text-[12.5px] text-zinc-400">
         <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />
         {label}
       </dt>
-      <dd className="text-[13px] font-semibold tabular-nums text-text-primary">{value}</dd>
+      <dd className="text-[13px] font-semibold tabular-nums text-zinc-100">{value}</dd>
     </div>
   );
 }
@@ -184,6 +233,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
       onAddLevelTwoSubsection,
       onAddQuestion,
       onOpenAnswerBank,
+      onOpenQuestionBank,
       onAddDemographic,
       onImportSections,
       onPreview,
@@ -203,6 +253,10 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
       canContinue,
       continueLabel = "Continuar",
       continueDisabledReason,
+      activeStep,
+      participantsSelectionCount = 0,
+      onClearParticipantsSelection,
+      onDeleteParticipantsSelection,
     },
     ref
   ) {
@@ -214,14 +268,49 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
     const [isExpanded, setIsExpanded] = React.useState(true);
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
+    // ── Step-change detection ──────────────────────────────
+    // Tracks the previous step to detect real transitions and drive the
+    // stagger animation. `stepChangeKey` increments on every transition
+    // so CSS animations re-fire via a new React key.
+    const prevStepRef = React.useRef(activeStep);
+    const [stepChangeKey, setStepChangeKey] = React.useState(0);
+    const forceOpenTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+    React.useEffect(() => {
+      if (prevStepRef.current !== activeStep) {
+        prevStepRef.current = activeStep;
+        setStepChangeKey((k) => k + 1);
+
+        // Force the rail open and suspend autoHide for 3 s so the author
+        // has time to notice the new contextual actions.
+        setIsExpanded(true);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        if (forceOpenTimerRef.current) clearTimeout(forceOpenTimerRef.current);
+        forceOpenTimerRef.current = setTimeout(() => {
+          // After the grace period, start the regular collapse timer if
+          // autoHide is on — otherwise leave the rail open.
+          if (autoHide) {
+            startCollapseTimer();
+          }
+        }, 3000);
+      }
+    }, [activeStep]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Clean up force-open timer on unmount
+    React.useEffect(() => {
+      return () => {
+        if (forceOpenTimerRef.current) clearTimeout(forceOpenTimerRef.current);
+      };
+    }, []);
+
     const startCollapseTimer = React.useCallback(() => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      // Wait longer if a menu is open so it doesn't collapse while the user is looking at it
+      // Do not collapse if a menu is open or autoHide is disabled
       if (isSubnivelMenuOpen || isImporting || !autoHide) return;
       
       timeoutRef.current = setTimeout(() => {
         setIsExpanded(false);
-      }, 3000);
+      }, 150);
     }, [isSubnivelMenuOpen, isImporting, autoHide]);
 
     React.useEffect(() => {
@@ -229,17 +318,11 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
         setIsExpanded(true);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
       } else {
-        startCollapseTimer();
-      }
-    }, [autoHide, startCollapseTimer]);
-
-    React.useEffect(() => {
-      setIsExpanded(true);
-      startCollapseTimer();
-      return () => {
+        setIsExpanded(false);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      };
-    }, [isSectionsStepActive, isDemographicsStepActive, startCollapseTimer]);
+      }
+    }, [autoHide]);
+
 
     const handleMouseEnter = () => {
       setIsExpanded(true);
@@ -295,7 +378,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
         <div 
           className={cn(
             "pointer-events-auto flex items-center justify-end",
-            isRight ? "w-32 flex-row py-12 pr-0" : "h-32 flex-col px-12 pb-0"
+            isRight ? "w-16 flex-row py-6 pr-0" : "h-16 flex-col px-6 pb-0"
           )}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
@@ -308,9 +391,11 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                 ? isRight
                   ? "w-max min-w-[56px] max-h-[800px] flex-col bg-zinc-900 px-3 py-3 shadow-[-8px_0_30px_rgb(0,0,0,0.24)] border border-zinc-800/80"
                   : "h-14 max-w-[800px] bg-zinc-900 px-3 shadow-[0_8px_30px_rgb(0,0,0,0.24)] border border-zinc-800/80"
+                // Collapsed: a full pill rather than a half-rounded hump, so
+                // the handle reads as one continuous rounded line either way.
                 : isRight
-                  ? "w-1.5 max-h-[64px] h-[64px] bg-zinc-400 shadow-sm border-transparent rounded-l-full rounded-r-none translate-x-[2px]"
-                  : "h-1.5 max-w-[64px] w-[64px] bg-zinc-400 shadow-sm border-transparent rounded-t-full rounded-b-none translate-y-[2px]"
+                  ? "w-1.5 max-h-[64px] h-[64px] bg-zinc-400 shadow-sm border-transparent rounded-full translate-x-[2px]"
+                  : "h-1.5 max-w-[64px] w-[64px] bg-zinc-400 shadow-sm border-transparent rounded-full translate-y-[2px]"
             )}
           >
             {/* The actual content that fades/slides in */}
@@ -323,115 +408,137 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
             >
               {isSectionsStepActive && (
                 <>
-                  <RailButton tooltipSide={isRight ? "left" : "top"}
-                    icon={<ListPlus className="h-[20px] w-[20px]" strokeWidth={2.3} />}
-                    label="Añadir sección"
-                    onClick={onAddSection}
-                    ignoreOutsideClick
+                  {/* Shimmer overlay for the contextual group */}
+                  <div
+                    key={`shimmer-sections-${stepChangeKey}`}
+                    className="pointer-events-none absolute inset-0 rounded-[24px]"
+                    style={{
+                      animation: "railGroupShimmer 1200ms ease-out both",
+                      animationDelay: "200ms",
+                    }}
                   />
+                  <AnimatedActionItem animKey={stepChangeKey} staggerIndex={0}>
+                    <RailButton tooltipSide={isRight ? "left" : "top"}
+                      icon={<ListPlus className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                      label="Añadir sección"
+                      onClick={onAddSection}
+                      ignoreOutsideClick
+                    />
+                  </AnimatedActionItem>
                   {showAddSubsection &&
                     (asksSubnivelChoice ? (
-                      <Popover open={isSubnivelMenuOpen} onOpenChange={setIsSubnivelMenuOpen}>
-                        <PopoverTrigger asChild>
-                          <button
-                            type="button"
-                            data-click-outside-ignore
-                            aria-label="Añadir subsección"
-                            onClick={() => setIsSubnivelMenuOpen(true)}
-                            className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                      <AnimatedActionItem animKey={stepChangeKey} staggerIndex={1}>
+                        <Popover open={isSubnivelMenuOpen} onOpenChange={setIsSubnivelMenuOpen}>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              data-click-outside-ignore
+                              aria-label="Añadir subsección"
+                              onClick={() => setIsSubnivelMenuOpen(true)}
+                              className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                            >
+                              <CornerDownRight className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            side="top"
+                            align="center"
+                            sideOffset={16}
+                            avoidCollisions={false}
+                            className="w-64 rounded-xl p-5"
                           >
-                            <CornerDownRight className="h-[20px] w-[20px]" strokeWidth={2.3} />
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          side="top"
-                          align="center"
-                          sideOffset={16}
-                          avoidCollisions={false}
-                          className="w-64 rounded-xl p-5"
-                        >
-                          <PopoverTitle className="text-[13px] font-semibold text-text-primary">
-                            Añadir subsección
-                          </PopoverTitle>
+                            <PopoverTitle className="text-[13px] font-semibold text-text-primary">
+                              Añadir subsección
+                            </PopoverTitle>
 
-                          <div className="my-3 h-px bg-border/60" />
+                            <div className="my-3 h-px bg-border/60" />
 
-                          <div className="flex flex-col gap-2.5">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsSubnivelMenuOpen(false);
-                                onAddSiblingSubsection();
-                              }}
-                              className="flex w-full items-start gap-3 rounded-lg border border-border/60 px-4 py-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                            >
-                              <CornerDownRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.3} />
-                              <span className="min-w-0">
-                                <span className="block text-[12.5px] font-semibold text-text-primary">
-                                  {hermanaTitle}
+                            <div className="flex flex-col gap-2.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsSubnivelMenuOpen(false);
+                                  onAddSiblingSubsection();
+                                }}
+                                className="flex w-full items-start gap-3 rounded-lg border border-border/60 px-4 py-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                              >
+                                <CornerDownRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.3} />
+                                <span className="min-w-0">
+                                  <span className="block text-[12.5px] font-semibold text-text-primary">
+                                    {hermanaTitle}
+                                  </span>
+                                  <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
+                                    Crea otra subsección al mismo nivel, debajo de esta.
+                                  </span>
                                 </span>
-                                <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
-                                  Crea otra subsección al mismo nivel, debajo de esta.
-                                </span>
-                              </span>
-                            </button>
+                              </button>
 
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsSubnivelMenuOpen(false);
-                                if (selectedDepth === 3) onAddLevelTwoSubsection();
-                                else onAddSubsection();
-                              }}
-                              className="flex w-full items-start gap-3 rounded-lg border border-border/60 px-4 py-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                            >
-                              <Layers className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.3} />
-                              <span className="min-w-0">
-                                <span className="block text-[12.5px] font-semibold text-text-primary">
-                                  {secondTitle}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsSubnivelMenuOpen(false);
+                                  if (selectedDepth === 3) onAddLevelTwoSubsection();
+                                  else onAddSubsection();
+                                }}
+                                className="flex w-full items-start gap-3 rounded-lg border border-border/60 px-4 py-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                              >
+                                <Layers className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.3} />
+                                <span className="min-w-0">
+                                  <span className="block text-[12.5px] font-semibold text-text-primary">
+                                    {secondTitle}
+                                  </span>
+                                  <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
+                                    {selectedDepth === 3
+                                      ? "Crea una subsección de nivel 2, debajo de tu subsección actual."
+                                      : "Crea una subsección dentro de esta."}
+                                  </span>
                                 </span>
-                                <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
-                                  {selectedDepth === 3
-                                    ? "Crea una subsección de nivel 2, debajo de tu subsección actual."
-                                    : "Crea una subsección dentro de esta."}
-                                </span>
-                              </span>
-                            </button>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
+                              </button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </AnimatedActionItem>
                     ) : (
-                      <RailButton tooltipSide={isRight ? "left" : "top"}
-                        icon={<CornerDownRight className="h-[20px] w-[20px]" strokeWidth={2.3} />}
-                        label="Añadir subsección"
-                        onClick={onAddSubsection}
-                        blockedReason={addSubsectionBlockedReason}
-                        ignoreOutsideClick
-                      />
+                      <AnimatedActionItem animKey={stepChangeKey} staggerIndex={1}>
+                        <RailButton tooltipSide={isRight ? "left" : "top"}
+                          icon={<CornerDownRight className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                          label="Añadir subsección"
+                          onClick={onAddSubsection}
+                          blockedReason={addSubsectionBlockedReason}
+                          ignoreOutsideClick
+                        />
+                      </AnimatedActionItem>
                     ))}
-                  <RailButton tooltipSide={isRight ? "left" : "top"}
-                    icon={<Plus className="h-[20px] w-[20px]" strokeWidth={2.3} />}
-                    label="Añadir pregunta"
-                    onClick={onAddQuestion}
-                    blockedReason={addQuestionBlockedReason}
-                    ignoreOutsideClick
-                  />
-                  <RailButton tooltipSide={isRight ? "left" : "top"}
-                    icon={<Library className="h-[20px] w-[20px]" strokeWidth={2.3} />}
-                    label="Banco de respuestas"
-                    onClick={onOpenAnswerBank}
-                  />
-                  <RailButton tooltipSide={isRight ? "left" : "top"}
-                    icon={
-                      isImporting
-                        ? <span className="h-[20px] w-[20px] animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-                        : <UploadCloud className="h-[20px] w-[20px]" strokeWidth={2.3} />
-                    }
-                    label={isImporting ? "Importando…" : "Cargar preguntas desde archivo"}
-                    onClick={() => importInputRef.current?.click()}
-                    blockedReason={isImporting ? "Importando archivo…" : null}
-                    ignoreOutsideClick
-                  />
+                  <AnimatedActionItem animKey={stepChangeKey} staggerIndex={2}>
+                    <RailButton tooltipSide={isRight ? "left" : "top"}
+                      icon={<Plus className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                      label="Añadir pregunta"
+                      onClick={onAddQuestion}
+                      blockedReason={addQuestionBlockedReason}
+                      ignoreOutsideClick
+                    />
+                  </AnimatedActionItem>
+                  <AnimatedActionItem animKey={stepChangeKey} staggerIndex={3}>
+                    <RailButton tooltipSide={isRight ? "left" : "top"}
+                      icon={<Library className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                      label="Banco de preguntas"
+                      onClick={onOpenQuestionBank}
+                      blockedReason={addQuestionBlockedReason}
+                    />
+                  </AnimatedActionItem>
+                  <AnimatedActionItem animKey={stepChangeKey} staggerIndex={4}>
+                    <RailButton tooltipSide={isRight ? "left" : "top"}
+                      icon={
+                        isImporting
+                          ? <span className="h-[20px] w-[20px] animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+                          : <UploadCloud className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                      }
+                      label={isImporting ? "Importando…" : "Cargar preguntas desde archivo"}
+                      onClick={() => importInputRef.current?.click()}
+                      blockedReason={isImporting ? "Importando archivo…" : null}
+                      ignoreOutsideClick
+                    />
+                  </AnimatedActionItem>
                   <input
                     ref={importInputRef}
                     type="file"
@@ -445,65 +552,142 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                     }}
                   />
 
-                  <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "mx-2 my-2 w-px")} />
+                  <AnimatedActionItem animKey={stepChangeKey} staggerIndex={5} skipColorFlash>
+                    <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "mx-2 my-2 w-px")} />
+                  </AnimatedActionItem>
                 </>
               )}
 
               {isDemographicsStepActive && (
                 <>
-                  <RailButton tooltipSide={isRight ? "left" : "top"}
-                    icon={<Plus className="h-[20px] w-[20px]" strokeWidth={2.3} />}
-                    label="Añadir dato demográfico"
-                    onClick={onAddDemographic}
-                    blockedReason={addDemographicBlockedReason}
+                  {/* Shimmer overlay for the contextual group */}
+                  <div
+                    key={`shimmer-demographics-${stepChangeKey}`}
+                    className="pointer-events-none absolute inset-0 rounded-[24px]"
+                    style={{
+                      animation: "railGroupShimmer 1200ms ease-out both",
+                      animationDelay: "200ms",
+                    }}
                   />
+                  <AnimatedActionItem animKey={stepChangeKey} staggerIndex={0}>
+                    <RailButton tooltipSide={isRight ? "left" : "top"}
+                      icon={<Plus className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                      label="Añadir dato demográfico"
+                      onClick={onAddDemographic}
+                      blockedReason={addDemographicBlockedReason}
+                    />
+                  </AnimatedActionItem>
+                </>
+              )}
 
-                  <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "mx-2 my-2 w-px")} />
+              {activeStep === "participants" && participantsSelectionCount > 0 && (
+                <>
+                  <div
+                    key={`shimmer-participants-${stepChangeKey}`}
+                    className="pointer-events-none absolute inset-0 rounded-[24px]"
+                    style={{
+                      animation: "railGroupShimmer 1200ms ease-out both",
+                      animationDelay: "200ms",
+                    }}
+                  />
+                  <AnimatedActionItem animKey={stepChangeKey} staggerIndex={0} skipColorFlash>
+                    <RailSelectionChip
+                      count={participantsSelectionCount}
+                      onClear={() => onClearParticipantsSelection?.()}
+                      gender="m"
+                    />
+                  </AnimatedActionItem>
+                  {/* Only where removing differs from clearing — the directory
+                      table's ticks *are* the audience, so it reports no remove. */}
+                  {onDeleteParticipantsSelection && (
+                    <>
+                      <AnimatedActionItem animKey={stepChangeKey} staggerIndex={1} skipColorFlash>
+                        <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "mx-1 my-2 w-px")} />
+                      </AnimatedActionItem>
+                      <AnimatedActionItem animKey={stepChangeKey} staggerIndex={2}>
+                        <RailButton tooltipSide={isRight ? "left" : "top"}
+                          icon={
+                            <svg className="h-[20px] w-[20px] text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" />
+                            </svg>
+                          }
+                          label={`Eliminar ${participantsSelectionCount} ${participantsSelectionCount === 1 ? "seleccionado" : "seleccionados"}`}
+                          onClick={() => onDeleteParticipantsSelection?.()}
+                        />
+                      </AnimatedActionItem>
+                    </>
+                  )}
+                  <AnimatedActionItem animKey={stepChangeKey} staggerIndex={3} skipColorFlash>
+                    <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "mx-2 my-2 w-px")} />
+                  </AnimatedActionItem>
                 </>
               )}
 
               {(isSectionsStepActive || isDemographicsStepActive || isPagesStepActive) && (
                 <>
-                  <RailButton tooltipSide={isRight ? "left" : "top"}
-                    icon={<Eye className="h-[20px] w-[20px]" strokeWidth={2.3} />}
-                    label="Vista previa"
-                    onClick={onPreview}
-                    blockedReason={previewBlockedReason}
-                  />
-                  <HoverCard>
-                    <HoverCardTrigger asChild>
-                      <button
-                        type="button"
-                        aria-label="Información de participantes, secciones, preguntas, datos demográficos y tiempo"
-                        className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
-                      >
-                        <Info className="h-[20px] w-[20px]" strokeWidth={2.3} />
-                      </button>
-                    </HoverCardTrigger>
-                    <HoverCardContent
-                      side="top"
-                      align="center"
-                      sideOffset={16}
-                      avoidCollisions={false}
-                      className="w-60 rounded-2xl p-4"
+                  {/* Shimmer for shared preview/info group (only when pages step triggers it) */}
+                  {isPagesStepActive && !isSectionsStepActive && !isDemographicsStepActive && (
+                    <div
+                      key={`shimmer-pages-${stepChangeKey}`}
+                      className="pointer-events-none absolute inset-0 rounded-[24px]"
+                      style={{
+                        animation: "railGroupShimmer 1200ms ease-out both",
+                        animationDelay: "200ms",
+                      }}
+                    />
+                  )}
+                  {(isSectionsStepActive || isPagesStepActive) && (
+                    <AnimatedActionItem
+                      animKey={stepChangeKey}
+                      staggerIndex={isSectionsStepActive ? 6 : isDemographicsStepActive ? 2 : 0}
                     >
-                      <PopoverTitle className="text-[13px] font-semibold text-text-primary">
-                        Información
-                      </PopoverTitle>
-
-                      <div className="my-2.5 h-px bg-border/60" />
-
-                      <dl className="flex flex-col gap-2.5">
-                        <InfoRow icon={Users} label="Participantes" value={formatCount(participantsCount)} />
-                        <InfoRow icon={Layers} label="Secciones" value={sectionCount} />
-                        <InfoRow icon={ListChecks} label="Preguntas" value={questionCount} />
-                        <InfoRow icon={BarChart3} label="Datos demográficos" value={demographicsCount} />
-                        <InfoRow icon={Clock3} label="Tiempo estimado" value={`${estimatedMinutes} min`} />
-                      </dl>
-                    </HoverCardContent>
-                  </HoverCard>
+                      <RailButton tooltipSide={isRight ? "left" : "top"}
+                        icon={<Eye className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                        label="Vista previa"
+                        onClick={onPreview}
+                        blockedReason={previewBlockedReason}
+                      />
+                    </AnimatedActionItem>
+                  )}
                 </>
               )}
+
+              {(isSectionsStepActive || isDemographicsStepActive || isPagesStepActive) && (
+                <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "mx-2 my-2 w-px")} />
+              )}
+
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Información de participantes, secciones, preguntas, datos demográficos y tiempo"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                  >
+                    <Info className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent
+                  side="top"
+                  align="center"
+                  sideOffset={16}
+                  avoidCollisions={false}
+                  className="w-60 rounded-2xl p-4 bg-zinc-900 border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.24)]"
+                >
+                  <PopoverTitle className="text-[13px] font-semibold text-zinc-100">
+                    Información
+                  </PopoverTitle>
+
+                  <div className="my-2.5 h-px bg-zinc-700/60" />
+
+                  <dl className="flex flex-col gap-2.5">
+                    <InfoRow icon={Users} label="Participantes" value={formatCount(participantsCount)} />
+                    <InfoRow icon={Layers} label="Secciones" value={sectionCount} />
+                    <InfoRow icon={ListChecks} label="Preguntas" value={questionCount} />
+                    <InfoRow icon={BarChart3} label="Datos demográficos" value={demographicsCount} />
+                    <InfoRow icon={Clock3} label="Tiempo estimado" value={`${estimatedMinutes} min`} />
+                  </dl>
+                </HoverCardContent>
+              </HoverCard>
 
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -524,8 +708,6 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                   {autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
                 </TooltipContent>
               </Tooltip>
-
-              <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "mx-2 my-2 w-px")} />
 
               <RailButton tooltipSide={isRight ? "left" : "top"}
                 icon={<Save className="h-[20px] w-[20px]" strokeWidth={2.3} />}

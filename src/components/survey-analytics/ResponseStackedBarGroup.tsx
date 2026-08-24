@@ -25,17 +25,20 @@ export function ResponseStackedBarGroup({
   const sharedLegendItems: LegendItem[] = []
   if (showLegend && items.length > 0 && !showIndividualLegends) {
     // Collect all unique tones/labels from segments (assuming they follow a consistent scale)
-    const uniqueSegments = new Map<string, { label: string, tone?: LegendTone }>()
+    // The explicit color travels with the tone: a scale that needs two
+    // intensities of one hue would otherwise collapse in the legend while the
+    // bars themselves still show it.
+    const uniqueSegments = new Map<string, { label: string, tone?: LegendTone, color?: string }>()
     items.forEach(item => {
       item.segments.forEach(segment => {
         if (!uniqueSegments.has(segment.label)) {
-          uniqueSegments.set(segment.label, { label: segment.label, tone: segment.tone })
+          uniqueSegments.set(segment.label, { label: segment.label, tone: segment.tone, color: segment.color })
         }
       })
     })
     
     uniqueSegments.forEach(s => {
-      sharedLegendItems.push({ label: s.label, tone: s.tone })
+      sharedLegendItems.push({ label: s.label, tone: s.tone, color: s.color })
     })
   }
 

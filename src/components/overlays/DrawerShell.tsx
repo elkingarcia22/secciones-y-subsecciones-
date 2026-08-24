@@ -127,7 +127,17 @@ export function DrawerShell({
           </SheetHeader>
         )}
         
-        <div className={cn("flex-1 overflow-y-auto flex flex-col", !disablePadding && "p-4")}>
+        <div
+          className={cn(
+            // `scrollbar-gutter: stable` reserves the scrollbar's space even
+            // when nothing overflows yet — without it, switching to content
+            // tall enough to need a scrollbar shifts every row a few pixels
+            // narrower, which can flip a borderline-length line from one
+            // line to two (or back) depending on what's selected above.
+            "flex-1 overflow-y-auto flex flex-col [scrollbar-gutter:stable]",
+            !disablePadding && "p-4"
+          )}
+        >
           {children}
         </div>
 

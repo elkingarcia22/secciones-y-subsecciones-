@@ -158,11 +158,15 @@ export function SaveToModuleButton({
           onClick={onSave}
           aria-label={label}
           className={cn(
-            "shrink-0 rounded-lg p-1.5 transition-all",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+            "shrink-0 rounded-lg p-1.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
             saved
-              ? "cursor-default text-status-positive"
-              : "text-muted-foreground opacity-0 hover:bg-primary/10 hover:text-primary focus-visible:opacity-100 group-hover:opacity-100 disabled:cursor-default disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+              ? "cursor-default text-status-positive opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+              : [
+                  "text-muted-foreground opacity-0",
+                  "hover:bg-primary/10 hover:text-primary",
+                  "focus-visible:opacity-100 group-hover:opacity-100",
+                  disabled && "group-hover:opacity-45 cursor-default hover:bg-transparent hover:text-muted-foreground"
+                ]
           )}
         >
           {saved ? (

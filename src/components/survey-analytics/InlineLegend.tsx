@@ -19,19 +19,23 @@ export function InlineLegend({
     )}>
       {items.map((item, index) => (
         <div key={index} className="flex items-start gap-2 group">
-          {/* Visual Indicator */}
-          <div className={cn(
-            "rounded-sm shrink-0",
-            size === "sm" ? "h-2 w-2 mt-1" : "h-2.5 w-2.5 mt-1.5",
-            {
-              "bg-primary": item.tone === "primary",
-              "bg-success": item.tone === "positive",
-              "bg-destructive": item.tone === "negative",
-              "bg-warning": item.tone === "warning",
-              "bg-info": item.tone === "info",
-              "bg-muted-foreground": item.tone === "neutral" || !item.tone,
-            }
-          )} />
+          {/* Visual Indicator — an explicit color wins over the tone, so a
+              diverging scale can show two intensities of the same hue. */}
+          <div
+            className={cn(
+              "rounded-sm shrink-0",
+              size === "sm" ? "h-2 w-2 mt-1" : "h-2.5 w-2.5 mt-1.5",
+              !item.color && {
+                "bg-primary": item.tone === "primary",
+                "bg-success": item.tone === "positive",
+                "bg-destructive": item.tone === "negative",
+                "bg-warning": item.tone === "warning",
+                "bg-info": item.tone === "info",
+                "bg-muted-foreground": item.tone === "neutral" || !item.tone,
+              }
+            )}
+            style={item.color ? { backgroundColor: item.color } : undefined}
+          />
           
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-2">

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { GripVertical, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
 import { MoveToPopover } from "./MoveToPopover";
 import { questionTypeLabel, scaleTypeLabel } from "./questionCatalog";
@@ -104,11 +105,19 @@ export function QuestionCard({
             question.statement ? "text-text-primary" : "text-muted-foreground/70"
           )}
         >
-          {question.statement || "Sin enunciado"}
+          {question.statement ? question.statement.replace(/<[^>]*>?/gm, '') : "Sin enunciado"}
         </span>
         <span className="mt-0.5 flex items-center gap-1.5 text-[10.5px] font-semibold text-muted-foreground/80">
           {typeLabel}
           {!question.required && <span className="text-muted-foreground/60">· Opcional</span>}
+          {question.isBankQuestion && (
+            <>
+              <span className="text-muted-foreground/60">·</span>
+              <Badge variant="outline" className="text-[9px] h-4 px-1.5 py-0 bg-transparent text-muted-foreground border-border/80">
+                Creada por UBITS
+              </Badge>
+            </>
+          )}
         </span>
       </button>
 

@@ -7,6 +7,15 @@ import type { SurveyListItem } from './types';
 
 
 export const COMPARATIVE_SURVEYS_LIST: SurveyListItem[] = [
+  // Mediciones abiertas. The home header's actionable cards — en curso, por
+  // cerrar, participación baja — only mean something if the list actually holds
+  // open measurements; with every row at 100% they would all read zero.
+  // Dates sit around Aug–Oct 2026 so "por cerrar" resolves against today.
+  { id: "open-nps-q3-2026", name: "NPS Clientes Premium Q3 2026", type: "NPS", status: "En curso", statusVariant: "info", startDate: "10 ago 2026", endDate: "26 ago 2026", participants: "214", progress: 23 },
+  { id: "open-clima-q3-2026", name: "Clima Organizacional - Q3 2026", type: "Clima", status: "En curso", statusVariant: "info", startDate: "12 ago 2026", endDate: "28 ago 2026", participants: "232", progress: 41 },
+  { id: "open-pulso-ago-2026", name: "Pulso de Bienestar - Ago 2026", type: "Clima", status: "En curso", statusVariant: "info", startDate: "03 ago 2026", endDate: "12 sep 2026", participants: "408", progress: 78 },
+  { id: "open-cultura-ola2-2026", name: "Cultura y Valores - 2026 (2ª ola)", type: "Cultura", status: "En curso", statusVariant: "info", startDate: "18 ago 2026", endDate: "02 oct 2026", participants: "331", progress: 62 },
+
   // Clima (Added 2025/2026)
   { id: "c2026-1", name: "Clima Organizacional - Q1 2026", type: "Clima", status: "Finalizado", statusVariant: "positive", startDate: "15 ene 2026", endDate: "30 ene 2026", participants: "520", progress: 100 },
   { id: "c2025-4", name: "Clima Organizacional - Q4 2025", type: "Clima", status: "Finalizado", statusVariant: "positive", startDate: "10 oct 2025", endDate: "25 oct 2025", participants: "505", progress: 100 },

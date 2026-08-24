@@ -1,7 +1,11 @@
 import * as React from "react";
-import { LIBRARY_DEMOGRAPHICS, type LibraryDemographic } from "./demographics";
+import {
+  LIBRARY_DEMOGRAPHICS,
+  SYSTEM_DEMOGRAPHICS,
+  type LibraryDemographic,
+} from "./demographics";
 import { buildOption } from "./questionCatalog";
-import type { DemographicField } from "./surveyBuilderTypes";
+import type { DemographicField, DemographicType } from "./surveyBuilderTypes";
 
 export type { LibraryDemographic };
 
@@ -65,8 +69,11 @@ function slug(value: string): string {
  */
 export function getLibraryDemographics(): readonly LibraryDemographic[] {
   const saved = readSaved();
-  const savedKeys = new Set(saved.map((entry) => entry.key));
-  return [...LIBRARY_DEMOGRAPHICS, ...saved.filter((entry) => !savedKeys.has(entry.key))];
+  // Against the *built-in* keys, not the saved ones: a set built from `saved`
+  // matches every entry in `saved`, so the filter dropped the whole stored
+  // library and nothing an author saved ever came back.
+  const builtInKeys = new Set(LIBRARY_DEMOGRAPHICS.map((entry) => entry.key));
+  return [...LIBRARY_DEMOGRAPHICS, ...saved.filter((entry) => !builtInKeys.has(entry.key))];
 }
 
 export const findLibraryDemographic = (key: string): LibraryDemographic | null =>
@@ -129,6 +136,7 @@ export function addFieldsToLibrary(fields: readonly DemographicField[]): number 
       optionLabels: field.options
         .map((option) => option.label.trim())
         .filter((value) => value !== ""),
+      createdAt: today(),
     });
     known.add(labelKey(label));
     added += 1;
@@ -143,6 +151,42 @@ export function addFieldsToLibrary(fields: readonly DemographicField[]): number 
 
 export const addFieldToLibrary = (field: DemographicField): boolean =>
   addFieldsToLibrary([field]) > 0;
+
+/** ISO day, so the stored date sorts and formats without a timezone surprise. */
+const today = (): string => new Date().toISOString().slice(0, 10);
+
+/**
+ * Creates a library entry straight from a label, type and option wording —
+ * the path the demographics screen's own "Crear demográfico" takes, where
+ * there is no survey and therefore no `DemographicField` to save from.
+ *
+ * Returns the stored entry, or null when the wording is blank or already
+ * taken: two demographics with the same name would be indistinguishable in
+ * every "ver por" menu in the app.
+ */
+export function createLibraryDemographic(input: {
+  label: string;
+  type: DemographicType;
+  optionLabels: readonly string[];
+}): LibraryDemographic | null {
+  const label = input.label.trim();
+  const optionLabels = input.optionLabels
+    .map((option) => option.trim())
+    .filter((option) => option !== "");
+  if (label === "" || optionLabels.length === 0 || isInLibrary(label)) return null;
+  if (SYSTEM_DEMOGRAPHICS.some((entry) => labelKey(entry.label) === labelKey(label))) return null;
+
+  const entry: LibraryDemographic = {
+    key: freeKey(label),
+    label,
+    type: input.type,
+    optionLabels,
+    createdAt: today(),
+  };
+  writeSaved([...readSaved(), entry]);
+  notifyLibraryChanged();
+  return entry;
+}
 
 const libraryListeners = new Set<() => void>();
 

@@ -266,36 +266,33 @@ export function DemographicsEditor({
               los que sean exclusivos de esta.
             </p>
 
-            <AccordionSection
-              icon={PenLine}
-              title="Datos creados solo para esta encuesta"
-              description="Datos demográficos nuevos, que se usarán solo en esta encuesta."
-              countLabel={customFields.length > 0 ? `${customFields.length} creados` : null}
-              isOpen={openSections.has("custom")}
-              onToggle={() => toggleSection("custom")}
-              // The rail parks here while nothing is being edited: this is the
-              // one accordion that starts open and holds the only real create
-              // action, so it is where the author's attention already is.
-              // Once a field opens for editing, that field's own card takes
-              // over as the anchor instead.
-              isDefaultAnchor={!isEditingAny}
-            >
-              <CustomAccordionContent
-                customFields={customFields}
-                editingId={editingId}
-                draggingId={draggingId}
-                overId={overId}
-                getHandleProps={getHandleProps}
-                getDropTargetProps={getDropTargetProps}
-                onOpen={setEditingId}
-                onRemove={removeCustomField}
-                onAdd={addCustomField}
-                onChangeField={(next) => patchField(next.id, next)}
-                onClose={() => setEditingId(null)}
-                onSaveToModule={saveFieldToLibrary}
-                isSavedInModule={isInLibrary}
-              />
-            </AccordionSection>
+            {customFields.length > 0 && (
+              <AccordionSection
+                icon={PenLine}
+                title="Datos creados solo para esta encuesta"
+                description="Datos demográficos nuevos, que se usarán solo en esta encuesta."
+                countLabel={`${customFields.length} creados`}
+                isOpen={openSections.has("custom")}
+                onToggle={() => toggleSection("custom")}
+                isDefaultAnchor={!isEditingAny}
+              >
+                <CustomAccordionContent
+                  customFields={customFields}
+                  editingId={editingId}
+                  draggingId={draggingId}
+                  overId={overId}
+                  getHandleProps={getHandleProps}
+                  getDropTargetProps={getDropTargetProps}
+                  onOpen={setEditingId}
+                  onRemove={removeCustomField}
+                  onAdd={addCustomField}
+                  onChangeField={(next) => patchField(next.id, next)}
+                  onClose={() => setEditingId(null)}
+                  onSaveToModule={saveFieldToLibrary}
+                  isSavedInModule={isInLibrary}
+                />
+              </AccordionSection>
+            )}
 
             <AccordionSection
               icon={BookOpen}

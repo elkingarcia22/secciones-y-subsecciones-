@@ -15,7 +15,14 @@ export interface Collaborator {
   area: string;
   /** Direct manager, or null for the people at the top of an area. */
   leader: string | null;
+  country: string;
+  age: string;
+  gender: string;
 }
+
+const COUNTRIES = ["Colombia", "México", "Perú", "Chile", "Argentina", "España"] as const;
+const AGES = ["18-24", "25-34", "35-44", "45-54", "55+"] as const;
+const GENDERS = ["Femenino", "Masculino", "Otro", "Prefiero no decirlo"] as const;
 
 const FIRST_NAMES = [
   "Ana", "Carlos", "Sofía", "Daniel", "Valentina", "Andrés", "Camila", "Julián",
@@ -81,6 +88,13 @@ function buildDirectory(): readonly Collaborator[] {
     const area = AREAS[hash(index, 4) % AREAS.length];
 
     const username = `${slug(first)}.${slug(paternal)}${index}`;
+    
+    // Some basic correlation for gender based on first name if possible? 
+    // Actually, hash is fine to just distribute them. 
+    // But FIRST_NAMES are mixed. Let's just use hash.
+    const country = COUNTRIES[hash(index, 6) % COUNTRIES.length];
+    const age = AGES[hash(index, 7) % AGES.length];
+    const gender = GENDERS[hash(index, 8) % GENDERS.length];
 
     people.push({
       id: `collab-${index}`,
@@ -91,6 +105,9 @@ function buildDirectory(): readonly Collaborator[] {
       // Roughly one in twenty reports to nobody, so the column isn't a wall of
       // identical values.
       leader: hash(index, 5) % 20 === 0 ? null : area.leader,
+      country,
+      age,
+      gender,
     });
   }
 

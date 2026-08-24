@@ -32,6 +32,7 @@ interface BuilderRightPanelProps {
   onAddLevelTwoSubsection: () => void;
   onAddQuestion: () => void;
   onOpenAnswerBank: () => void;
+  onOpenQuestionBank: () => void;
   onAddDemographic: () => void;
   onPreview: () => void;
   previewBlockedReason: string | null;
@@ -60,6 +61,7 @@ export const BuilderRightPanel = React.forwardRef<HTMLDivElement, BuilderRightPa
     onAddLevelTwoSubsection,
     onAddQuestion,
     onOpenAnswerBank,
+    onOpenQuestionBank,
     onAddDemographic,
     onPreview,
     previewBlockedReason,
@@ -145,8 +147,8 @@ export const BuilderRightPanel = React.forwardRef<HTMLDivElement, BuilderRightPa
               
               <ActionIconButton 
                 icon={<Library className="h-[20px] w-[20px]" strokeWidth={2.3} />} 
-                label="Banco de respuestas" 
-                onClick={onOpenAnswerBank} 
+                label="Banco de preguntas" 
+                onClick={onOpenQuestionBank} 
               />
               
               <div className="my-1 border-t border-border/50 w-full" />
@@ -165,7 +167,7 @@ export const BuilderRightPanel = React.forwardRef<HTMLDivElement, BuilderRightPa
             </>
           )}
 
-          {(isSectionsStepActive || isDemographicsStepActive || isPagesStepActive) && (
+          {(isSectionsStepActive || isPagesStepActive) && (
             <ActionIconButton 
               icon={<Eye className="h-[20px] w-[20px]" strokeWidth={2.3} />} 
               label="Vista previa" 

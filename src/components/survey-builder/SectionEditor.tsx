@@ -6,10 +6,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
 import { SubsectionAccordion, type SubsectionAccordionHandlers } from "./SubsectionAccordion";
+import { SectionQuestions } from "./SectionQuestions";
 import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
 import { SECTION_HEADER_DIVIDER, SIBLING_DIVIDER } from "./depthTheme";
 import { childEntries, type SectionTreeEntry } from "./sectionTree";
-import { depthLabel } from "./surveyBuilderTypes";
+import { depthLabel, canHaveQuestions } from "./surveyBuilderTypes";
 
 interface SectionEditorProps extends SubsectionAccordionHandlers {
   /** Always a level-1 section: the card is the root of one branch. */
@@ -164,7 +165,7 @@ export function SectionEditor({
 
       {!isCollapsed && (
         <div className="flex min-h-0 flex-col gap-4 px-6 py-5 animate-in fade-in slide-in-from-top-1 duration-300">
-          {children.length === 0 ? (
+          {children.length === 0 && section.questions.length === 0 ? (
             <EmptyState
               icon={Layers}
               title="Esta sección está vacía"
@@ -195,11 +196,29 @@ export function SectionEditor({
             />
           ) : (
             <>
-              <ul className={cn("flex flex-col", SIBLING_DIVIDER)}>
-                {children.map((child) => (
-                  <SubsectionAccordion key={child.section.id} entry={child} {...handlers} />
-                ))}
-              </ul>
+              {canHaveQuestions(depth) && section.questions.length > 0 && (
+                <SectionQuestions
+                  sectionId={section.id}
+                  questions={section.questions}
+                  editingQuestionId={handlers.editingQuestionId}
+                  onOpenQuestion={handlers.onOpenQuestion}
+                  onQuestionChange={handlers.onQuestionChange}
+                  onCloseQuestion={handlers.onCloseQuestion}
+                  onAddQuestion={handlers.onAddQuestion}
+                  onDuplicateQuestion={handlers.onDuplicateQuestion}
+                  onRemoveQuestion={handlers.onRemoveQuestion}
+                  onReorderQuestions={handlers.onReorderQuestions}
+                  sections={handlers.sections}
+                  onMoveQuestion={handlers.onMoveQuestion}
+                />
+              )}
+              {children.length > 0 && (
+                <ul className={cn("flex flex-col", SIBLING_DIVIDER)}>
+                  {children.map((child) => (
+                    <SubsectionAccordion key={child.section.id} entry={child} {...handlers} />
+                  ))}
+                </ul>
+              )}
             </>
           )}
         </div>

@@ -20,11 +20,11 @@ export function PagesEditor({
       <div className="flex flex-col gap-4 p-5">
         <Tabs defaultValue="welcome" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="welcome" className="gap-2 text-[13px]">
+            <TabsTrigger value="welcome" className="gap-2 text-[13px] data-[state=active]:bg-brand data-[state=active]:text-white">
               <Home className="h-4 w-4" />
               Mensaje de bienvenida
             </TabsTrigger>
-            <TabsTrigger value="closing" className="gap-2 text-[13px]">
+            <TabsTrigger value="closing" className="gap-2 text-[13px] data-[state=active]:bg-brand data-[state=active]:text-white">
               <Flag className="h-4 w-4" />
               Mensaje de cierre
             </TabsTrigger>

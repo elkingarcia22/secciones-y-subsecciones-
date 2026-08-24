@@ -178,6 +178,13 @@ export interface LibraryDemographic {
   label: string;
   type: DemographicType;
   optionLabels: readonly string[];
+  /**
+   * When someone authored it, as an ISO date. Only the ones a person created
+   * carry this — a system demographic has always existed as far as the
+   * platform is concerned, so the column reads "—" for those rather than
+   * inventing a date.
+   */
+  createdAt?: string;
 }
 
 /**
@@ -191,30 +198,35 @@ export const LIBRARY_DEMOGRAPHICS: readonly LibraryDemographic[] = [
     label: "Modalidad de trabajo",
     type: "single",
     optionLabels: ["Presencial", "Híbrido", "Remoto"],
+    createdAt: "2025-02-18",
   },
   {
     key: "shift",
     label: "Turno de trabajo",
     type: "single",
     optionLabels: ["Diurno", "Nocturno", "Rotativo"],
+    createdAt: "2025-04-07",
   },
   {
     key: "education",
     label: "Nivel de formación académica",
     type: "dropdown",
     optionLabels: ["Bachillerato", "Técnico o tecnólogo", "Profesional", "Posgrado"],
+    createdAt: "2025-06-23",
   },
   {
     key: "maritalStatus",
     label: "Estado civil",
     type: "single",
     optionLabels: ["Soltero/a", "Casado/a", "Unión libre", "Divorciado/a", "Viudo/a"],
+    createdAt: "2025-09-15",
   },
   {
     key: "dependents",
     label: "Personas a cargo",
     type: "single",
     optionLabels: ["Ninguna", "1", "2", "3 o más"],
+    createdAt: "2026-01-29",
   },
 ];
 

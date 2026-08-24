@@ -1,7 +1,9 @@
 import * as React from "react";
 import {
   BrainCircuit,
+  EyeOff,
   Gauge,
+  Globe,
   Heart,
   Info,
   Minus,
@@ -144,7 +146,7 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
               onChange({ description: event.target.value.slice(0, MAX_DESCRIPTION_LENGTH) })
             }
             maxLength={MAX_DESCRIPTION_LENGTH}
-            rows={4}
+            rows={2}
             aria-label="Descripción de la encuesta"
             className="w-full resize-y rounded-md border border-border bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-text-primary outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/70"
           />
@@ -175,54 +177,74 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
         </div>
 
         <Field label="Tipo de encuesta" error={kindError}>
-          <LabelledSelect
-            options={KIND_OPTIONS}
-            value={draft.kind}
-            placeholder="Selecciona un tipo"
-            ariaLabel="Tipo de encuesta"
-            icons={KIND_ICONS}
-            hasError={!!kindError}
-            onChange={(kind: SurveyKind) => onChange({ kind })}
-          />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+            {KIND_OPTIONS.map(([optionValue, label]) => {
+              const Icon = KIND_ICONS[optionValue];
+              const isSelected = draft.kind === optionValue;
+              return (
+                <button
+                  key={optionValue}
+                  type="button"
+                  onClick={() => onChange({ kind: optionValue })}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-2.5 rounded-lg border p-4 transition-all hover:bg-surface-hover",
+                    isSelected
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border bg-surface text-text-secondary hover:border-border-hover",
+                    kindError && !isSelected && "border-destructive/50"
+                  )}
+                >
+                  <Icon className="size-6" strokeWidth={1.5} />
+                  <span className="text-center text-[12px] font-medium leading-tight">
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </Field>
 
         <Field label="Tipo de visibilidad">
-          <LabelledSelect
-            options={VISIBILITY_OPTIONS}
-            value={draft.visibility}
-            ariaLabel="Tipo de visibilidad"
-            onChange={(visibility: SurveyVisibility) => onChange({ visibility })}
-          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            {VISIBILITY_OPTIONS.map(([optionValue, label]) => {
+              const isSelected = draft.visibility === optionValue;
+              const Icon = optionValue === "public" ? Globe : EyeOff;
+              return (
+                <button
+                  key={optionValue}
+                  type="button"
+                  onClick={() => onChange({ visibility: optionValue })}
+                  className={cn(
+                    "flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all hover:bg-surface-hover",
+                    isSelected
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                      : "border-border bg-surface hover:border-border-hover"
+                  )}
+                >
+                  <div className="flex w-full items-center gap-2">
+                    <Icon className={cn("size-5", isSelected ? "text-primary" : "text-muted-foreground")} strokeWidth={1.75} />
+                    <span className={cn("text-[14px] font-semibold", isSelected ? "text-primary" : "text-text-primary")}>
+                      {label}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-[12.5px] font-semibold text-text-primary">
+                      {SURVEY_VISIBILITY_HEADLINES[optionValue]}
+                    </p>
+                    <p className="text-[12px] leading-relaxed text-text-secondary">
+                      {SURVEY_VISIBILITY_NOTES[optionValue]}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </Field>
 
-        {/* Both visibilities explain themselves in the same slot, so switching
-            between them reads as one answer changing rather than the form
-            growing a new section. Public is a fact worth noting, not a
-            warning — it stays in the same informative register as anonymous. */}
-        <div
-          className={cn(
-            "flex flex-col gap-2 rounded-md px-3.5 py-3",
-            draft.visibility === "public" ? "bg-status-info/[0.07]" : "bg-border/25"
-          )}
-        >
-          <p className="flex items-start gap-2 text-[12.5px] font-semibold text-text-primary">
-            {draft.visibility === "public" && (
-              <Info
-                className="mt-0.5 h-4 w-4 shrink-0 text-status-info"
-                strokeWidth={2.3}
-              />
-            )}
-            {SURVEY_VISIBILITY_HEADLINES[draft.visibility]}
-          </p>
-
-          <p className="text-[12.5px] leading-relaxed text-text-secondary">
-            {SURVEY_VISIBILITY_NOTES[draft.visibility]}
-          </p>
-
-          {/* A stepper card instead of a plain dropdown, but the number
-              itself stays a real input — nudge it with the buttons, or type
-              a value directly when the target is further away. */}
-          {isAnonymous && (
+        {/* A stepper card instead of a plain dropdown, but the number
+            itself stays a real input — nudge it with the buttons, or type
+            a value directly when the target is further away. */}
+        {isAnonymous && (
             <div className="mt-1 flex flex-wrap items-center gap-4 rounded-xl border border-border/60 bg-surface px-4 py-3">
               <div className="flex items-center gap-2.5">
                 <button
@@ -280,7 +302,6 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
               </div>
             </div>
           )}
-        </div>
       </div>
     </section>
   );

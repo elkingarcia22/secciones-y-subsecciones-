@@ -23,6 +23,10 @@ export interface LegendItem {
   value?: string | number
   /** Tone for the visual indicator */
   tone?: LegendTone
+  /** Explicit indicator color, for scales the six tones cannot express (e.g. a
+   * diverging scale that needs two intensities of the same hue). Wins over
+   * `tone`. Use a token expression, never a literal HEX. */
+  color?: string
   /** Optional secondary description */
   description?: string
 }
@@ -75,6 +79,10 @@ export interface ResponseSegment {
   percentage?: number
   /** Tone for color mapping */
   tone?: LegendTone
+  /** Explicit fill, for scales the six tones cannot express. Wins over `tone`;
+   * `ResponseStackedBar` already honored it, this only states it in the type.
+   * Use a token expression, never a literal HEX. */
+  color?: string
   /** Optional description for tooltips or detailed legends */
   description?: string
 }
@@ -127,12 +135,16 @@ export interface ResponseStackedBarProps {
   deltaTone?: DeltaTone
   /** Whether to show segment labels inside or near the bar */
   showLabels?: boolean
+  /** Minimum share (%) a segment needs to earn an inline label. Default 8. */
+  minLabelPercent?: number
   /** Whether to show percentage values */
   showPercentages?: boolean
   /** Whether to render a legend for this bar */
   showLegend?: boolean
   /** Visual height/thickness of the bar */
   size?: "sm" | "md"
+  /** Extra classes on the bar track itself (e.g. a custom height). */
+  barClassName?: string
   /** Whether this is the base item for comparison */
   isBase?: boolean
   /** Custom message to show when there are no responses */
@@ -253,6 +265,8 @@ export interface SurveyMetricCardProps {
   error?: string
   /** Additional CSS classes */
   className?: string
+  /** Custom children to render below the metric */
+  children?: React.ReactNode
 }
 
 export interface FavorabilityDistributionCardProps {
@@ -260,6 +274,18 @@ export interface FavorabilityDistributionCardProps {
   title?: string
   /** Secondary description */
   description?: string
+  /** Main numeric or text value */
+  value?: string | number
+  /** Subtitle or unit for the value */
+  subtitle?: string
+  /** Optional delta value for comparison */
+  delta?: number
+  /** Custom label for the delta */
+  deltaLabel?: string
+  /** Tone for the delta pill */
+  deltaTone?: DeltaTone
+  /** Explicit direction for the delta */
+  trendDirection?: DeltaDirection
   /** Response segments to display in the bar */
   segments: ResponseSegment[]
   /** Total count for percentage calculation */

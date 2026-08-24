@@ -54,7 +54,11 @@ function escapeHtml(text: string): string {
  */
 export function RichTextEditor({ value, onChange, placeholder, ariaLabel }: RichTextEditorProps) {
   const editorRef = React.useRef<HTMLDivElement>(null);
-  const lastEmittedRef = React.useRef(value);
+  // `null` until the first sync, so the initial value always reaches the DOM:
+  // a contentEditable has no `value` attribute React could render it from, and
+  // seeding this with `value` would make the sync below skip its first run —
+  // leaving an editor that opens blank on a survey that already has content.
+  const lastEmittedRef = React.useRef<string | null>(null);
   const [activeCommands, setActiveCommands] = React.useState<ReadonlySet<ToggleCommand>>(new Set());
   const [currentBlock, setCurrentBlock] = React.useState("");
   const [isEmpty, setIsEmpty] = React.useState(() => isHtmlEmpty(value));
@@ -121,7 +125,7 @@ export function RichTextEditor({ value, onChange, placeholder, ariaLabel }: Rich
 
   return (
     <div className="w-full overflow-hidden rounded-xl border border-border bg-surface transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/25">
-      <div className="flex flex-wrap items-center gap-1 border-b border-border/60 px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-border/60 px-4 py-3.5">
         <ToolbarButton icon={Bold} label="Negrita" active={activeCommands.has("bold")} onClick={() => runCommand("bold")} />
         <ToolbarButton icon={Italic} label="Cursiva" active={activeCommands.has("italic")} onClick={() => runCommand("italic")} />
         <ToolbarButton icon={Underline} label="Subrayado" active={activeCommands.has("underline")} onClick={() => runCommand("underline")} />
@@ -210,7 +214,7 @@ function ToolbarButton({
           aria-label={label}
           aria-pressed={active}
           className={cn(
-            "flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
             active && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
           )}
         >

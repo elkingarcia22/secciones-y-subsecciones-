@@ -30,6 +30,8 @@
   
   --color-warning: #FF7B0D;
   --color-warning-light: #FFB37F;
+
+  --color-yellow: #EAB308;
   
   --color-info: #4A74EE;
   
@@ -84,6 +86,7 @@
   --color-positive-bg-hsl: 108 55% 93%;
   --color-warning-hsl: 27 100% 52%;
   --color-warning-light-hsl: 24 100% 75%;
+  --color-yellow-hsl: 48 96% 46%;
   --color-info-hsl: 225 83% 61%;
   --color-surface-muted-hsl: 225 100% 97%;
   --color-surface-subtle-hsl: 225 100% 99%;

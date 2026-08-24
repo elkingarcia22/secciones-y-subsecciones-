@@ -1,10 +1,21 @@
 import * as React from "react";
+import type { TableSelectionActions } from "@/components/action-rail";
 import * as XLSX from "xlsx";
 import { CheckCircle2, FileSearch, FileX2, TriangleAlert, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UploadZone } from "@/components/upload";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { COLLABORATOR_COUNT, COLLABORATORS } from "@/mocks/collaborators";
 import { CollaboratorTable } from "./CollaboratorTable";
+import { SortableHeader, FilterMenu, type SortDir } from "./CollaboratorTableParts";
 import { ImportedUsersTable } from "./ImportedUsersTable";
 import {
   DEMOGRAPHIC_COLUMN_LABELS,
@@ -28,6 +39,7 @@ interface ParticipantsEditorProps {
   /** Flips on once the author tried to leave/finalize with nobody selected, so
    * the missing-participant hint only appears in response to that attempt. */
   showValidation?: boolean;
+  onSelectionChange?: (count: number, actions: TableSelectionActions) => void;
 }
 
 /** Reads a single cell by header, tolerating the column being absent. */
@@ -124,7 +136,12 @@ async function readImportedUsers(file: File): Promise<ReadImportResult> {
  * whole company, a list built by hand, or a file. The panel underneath belongs
  * to whichever is active, so the page only ever asks one question at a time.
  */
-export function ParticipantsEditor({ participants, onChange, showValidation = false }: ParticipantsEditorProps) {
+export function ParticipantsEditor({ 
+  participants, 
+  onChange, 
+  showValidation = false,
+  onSelectionChange 
+}: ParticipantsEditorProps) {
   const [files, setFiles] = React.useState<File[]>([]);
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
   const [analyzingProgress, setAnalyzingProgress] = React.useState(0);
@@ -206,6 +223,21 @@ export function ParticipantsEditor({ participants, onChange, showValidation = fa
     return files;
   }, [files, participants.importedFileName]);
 
+  const handleRemoveImportedUsers = (identifiers: string[]) => {
+    const toRemove = new Set(identifiers);
+    const updatedUsers = participants.importedUsers.filter(u => {
+      const id = u.username + "|" + u.email;
+      return !toRemove.has(id);
+    });
+    const resolved = resolveImportedRows(updatedUsers, COLLABORATORS);
+    const newCount = resolved.filter((row) => row.person === null).length;
+    onChange({
+      importedUsers: updatedUsers,
+      importedCount: updatedUsers.length,
+      importedNewCount: newCount,
+    });
+  };
+
   return (
     <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/50 bg-surface shadow-card">
       <div className="flex items-center gap-3 border-b border-border/40 px-6 py-4">
@@ -255,6 +287,7 @@ export function ParticipantsEditor({ participants, onChange, showValidation = fa
             collaborators={COLLABORATORS}
             selectedIds={participants.selectedIds}
             onChange={(selectedIds) => onChange({ selectedIds })}
+            onSelectionChange={onSelectionChange}
           />
         )}
 
@@ -291,6 +324,8 @@ export function ParticipantsEditor({ participants, onChange, showValidation = fa
                       collaboratorCount={participants.importedCount}
                       fileName={participants.importedFileName}
                       collaborators={COLLABORATORS}
+                      onRemoveUsers={handleRemoveImportedUsers}
+                      onSelectionChange={onSelectionChange}
                     />
                   ))}
               </>
@@ -460,6 +495,16 @@ function ModeCard({
   );
 }
 
+// Add this type and these options outside the function
+type SegmentKey = "area" | "leader" | "country" | "age" | "gender";
+const SEGMENT_LABELS: Record<SegmentKey, string> = {
+  area: "Área",
+  leader: "Líder",
+  country: "País",
+  age: "Edad",
+  gender: "Sexo",
+};
+
 /**
  * "Everyone" is an abstraction until you can see what it contains, so the
  * company option shows how that total breaks down instead of a blank panel.
@@ -470,47 +515,176 @@ function ModeCard({
  * share as quiet context beside it.
  */
 function CompanySummary() {
-  const byArea = React.useMemo(() => {
+  const [segmentBy, setSegmentBy] = React.useState<SegmentKey>("area");
+  const [sortKey, setSortKey] = React.useState<"segment" | "count" | null>("count");
+  const [sortDir, setSortDir] = React.useState<SortDir>("desc");
+  const [segmentFilter, setSegmentFilter] = React.useState<ReadonlySet<string>>(() => new Set());
+
+  // Whenever the segment category changes, clear the filter and reset sort to default.
+  const handleSegmentByChange = (val: SegmentKey) => {
+    setSegmentBy(val);
+    setSegmentFilter(new Set());
+    setSortKey("count");
+    setSortDir("desc");
+  };
+
+  const segments = React.useMemo(() => {
     const counts = new Map<string, number>();
     COLLABORATORS.forEach((person) => {
-      counts.set(person.area, (counts.get(person.area) ?? 0) + 1);
+      const value = person[segmentBy] ?? "Sin asignar";
+      counts.set(value, (counts.get(value) ?? 0) + 1);
     });
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  }, []);
+    
+    let entries = [...counts.entries()];
+
+    if (segmentFilter.size > 0) {
+      entries = entries.filter(([segment]) => segmentFilter.has(segment));
+    }
+
+    if (sortKey) {
+      const direction = sortDir === "asc" ? 1 : -1;
+      entries.sort((a, b) => {
+        if (sortKey === "segment") {
+          return direction * a[0].localeCompare(b[0], "es");
+        } else {
+          return direction * (a[1] - b[1]);
+        }
+      });
+    }
+
+    return entries;
+  }, [segmentBy, segmentFilter, sortKey, sortDir]);
+
+  const toggleSort = (key: "segment" | "count") => {
+    if (sortKey !== key) {
+      setSortKey(key);
+      setSortDir("asc");
+    } else if (sortDir === "asc") {
+      setSortDir("desc");
+    } else {
+      setSortKey(null);
+    }
+  };
+
+  const toggleSegmentFilter = (value: string) => {
+    setSegmentFilter((current) => {
+      const next = new Set(current);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
+  };
+
+  // Extract all unique segments for the filter dropdown (regardless of current filter)
+  const allSegments = React.useMemo(() => {
+    const set = new Set<string>();
+    COLLABORATORS.forEach((person) => set.add(person[segmentBy] ?? "Sin asignar"));
+    return [...set].sort((a, b) => a.localeCompare(b, "es"));
+  }, [segmentBy]);
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border/60 p-4">
-      <p className="text-[12.5px] leading-relaxed text-text-secondary">
-        Se asignarán{" "}
-        <span className="font-bold text-text-primary">
-          {formatCount(COLLABORATOR_COUNT)}
-        </span>{" "}
-        colaboradores, repartidos así:
-      </p>
-
-      <div className="grid gap-px overflow-hidden rounded-lg border border-border/60 bg-border/50 sm:grid-cols-2">
-        {byArea.map(([area, count]) => {
-          const share = Math.round((count / COLLABORATOR_COUNT) * 100);
-          return (
-            <div key={area} className="flex items-center justify-between gap-3 bg-surface px-3 py-2.5">
-              <span className="min-w-0 truncate text-[12.5px] text-text-secondary">{area}</span>
-              <span className="flex shrink-0 items-baseline gap-1.5">
-                <span className="text-[12.5px] font-bold tabular-nums text-text-primary">
-                  {formatCount(count)}
-                </span>
-                <span className="w-8 text-right text-[10.5px] font-medium tabular-nums text-muted-foreground">
-                  {share}%
-                </span>
-              </span>
-            </div>
-          );
-        })}
+    <div className="flex flex-col gap-5 rounded-xl border border-border/60 p-6 shadow-sm bg-surface">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 border-b border-border/60 pb-5">
+        <div className="shrink-0">
+          <p className="text-[13px] text-text-secondary font-medium mb-1">
+            Se asignarán
+          </p>
+          <p className="text-3xl font-bold tracking-tight text-primary leading-none">
+            {formatCount(COLLABORATOR_COUNT)}{" "}
+            <span className="text-[16px] font-semibold text-text-secondary">colaboradores</span>
+          </p>
+        </div>
+        <div className="hidden sm:block w-px h-10 bg-border/60" />
+        <p className="text-[12.5px] leading-relaxed text-muted-foreground max-w-2xl">
+          La lista de destinatarios se cerrará de forma automática al momento de lanzar la encuesta. Quienes entren a la empresa antes de esa fecha también la recibirán.
+        </p>
       </div>
 
-      <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-        La lista se resuelve al enviar la encuesta, así que quien entre a la empresa antes de esa
-        fecha también la recibirá.
-      </p>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-[13px] font-bold text-text-primary">
+            Detalle de la distribución
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="text-[11.5px] font-medium text-muted-foreground">Ver por:</span>
+            <Select value={segmentBy} onValueChange={(val) => handleSegmentByChange(val as SegmentKey)}>
+              <SelectTrigger className="h-8 w-[140px] rounded-lg border-border/60 bg-surface px-3 text-[12px] shadow-sm focus:ring-2 focus:ring-primary/20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                {Object.entries(SEGMENT_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key} className="text-[12px]">
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-xl border border-border/60 shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
+                <TableHead
+                  aria-sort={sortKey === "segment" ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
+                  className="py-3 pl-6"
+                >
+                  <div className="flex items-center gap-2">
+                    <SortableHeader
+                      label={SEGMENT_LABELS[segmentBy]}
+                      active={sortKey === "segment"}
+                      direction={sortDir}
+                      onToggle={() => toggleSort("segment")}
+                    />
+                    <FilterMenu
+                      label=""
+                      options={allSegments}
+                      selected={segmentFilter}
+                      onToggle={toggleSegmentFilter}
+                      onClear={() => setSegmentFilter(new Set())}
+                    />
+                  </div>
+                </TableHead>
+                <TableHead
+                  aria-sort={sortKey === "count" ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
+                  className="w-[120px] py-3 text-right"
+                >
+                  <div className="flex justify-end">
+                    <SortableHeader
+                      label="Cantidad"
+                      active={sortKey === "count"}
+                      direction={sortDir}
+                      onToggle={() => toggleSort("count")}
+                    />
+                  </div>
+                </TableHead>
+                <TableHead className="w-[80px] py-3 pr-6 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  %
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {segments.map(([segment, count]) => {
+                const share = Math.round((count / COLLABORATOR_COUNT) * 100);
+                return (
+                  <TableRow key={segment} className="border-border/50 bg-surface hover:bg-border/20 transition-colors">
+                    <TableCell className="py-2.5 pl-7 text-[12.5px] text-text-secondary">
+                      {segment}
+                    </TableCell>
+                    <TableCell className="w-[120px] py-2.5 text-right tabular-nums text-[12.5px] text-text-secondary">
+                      {formatCount(count)}
+                    </TableCell>
+                    <TableCell className="w-[80px] py-2.5 pr-6 text-right tabular-nums text-[12.5px] text-text-secondary">
+                      {share}%
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 }

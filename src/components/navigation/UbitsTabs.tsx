@@ -1,9 +1,12 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 export interface TabItem {
   id: string;
   label: string;
+  icon?: React.ReactNode;
 }
 
 interface UbitsTabsProps {
@@ -11,38 +14,55 @@ interface UbitsTabsProps {
   activeTabId: string;
   onTabChange: (id: string) => void;
   className?: string;
+  variant?: "default" | "results";
+  /**
+   * Sizes the strip to its labels instead of stretching it across the row.
+   * With six tabs, splitting the full width reads as a nav bar; with two it
+   * reads as two oversized buttons, so a short set sits compact on the left.
+   */
+  fitContent?: boolean;
 }
 
 /**
- * UBITS PREMIUM DUAL TABS
- * Minimalist, enterprise-grade navigation component.
- * Strictly uses Inter typography and UBITS design tokens.
+ * UBITS TABS
+ * Reusing the core generic Tabs UI components to maintain consistency with the blank survey creation.
  */
 export const UbitsTabs: React.FC<UbitsTabsProps> = ({
   tabs,
   activeTabId,
   onTabChange,
   className,
+  variant = "default",
+  fitContent = false,
 }) => {
   return (
-    <div className={cn("inline-flex items-center p-1 bg-surface-muted/40 rounded-full border border-border/30 mb-8 backdrop-blur-md", className)}>
-      {tabs.map((tab) => {
-        const isActive = tab.id === activeTabId;
-        return (
-          <button
+    <Tabs value={activeTabId} onValueChange={onTabChange} className={cn("w-full mb-8", className)}>
+      <TabsList
+        className={cn(
+          fitContent ? "inline-flex w-auto" : "grid w-full",
+          variant === "results" && "rounded-full bg-[#eef2ff]"
+        )}
+        style={
+          fitContent
+            ? undefined
+            : { gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }
+        }
+      >
+        {tabs.map((tab) => (
+          <TabsTrigger
             key={tab.id}
-            onClick={() => onTabChange(tab.id)}
+            value={tab.id}
             className={cn(
-              "relative px-7 py-2.5 transition-all duration-500 outline-none rounded-full text-xs font-bold tracking-tight",
-              isActive 
-                ? "bg-primary text-text-inverse shadow-lg shadow-primary/20" 
-                : "text-text-secondary/50 hover:text-text-primary hover:bg-surface/60"
+              "gap-2 text-[13px] font-bold",
+              fitContent && "px-5",
+              variant === "results" && "rounded-full data-[state=active]:bg-brand data-[state=active]:text-white"
             )}
           >
+            {tab.icon}
             {tab.label}
-          </button>
-        );
-      })}
-    </div>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 };

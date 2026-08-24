@@ -26,9 +26,11 @@ export function ResponseStackedBar({
   deltaLabel,
   deltaTone,
   showLabels = false,
+  minLabelPercent = 8,
   showPercentages = true,
   showLegend = false,
   size = "md",
+  barClassName,
   isBase = false,
   emptyMessage,
   className,
@@ -78,61 +80,75 @@ export function ResponseStackedBar({
     }
   }
 
+  // Inline labels ride on fills of very different lightness — the deep band
+  // colors take white text, the pale NS/NR gray takes dark text. Read the
+  // lightness straight out of the token expression instead of hard-coding it.
+  const labelTextOn = (color?: string) => {
+    const match = color?.match(/hsl\(\s*[\d.]+[\s,]+[\d.]+%\s+([\d.]+)%/);
+    const lightness = match ? Number(match[1]) : 0;
+    return lightness > 60 ? "text-slate-900" : "text-white";
+  }
+
+  const hasHeaderContent = label || description || (processedSegments.length === 0 && emptyMessage) || value !== undefined || total !== undefined || delta !== undefined;
+
   return (
     <TooltipProvider delayDuration={0}>
-      <div className={cn("space-y-3", className)}>
+      <div className={cn(hasHeaderContent ? "space-y-3" : "", className)}>
         {/* Header */}
-        <div className="flex items-end justify-between">
-          {(label || description) && (
-            <div className="flex items-end gap-3">
-              <div className="space-y-0.5 pb-0.5">
-                {label && (
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-[10px] font-bold leading-tight text-text-brand/80">{label}</h4>
-                    {isBase && (
-                      <span className="px-2 py-0.5 bg-brand/10 text-brand text-[8px] font-bold rounded">BASE</span>
-                    )}
-                  </div>
-                )}
-                {description && <p className="text-[10px] text-muted-foreground font-medium">{description}</p>}
+        {hasHeaderContent && (
+          <div className="flex items-end justify-between">
+            {(label || description) && (
+              <div className="flex items-end gap-3">
+                <div className="space-y-0.5 pb-0.5">
+                  {label && (
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-[10px] font-bold leading-tight text-text-brand/80">{label}</h4>
+                      {isBase && (
+                        <span className="px-2 py-0.5 bg-brand/10 text-brand text-[8px] font-bold rounded">BASE</span>
+                      )}
+                    </div>
+                  )}
+                  {description && <p className="text-[10px] text-muted-foreground font-medium">{description}</p>}
+                </div>
               </div>
-            </div>
-          )}
-          
-          <div className="flex items-center gap-4 pb-0.5">
-            {processedSegments.length === 0 ? (
-              <span className="text-[10px] text-muted-foreground font-medium italic">
-                {emptyMessage || "Sin respuestas"}
-              </span>
-            ) : (
-              <>
-                {value !== undefined && value !== null && (
-                  <span className="text-[11px] font-bold text-text-brand tabular-nums">
-                    {typeof value === 'number' && showPercentages ? `${value}%` : value}
-                  </span>
-                )}
-                {total !== undefined && total > 0 && (
-                  <span className="text-[10px] font-bold text-text-muted/30">
-                    n={total}
-                  </span>
-                )}
-                {delta !== undefined && (
-                  <DeltaPill 
-                    value={delta} 
-                    label={deltaLabel} 
-                    tone={deltaTone} 
-                    size="sm" 
-                  />
-                )}
-              </>
             )}
+            
+            <div className="flex items-center gap-4 pb-0.5">
+              {processedSegments.length === 0 ? (
+                <span className="text-[10px] text-muted-foreground font-medium italic">
+                  {emptyMessage || "Sin respuestas"}
+                </span>
+              ) : (
+                <>
+                  {value !== undefined && value !== null && (
+                    <span className="text-[11px] font-bold text-text-brand tabular-nums">
+                      {typeof value === 'number' && showPercentages ? `${value}%` : value}
+                    </span>
+                  )}
+                  {total !== undefined && total > 0 && (
+                    <span className="text-[10px] font-bold text-text-muted/30">
+                      n={total}
+                    </span>
+                  )}
+                  {delta !== undefined && (
+                    <DeltaPill 
+                      value={delta} 
+                      label={deltaLabel} 
+                      tone={deltaTone} 
+                      size="sm" 
+                    />
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Bar Container */}
         <div className={cn(
           "w-full rounded-full overflow-hidden flex bg-muted/30 border border-border/40",
-          barSizeClasses
+          barSizeClasses,
+          barClassName
         )}>
           {processedSegments.length > 0 ? (
             processedSegments.map((segment) => (
@@ -151,8 +167,8 @@ export function ResponseStackedBar({
                     aria-label={`${segment.label}: ${segment.percentage ?? Math.round(segment.resolvedPercentage)}%`}
                   >
                     {/* Inline label (optional) */}
-                    {showLabels && segment.resolvedPercentage > 8 && (
-                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-primary-foreground truncate px-1 pointer-events-none">
+                    {showLabels && segment.resolvedPercentage > minLabelPercent && (
+                      <span className={`absolute inset-0 flex items-center justify-center text-[10px] font-bold truncate px-1 pointer-events-none ${labelTextOn(segment.color)}`}>
                         {showPercentages ? `${Math.round(segment.resolvedPercentage)}%` : segment.value}
                       </span>
                     )}

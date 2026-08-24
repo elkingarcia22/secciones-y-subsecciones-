@@ -1,4 +1,4 @@
-export { BuilderTopBar } from "./BuilderTopBar";
+export { BuilderIdentity } from "./BuilderIdentity";
 export { BuilderFooter } from "./BuilderFooter";
 export { AutosaveIndicator } from "./AutosaveIndicator";
 export { BuilderSideRail } from "./BuilderSideRail";

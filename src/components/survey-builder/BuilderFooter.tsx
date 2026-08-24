@@ -18,10 +18,12 @@ interface BuilderFooterProps {
 }
 
 /**
- * Wizard actions, separated from the identity bar above: the header says what
- * you are editing, this bar says what happens next. Saving and advancing are
- * both "leave this step" actions, so they belong together at the point the
- * author is actually done with it — not scattered next to the title.
+ * Wizard actions: what happens next with the step the author is on. Saving and
+ * advancing are both "leave this step" actions, so they belong together at the
+ * point the author is actually done with it.
+ *
+ * Leaving the builder is not here — that is the shell breadcrumb's job, since
+ * it is navigation out of the screen rather than an action on this step.
  */
 export function BuilderFooter({
   stepNumber,
@@ -33,12 +35,7 @@ export function BuilderFooter({
   onContinue,
 }: BuilderFooterProps) {
   return (
-    <footer className="mx-3 mb-3 flex h-16 shrink-0 items-center justify-between gap-4 rounded-2xl border border-border/50 bg-surface px-6 shadow-sm">
-      {/* Optional steps carry no number, so this side stays quiet on them
-          rather than claiming a position they don't have. */}
-      <p className="text-[12.5px] font-semibold text-muted-foreground">
-        {stepNumber !== null && `Paso ${stepNumber} de ${totalRequiredSteps}`}
-      </p>
+    <footer className="mx-3 mb-3 flex h-16 shrink-0 items-center justify-end gap-4 rounded-2xl border border-border/50 bg-surface px-6 shadow-sm">
 
       <div className="flex shrink-0 items-center gap-2">
         <Button

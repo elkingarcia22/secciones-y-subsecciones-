@@ -1,5 +1,6 @@
 import * as React from "react";
-import { CheckIcon, ChevronDown, Eye, EyeOff, MinusIcon, Search, UserRoundX, X } from "lucide-react";
+import type { TableSelectionActions } from "@/components/action-rail";
+import { CheckIcon, ChevronDown, Eye, EyeOff, MinusIcon, Search, Trash2, UserRoundX, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -40,6 +41,7 @@ interface CollaboratorTableProps {
   collaborators: readonly Collaborator[];
   selectedIds: readonly string[];
   onChange: (ids: readonly string[]) => void;
+  onSelectionChange?: (count: number, actions: TableSelectionActions) => void;
 }
 
 const PAGE_SIZES = [10, 25, 50] as const;
@@ -98,8 +100,11 @@ export function CollaboratorTable({
   collaborators,
   selectedIds,
   onChange,
+  onSelectionChange,
 }: CollaboratorTableProps) {
   const [query, setQuery] = React.useState("");
+  const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [pageSize, setPageSize] = React.useState<number>(PAGE_SIZES[0]);
   const [page, setPage] = React.useState(1);
   const [onlySelected, setOnlySelected] = React.useState(false);
@@ -168,6 +173,22 @@ export function CollaboratorTable({
         ? "indeterminate"
         : false;
 
+  const callbacksRef = React.useRef({ onSelectionChange, setSelection: (ids: Iterable<string>) => onChange([...new Set(ids)]) });
+  React.useEffect(() => {
+    callbacksRef.current = { onSelectionChange, setSelection: (ids: Iterable<string>) => onChange([...new Set(ids)]) };
+  });
+
+  React.useEffect(() => {
+    const { onSelectionChange: currentSelectionChange, setSelection } = callbacksRef.current;
+    if (currentSelectionChange) {
+      // No `remove`: here the ticks *are* the audience, so dropping them is the
+      // only outcome available — a separate "eliminar" would do the same thing.
+      currentSelectionChange(selected.size, {
+        clear: () => setSelection(new Set()),
+      });
+    }
+  }, [selected.size]); // Use selected.size to trigger update, since selected is a new Set on every render if selectedIds changes
+
   const setSelection = (ids: Iterable<string>) => onChange([...new Set(ids)]);
 
   const toggleOne = (id: string) => {
@@ -235,58 +256,97 @@ export function CollaboratorTable({
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[220px] flex-1">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
-            strokeWidth={2.2}
-          />
-          <input
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setPage(1);
+      <div className="flex flex-wrap items-center gap-4">
+        <h3 className="text-[13px] font-bold text-text-primary">Colaboradores</h3>
+        
+        <div className="flex items-center gap-3 ml-auto">
+          <div
+            className={cn(
+              "relative flex h-9 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden rounded-lg border bg-surface",
+              (isSearchExpanded || query !== "")
+                ? "w-[300px] border-primary/50 ring-1 ring-primary/15"
+                : "w-9 border-border hover:bg-border/50 cursor-pointer"
+            )}
+            onClick={() => {
+              if (!isSearchExpanded && query === "") {
+                setIsSearchExpanded(true);
+                setTimeout(() => searchInputRef.current?.focus(), 50);
+              }
             }}
-            placeholder="Busca por nombre, correo, área o líder"
-            aria-label="Buscar colaboradores"
-            className="h-9 w-full rounded-lg border border-border bg-surface pl-9 pr-8 text-[13px] text-text-primary outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/70"
-          />
-          {query !== "" && (
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget) && query === "") {
+                setIsSearchExpanded(false);
+              }
+            }}
+          >
+            <div
+              className={cn(
+                "absolute left-0 -ml-px -mt-px flex h-9 w-9 items-center justify-center transition-colors",
+                (isSearchExpanded || query !== "") ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Search className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]" strokeWidth={2.2} />
+            </div>
+            
+            <input
+              ref={searchInputRef}
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Busca por nombre, correo, área o líder"
+              aria-label="Buscar colaboradores"
+              className={cn(
+                "h-full w-[300px] bg-transparent pl-9 pr-8 text-[13px] text-text-primary outline-none transition-all placeholder:text-muted-foreground/70",
+                (isSearchExpanded || query !== "") ? "opacity-100" : "opacity-0 pointer-events-none"
+              )}
+            />
+            {query !== "" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setPage(1);
+                  searchInputRef.current?.focus();
+                }}
+                className="absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-border/60 hover:text-text-primary"
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </button>
+            )}
+          </div>
+
+          <div
+            className={cn(
+              "flex shrink-0 items-center overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+              (selected.size > 0 || onlySelected)
+                ? "max-w-[200px] opacity-100"
+                : "max-w-0 opacity-0 pointer-events-none"
+            )}
+          >
             <button
               type="button"
               onClick={() => {
-                setQuery("");
+                setOnlySelected((value) => !value);
                 setPage(1);
               }}
-              aria-label="Limpiar búsqueda"
-              className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:bg-border/50 hover:text-text-primary"
+              className={cn(
+                "flex h-9 whitespace-nowrap shrink-0 items-center gap-2 rounded-lg border px-3 text-[12.5px] font-semibold transition-colors",
+                onlySelected
+                  ? "border-primary/40 bg-primary/5 text-primary"
+                  : "border-border text-text-secondary hover:border-primary/30 hover:text-primary"
+              )}
             >
-              <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+              {onlySelected ? (
+                <EyeOff className="h-3.5 w-3.5" strokeWidth={2.3} />
+              ) : (
+                <Eye className="h-3.5 w-3.5" strokeWidth={2.3} />
+              )}
+              {onlySelected ? "Ver todos" : `Ver seleccionados (${formatCount(selected.size)})`}
             </button>
-          )}
+          </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            setOnlySelected((value) => !value);
-            setPage(1);
-          }}
-          disabled={selected.size === 0 && !onlySelected}
-          className={cn(
-            "flex h-9 shrink-0 items-center gap-2 rounded-lg border px-3 text-[12.5px] font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-40",
-            onlySelected
-              ? "border-primary/40 bg-primary/5 text-primary"
-              : "border-border text-text-secondary hover:border-primary/30 hover:text-primary"
-          )}
-        >
-          {onlySelected ? (
-            <EyeOff className="h-3.5 w-3.5" strokeWidth={2.3} />
-          ) : (
-            <Eye className="h-3.5 w-3.5" strokeWidth={2.3} />
-          )}
-          {onlySelected ? "Ver todos" : `Ver seleccionados (${formatCount(selected.size)})`}
-        </button>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border/60">
@@ -300,13 +360,13 @@ export function CollaboratorTable({
               <TableHead className="w-16 px-0">
                 {/* No hover background here: the header row already carries
                     one (bg-muted/40), and a second, smaller one under just
-                    the trigger read as a stray floating chip rather than
                     part of the row. The chevron darkening on hover is
                     affordance enough. */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
+                      disabled={filtered.length === 0}
                       aria-label="Opciones de selección"
                       // Not `justify-center`: that centers the checkbox+chevron
                       // pair as one block, which sits the checkbox 8px left of
@@ -343,6 +403,18 @@ export function CollaboratorTable({
                       <DropdownMenuItem onClick={clearSelection}>
                         Deseleccionar todos los colaboradores
                       </DropdownMenuItem>
+                    )}
+                    {selected.size > 0 && (
+                      <>
+                        <div className="my-1 h-px bg-border" role="separator" />
+                        <DropdownMenuItem
+                          onClick={() => setSelection(new Set())}
+                          className="text-status-negative focus:text-status-negative focus:bg-status-negative/10"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Eliminar seleccionados ({selected.size})
+                        </DropdownMenuItem>
+                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -436,6 +508,22 @@ export function CollaboratorTable({
                 ? "Vuelve a la lista completa para elegir colaboradores."
                 : "Prueba con otro nombre, correo o área."}
             </p>
+            {(!onlySelected && (query !== "" || areaFilter.size > 0 || leaderFilter.size > 0)) && (
+              <Button
+                variant="secondary"
+                className="mt-3"
+                size="sm"
+                onClick={() => {
+                  setQuery("");
+                  setAreaFilter(new Set());
+                  setLeaderFilter(new Set());
+                  setPage(1);
+                  setIsSearchExpanded(false);
+                }}
+              >
+                Limpiar búsqueda y filtros
+              </Button>
+            )}
           </div>
         )}
       </div>

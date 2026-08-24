@@ -6,9 +6,11 @@ import { useAutosave } from "@/hooks/useAutosave";
 import { useAnchorOffset } from "@/hooks/useAnchorOffset";
 
 import { createBlankSurveyDraft } from "@/mocks/surveyBuilderMocks";
+import { ShellHeaderSlot } from "@/components/app-shell";
+import type { TableSelectionActions } from "@/components/action-rail";
 import {
   BuilderSideRail,
-  BuilderTopBar,
+  BuilderIdentity,
   DemographicsEditor,
   GeneralDataEditor,
   PagesEditor,
@@ -56,13 +58,26 @@ import {
   type SurveyQuestion,
   type SurveySection,
 } from "@/components/survey-builder";
-import { UbitsToaster } from "@/components/feedback";
 import { SurveyPreviewDrawer, canPreview } from "@/components/survey-preview";
+import { QuestionBankDrawer } from "@/components/survey-builder/QuestionBankDrawer";
 
 interface SurveyBuilderProps {
   initialDraft?: SurveyDraft;
+  /**
+   * Which panel the builder opens on. Defaults to the first step; the list's
+   * "Editar participantes" uses it to land straight on that one instead of
+   * making the person walk there.
+   */
+  initialStep?: FixedBlockId;
   menuOrientation?: "right" | "bottom";
   onExit: (draft?: SurveyDraft) => void;
+  /**
+   * Publishes the draft as it changes. Leaving the builder is the shell
+   * breadcrumb's job now, and that click happens outside this component — so
+   * the caller needs the current draft on hand to commit it, exactly as
+   * finishing the wizard would.
+   */
+  onDraftChange?: (draft: SurveyDraft) => void;
 }
 
 /** Fixed blocks that can be switched on and off. */
@@ -82,14 +97,31 @@ const buildEmptySection = (title: string): SurveySection => ({
  * Step of the creation wizard where the author lays out the survey structure:
  * fixed blocks plus a tree of sections whose leaves hold the questions.
  */
-export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit }: SurveyBuilderProps) {
+export function SurveyBuilder({
+  initialDraft,
+  initialStep = "general",
+  menuOrientation = "bottom",
+  onExit,
+  onDraftChange,
+}: SurveyBuilderProps) {
   const _initialDraft = React.useMemo(() => initialDraft || createBlankSurveyDraft(), [initialDraft]);
   const [draft, setDraft] = React.useState<SurveyDraft>(_initialDraft);
+
+  React.useEffect(() => {
+    onDraftChange?.(draft);
+  }, [draft, onDraftChange]);
   const [selection, setSelection] = React.useState<BuilderSelection>({
     kind: "fixed",
-    id: "general",
+    id: initialStep,
   });
   const [isSectionsPanelCollapsed, setIsSectionsPanelCollapsed] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsSectionsPanelCollapsed(true);
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, []);
   // Steps the author has passed through. Visit-based steps (welcome,
   // demographics, closing) count as done the first time they are reached.
   const [visitedSteps, setVisitedSteps] = React.useState<ReadonlySet<StepperStepId>>(
@@ -143,6 +175,22 @@ export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit
   // The preview reads the same draft the builder is editing, so there is
   // nothing to hand over when it opens — only whether it is on screen.
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
+  const [isQuestionBankOpen, setIsQuestionBankOpen] = React.useState(false);
+
+  // The participants step's table owns its own ticks; the rail only needs the
+  // count and the two ways to act on it (see `TableSelectionActions`).
+  const [participantsSelectionCount, setParticipantsSelectionCount] = React.useState(0);
+  const [clearParticipantsSelection, setClearParticipantsSelection] = React.useState<(() => void) | null>(null);
+  const [deleteParticipantsSelection, setDeleteParticipantsSelection] = React.useState<(() => void) | null>(null);
+
+  const handleParticipantsSelectionChange = React.useCallback(
+    (count: number, actions: TableSelectionActions) => {
+      setParticipantsSelectionCount(count);
+      setClearParticipantsSelection(() => actions.clear);
+      setDeleteParticipantsSelection(actions.remove ? () => actions.remove! : null);
+    },
+    []
+  );
 
   // Mirrors the question-editing state above, one level up: lifted here so
   // the side rail's "Crear dato demográfico" button can open a fresh field
@@ -150,7 +198,7 @@ export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit
   const [editingDemographicId, setEditingDemographicId] = React.useState<string | null>(null);
   const [openDemographicSections, setOpenDemographicSections] = React.useState<
     ReadonlySet<DemographicSectionId>
-  >(() => new Set(["custom"]));
+  >(() => new Set(["library"]));
   const handleToggleDemographicSection = (id: DemographicSectionId) => {
     setOpenDemographicSections((current) => {
       const next = new Set(current);
@@ -600,6 +648,26 @@ export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit
     handleAddQuestionTo(selectedSection.id);
   };
 
+  const handleAddBankQuestions = (texts: string[]) => {
+    if (!selectedSection || !selectedEntry) {
+      toast.info("Selecciona una sección para añadir preguntas.");
+      return;
+    }
+    
+    const target = findSection(draft.sections, selectedSection.id);
+    if (!target) return;
+
+    const newQuestions = texts.map(text => {
+      const q = buildQuestion();
+      return { ...q, statement: `<p>${text}</p>`, isBankQuestion: true };
+    });
+
+    updateSection(selectedSection.id, {
+      questions: [...target.section.questions, ...newQuestions],
+    });
+    toast.success(`Se añadieron ${texts.length} preguntas.`);
+  };
+
   /**
    * Rail shortcut for "Datos creados solo para esta encuesta" — the only one
    * of the three demographic accordions with a real create action. Reveals
@@ -764,6 +832,7 @@ export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit
               }))
             }
             showValidation={participantsValidationTouched}
+            onSelectionChange={handleParticipantsSelectionChange}
           />
         );
       }
@@ -927,14 +996,17 @@ export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit
   };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background font-sans">
-      <BuilderTopBar
-        name={draft.name}
-        status={draft.status}
-        autosave={autosave}
-        onNameChange={(name) => setDraft((current) => ({ ...current, name }))}
-        onExit={() => onExit(draft)}
-      />
+    <div className="flex h-full flex-col overflow-hidden bg-background font-sans">
+      {/* The survey's name, status and autosave are the app shell's breadcrumb
+          — leaving lives in the action bar, next to the other step actions. */}
+      <ShellHeaderSlot>
+        <BuilderIdentity
+          name={draft.name}
+          status={draft.status}
+          autosave={autosave}
+          onNameChange={(name) => setDraft((current) => ({ ...current, name }))}
+        />
+      </ShellHeaderSlot>
 
       {/* Only the middle column scrolls. The side panel sits outside that
           scroll region entirely — not merely stickied within it — so it never
@@ -965,7 +1037,9 @@ export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit
         />
 
         <div className="relative flex min-h-0 min-w-0 flex-1 flex-col self-stretch">
-          <UbitsToaster className="absolute" />
+          {/* Toasts come from the single app-level UbitsToaster in App.tsx —
+              a second mount here would render every toast twice while this
+              screen is up, since both instances read the same toast queue. */}
           <div
             ref={workspaceRef}
             className="flex flex-1 items-start gap-3 self-stretch overflow-y-auto"
@@ -975,7 +1049,7 @@ export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit
 
           {/* The bottom action bar provides navigation and save actions on all steps, 
               and contextual creation actions on specific steps. */}
-          {menuOrientation === "bottom" ? (
+          {menuOrientation === "bottom" && (
             <BuilderSideRail
               ref={railRef}
               offset={0}
@@ -997,6 +1071,7 @@ export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit
               onOpenAnswerBank={() =>
                 toast.info("El banco de respuestas llega en el siguiente paso.")
               }
+              onOpenQuestionBank={() => setIsQuestionBankOpen(true)}
               onAddDemographic={handleAddCustomDemographic}
               onImportSections={handleImportSections}
               onPreview={handlePreview}
@@ -1018,16 +1093,10 @@ export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit
               canContinue={canContinue}
               continueLabel={continueLabel}
               continueDisabledReason={continueDisabledReason}
-            />
-          ) : (
-            <BuilderFooter 
-              stepNumber={["general", "participants", "sections", "pages"].indexOf(activeStep as any) >= 0 ? ["general", "participants", "sections", "pages"].indexOf(activeStep as any) + 1 : null}
-              totalRequiredSteps={REQUIRED_STEPS}
-              canContinue={canContinue}
-              continueLabel={continueLabel}
-              continueDisabledReason={continueDisabledReason}
-              onSave={() => toast.success("Encuesta guardada")}
-              onContinue={handleContinue}
+              activeStep={activeStep}
+              participantsSelectionCount={participantsSelectionCount}
+              onClearParticipantsSelection={clearParticipantsSelection}
+              onDeleteParticipantsSelection={deleteParticipantsSelection}
             />
           )}
         </div>
@@ -1055,6 +1124,7 @@ export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit
               onOpenAnswerBank={() =>
                 toast.info("El banco de respuestas llega en el siguiente paso.")
               }
+              onOpenQuestionBank={() => setIsQuestionBankOpen(true)}
               onAddDemographic={handleAddCustomDemographic}
               onImportSections={handleImportSections}
               onPreview={handlePreview}
@@ -1076,7 +1146,20 @@ export function SurveyBuilder({ initialDraft, menuOrientation = "bottom", onExit
         )}
       </div>
 
+      {menuOrientation !== "bottom" && (
+        <BuilderFooter 
+          stepNumber={["general", "participants", "sections", "pages"].indexOf(activeStep as any) >= 0 ? ["general", "participants", "sections", "pages"].indexOf(activeStep as any) + 1 : null}
+          totalRequiredSteps={REQUIRED_STEPS}
+          canContinue={canContinue}
+          continueLabel={continueLabel}
+          continueDisabledReason={continueDisabledReason}
+          onSave={() => toast.success("Encuesta guardada")}
+          onContinue={handleContinue}
+        />
+      )}
+
       <SurveyPreviewDrawer draft={draft} open={isPreviewOpen} onOpenChange={setIsPreviewOpen} />
+      <QuestionBankDrawer open={isQuestionBankOpen} onOpenChange={setIsQuestionBankOpen} onAddQuestions={handleAddBankQuestions} />
     </div>
   );
 }

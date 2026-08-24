@@ -1,7 +1,6 @@
 import * as React from "react";
 import {
   Check,
-  Lock,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -65,27 +64,27 @@ function StepMarker({ step, state, hasError }: { step: StepperStepId; state: Ste
   const number = stepNumber(step);
 
   return (
-    <span
-      aria-hidden
-      className={cn(
-        "z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums transition-all",
-        hasError && "bg-destructive/15 text-destructive ring-1 ring-destructive/30",
-        !hasError && state === "active" && "bg-primary text-primary-foreground",
-        !hasError && state === "complete" && "bg-status-positive/15 text-status-positive",
-        !hasError && state === "available" && "bg-border/50 text-text-secondary",
-        !hasError && state === "locked" && "bg-border/40 text-muted-foreground/60"
-      )}
-    >
-      {state === "locked" ? (
-        <Lock className="h-3.5 w-3.5" strokeWidth={2.3} />
-      ) : state === "complete" ? (
-        <Check className="h-3.5 w-3.5" strokeWidth={3} />
-      ) : number !== null ? (
-        number
-      ) : (
-        <span className="h-1.5 w-1.5 rounded-full bg-current" />
-      )}
-    </span>
+    <div className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface">
+      <span
+        aria-hidden
+        className={cn(
+          "absolute inset-0 flex items-center justify-center rounded-full text-[11px] font-bold tabular-nums transition-all",
+          hasError && "bg-destructive/15 text-destructive ring-1 ring-destructive/30",
+          !hasError && state === "active" && "bg-primary text-primary-foreground",
+          !hasError && state === "complete" && "bg-status-positive/15 text-status-positive",
+          !hasError && state === "available" && "bg-border/50 text-text-secondary",
+          !hasError && state === "locked" && "bg-border/40 text-muted-foreground/60"
+        )}
+      >
+        {state === "complete" ? (
+          <Check className="h-3.5 w-3.5" strokeWidth={3} />
+        ) : number !== null ? (
+          number
+        ) : (
+          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+        )}
+      </span>
+    </div>
   );
 }
 
@@ -250,31 +249,14 @@ export function SectionsPanel({
           <TooltipContent side="right">Expandir menú</TooltipContent>
         </Tooltip>
 
-        {/* Required and optional stay visually separate here too: the connector
-            runs through the numbered path and stops before the divider. */}
         <div className="flex w-full flex-col gap-3">
-          {REQUIRED_STEPS.map((step, index) => (
+          {STEPPER_ORDER.map((step, index) => (
             <RailStep
               key={step}
               step={step}
               state={stateOf(step)}
               hasError={hasError(step)}
-              hasNext={index < REQUIRED_STEPS.length - 1}
-              onSelect={() => onSelectStep(step)}
-            />
-          ))}
-        </div>
-
-        <div className="mx-auto h-px w-6 shrink-0 bg-border/60" />
-
-        <div className="flex w-full flex-col gap-3">
-          {OPTIONAL_STEPS.map((step) => (
-            <RailStep
-              key={step}
-              step={step}
-              state={stateOf(step)}
-              hasError={hasError(step)}
-              hasNext={false}
+              hasNext={index < STEPPER_ORDER.length - 1}
               onSelect={() => onSelectStep(step)}
             />
           ))}
@@ -285,14 +267,19 @@ export function SectionsPanel({
 
   return (
     <aside className="flex w-[288px] shrink-0 flex-col self-start overflow-y-auto rounded-2xl border border-border/50 bg-surface p-2 shadow-card max-h-full">
-      <button
-        type="button"
-        onClick={onToggleCollapsed}
-        aria-label="Contraer menú"
-        className="mb-0.5 flex h-8 w-8 items-center justify-center self-end rounded-xl text-muted-foreground/70 transition-all hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95"
-      >
-        <PanelLeftClose className="h-[18px] w-[18px]" strokeWidth={2.3} />
-      </button>
+      <div className="mb-2 flex items-center justify-between pl-3 pr-1 pt-1.5">
+        <h2 className="text-[12.5px] font-semibold text-text-secondary">
+          Pasos de creación
+        </h2>
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          aria-label="Contraer menú"
+          className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground/70 transition-all hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95"
+        >
+          <PanelLeftClose className="h-[18px] w-[18px]" strokeWidth={2.3} />
+        </button>
+      </div>
 
       <ul className="flex flex-col gap-1">
         {STEPPER_ORDER.map((step, index) => (
