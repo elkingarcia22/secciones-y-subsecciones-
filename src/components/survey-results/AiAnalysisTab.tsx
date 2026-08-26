@@ -92,23 +92,36 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
     [draft, results, respondents]
   );
   const [progress, setProgress] = React.useState(0);
+  const [loaderText, setLoaderText] = React.useState("Procesando respuestas y calculando favorabilidad...");
   
   React.useEffect(() => {
     if (isAnalyzing) {
       let current = 0;
+      setLoaderText("Procesando respuestas y calculando favorabilidad...");
+      
       const interval = setInterval(() => {
-        current += Math.floor(Math.random() * 15) + 5;
+        current += Math.floor(Math.random() * 8) + 2;
         if (current >= 100) {
           clearInterval(interval);
           setProgress(100);
+          setLoaderText("¡Análisis completado!");
           setTimeout(() => {
              setIsAnalyzing(false);
              setProgress(0);
-          }, 400);
+          }, 800);
         } else {
           setProgress(current);
+          if (current < 25) {
+             setLoaderText("Procesando respuestas y calculando favorabilidad...");
+          } else if (current < 50) {
+             setLoaderText("Identificando fortalezas y áreas de mejora...");
+          } else if (current < 75) {
+             setLoaderText("Analizando brechas demográficas...");
+          } else {
+             setLoaderText("Leyendo comentarios y detectando sentimiento...");
+          }
         }
-      }, 300);
+      }, 400);
       return () => clearInterval(interval);
     }
   }, [isAnalyzing]);
@@ -157,12 +170,6 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
 
   // The analysis is derived synchronously; the delay only exists so the state
   // the real feature will have — "this takes a moment" — is visible in the UI.
-  React.useEffect(() => {
-    if (!isAnalyzing) return;
-    const timer = window.setTimeout(() => setIsAnalyzing(false), REANALYSIS_MS);
-    return () => window.clearTimeout(timer);
-  }, [isAnalyzing]);
-
   const visibleGroups = React.useMemo<readonly InsightGroup[]>(
     () =>
       KIND_ORDER.map((kind) => ({
@@ -269,7 +276,7 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
           </div>
 
           {isAnalyzing ? (
-            <AnalyzingLoader progress={progress} />
+            <AnalyzingLoader progress={progress} text={loaderText} />
           ) : (
             <>
               <AnalysisSummary summary={analysis.summary} isAnalyzing={isAnalyzing} />
@@ -349,7 +356,7 @@ function AnalysisSummary({
   );
 }
 
-function AnalyzingLoader({ progress }: { progress: number }) {
+function AnalyzingLoader({ progress, text }: { progress: number; text: string }) {
   return (
     <div className="relative flex flex-col min-h-[300px] p-[2px] rounded-xl bg-ai-gradient shimmer-mirror shadow-sm animate-in fade-in duration-300 select-none">
       <div className="relative z-10 flex-1 w-full bg-ai-mesh-card rounded-[calc(var(--radius-xl)-2px)] flex flex-col items-center justify-center p-6 gap-6">
@@ -408,7 +415,7 @@ function AnalyzingLoader({ progress }: { progress: number }) {
             />
           </div>
           <p className="text-center text-[11px] text-text-secondary mt-2">
-            Estamos extrayendo nuevos hallazgos y cruzando los datos...
+            {text}
           </p>
         </div>
       </div>
