@@ -999,7 +999,7 @@ export function SurveyBuilder({
 
     if (failing.length === 0) {
       setFinalizeErrorSteps(new Set());
-      toast.success("Encuesta finalizada");
+      toast.success("Encuesta guardada");
       onExit(draft);
       return;
     }
