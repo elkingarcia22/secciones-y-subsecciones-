@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DatePicker } from "@/components/date";
+import { DateRangePicker } from "@/components/date";
 import {
   Select,
   SelectContent,
@@ -152,27 +152,24 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
           />
         </Field>
 
-        {/* The design system's DatePicker, not a native date input: it renders
-            its own label and error, so these two skip the Field wrapper. */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <DatePicker
-            label="Fecha de inicio"
-            placeholder="Selecciona una fecha"
+        {/* A single DateRangePicker gives the Avianca/Despegar booking experience,
+            showing two months and allowing the user to select the range in one go. */}
+        <div className="grid gap-4 sm:grid-cols-1">
+          <DateRangePicker
+            label="Fechas de la encuesta"
+            placeholder="Selecciona el rango (Inicio - Cierre)"
             locale="es"
-            value={startDate}
-            error={startDateError}
-            onChange={(date) => onChange({ startDate: toISODate(date) })}
-          />
-          <DatePicker
-            label="Fecha de cierre"
-            placeholder="Selecciona una fecha"
-            locale="es"
-            value={parseISODate(draft.endDate)}
-            // The calendar refuses earlier days; the message covers a start date
-            // moved forward after the close was already set.
-            minDate={startDate ?? undefined}
-            error={endDateError}
-            onChange={(date) => onChange({ endDate: toISODate(date) })}
+            value={{
+              from: startDate ?? undefined,
+              to: parseISODate(draft.endDate) ?? undefined,
+            }}
+            error={startDateError || endDateError}
+            onChange={(range) => {
+              onChange({
+                startDate: toISODate(range?.from),
+                endDate: toISODate(range?.to),
+              });
+            }}
           />
         </div>
 
