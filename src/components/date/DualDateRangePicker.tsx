@@ -289,7 +289,7 @@ export const DualDateRangePicker = React.forwardRef<
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] p-0 bg-transparent border-none shadow-none z-50"
+          className="w-auto p-0 rounded-2xl border-border/80 bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] z-50 overflow-hidden"
           align="start"
           sideOffset={8}
           onPointerDownOutside={() => {
@@ -297,15 +297,8 @@ export const DualDateRangePicker = React.forwardRef<
             onChange?.({ startDate: tempFrom, endDate: tempTo });
           }}
         >
-          {/* Animated sliding container */}
-          <div
-            className="w-max rounded-2xl border border-border/80 bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] overflow-hidden transition-transform duration-500 ease-in-out origin-top"
-            style={{
-              transform: activeStep === "start" ? "translateX(0)" : "translateX(calc(var(--radix-popover-trigger-width) - 100%))"
-            }}
-          >
-            {/* Header step switcher tabs inside the popover */}
-            <div className="flex items-center border-b border-border/50 bg-muted/20 px-4 py-2.5">
+          {/* Header step switcher tabs inside the popover */}
+          <div className="flex items-center border-b border-border/50 bg-muted/20 px-4 py-2.5">
               <div className="flex items-center gap-2 text-xs font-semibold text-text-secondary">
                 <button
                   type="button"
@@ -405,7 +398,6 @@ export const DualDateRangePicker = React.forwardRef<
                 Aplicar
               </button>
             </div>
-          </div>
           </div>
         </PopoverContent>
       </Popover>
