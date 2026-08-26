@@ -289,7 +289,7 @@ export const DualDateRangePicker = React.forwardRef<
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-auto p-0 rounded-2xl border-border/80 bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] z-50 overflow-hidden"
+          className="w-auto p-0 rounded-2xl border-border/80 bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] z-50 overflow-hidden transition-all duration-300 ease-in-out"
           align={activeStep === "start" ? "start" : "end"}
           sideOffset={8}
           onPointerDownOutside={() => {
@@ -338,7 +338,7 @@ export const DualDateRangePicker = React.forwardRef<
             </div>
 
             <div className="ml-auto text-[11px] font-medium text-muted-foreground">
-              {activeStep === "start" ? "Selecciona fecha de inicio" : "Selecciona fecha de cierre"}
+              {activeStep === "start" ? "Selecciona fecha de inicio" : (hasEnd ? "" : "Selecciona fecha de cierre")}
             </div>
           </div>
 
