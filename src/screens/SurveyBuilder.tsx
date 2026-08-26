@@ -1,5 +1,4 @@
 import * as React from "react";
-import { TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { moveItemById } from "@/lib/reorder";
 import { useAutosave } from "@/hooks/useAutosave";
@@ -920,20 +919,6 @@ export function SurveyBuilder({
 
     return (
       <div className="flex min-w-0 flex-1 flex-col gap-3">
-        {sectionsValidationTouched && !hasSectionWithQuestion && (
-          <div className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-2.5 text-[12px] font-medium text-destructive animate-in fade-in duration-200">
-            <TriangleAlert className="h-4 w-4 shrink-0" strokeWidth={2.2} />
-            Añade al menos una sección con preguntas para poder finalizar la encuesta.
-          </div>
-        )}
-
-        {sectionsValidationTouched && hasSectionWithQuestion && !allQuestionsComplete && (
-          <div className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-2.5 text-[12px] font-medium text-destructive animate-in fade-in duration-200">
-            <TriangleAlert className="h-4 w-4 shrink-0" strokeWidth={2.2} />
-            Completa los campos obligatorios de la pregunta señalada para poder continuar.
-          </div>
-        )}
-
         {draft.sections.map((rootSection, index) => (
           <SectionEditor
             key={rootSection.id}
