@@ -16,7 +16,7 @@ import {
   type AiMetaDot,
 } from "./AiSectionCard";
 import { SENTIMENT_ORDER, SENTIMENT_STYLES } from "./sentimentScale";
-import type { SentimentRollup } from "./summaryModel";
+import { type SentimentRollup, confidenceFor } from "./summaryModel";
 
 const formatCount = (value: number) => new Intl.NumberFormat("es-CO").format(value);
 
@@ -122,7 +122,14 @@ export function AiVoiceSection({
                   {sentiment.topics.slice(0, TOPICS).map((topic, index) => (
                     <tr key={topic.topic} className={AI_ROW_STATIC}>
                       <td className={AI_RANK_CELL}>{index + 1}</td>
-                      <td className={AI_TITLE_CELL}>{topic.topic}</td>
+                      <td className={AI_TITLE_CELL}>
+                        {topic.topic}
+                        <div className="mt-1">
+                          <span className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-text-secondary">
+                            Confianza {confidenceFor(topic.total)}
+                          </span>
+                        </div>
+                      </td>
                       {(["positive", "neutral"] as const).map((id) => (
                         <td
                           key={id}

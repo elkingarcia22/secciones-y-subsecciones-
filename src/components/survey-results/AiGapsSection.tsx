@@ -29,6 +29,7 @@ import {
   type SegmentGaps,
   type SegmentStanding,
   type WidestGap,
+  confidenceFor,
 } from "./summaryModel";
 
 const formatCount = (value: number) => new Intl.NumberFormat("es-CO").format(value);
@@ -47,10 +48,12 @@ export function AiGapsSection({
   segments,
   results,
   numbering,
+  allowedConfidence,
 }: {
   segments: readonly SegmentDefinition[];
   results: SurveyResults;
   numbering: number;
+  allowedConfidence: Set<string>;
 }) {
   // The analysis tab has no scope bar of its own, so the brechas are read over
   // the whole measurement — the same population the AI's lecturas rest on.
@@ -60,8 +63,12 @@ export function AiGapsSection({
     () =>
       segments
         .map((segment) => analyseSegmentGaps(segment, results, noFilters))
-        .filter((analysis): analysis is SegmentGaps => analysis !== null),
-    [segments, results, noFilters]
+        .filter((analysis): analysis is SegmentGaps => analysis !== null)
+        .filter((analysis) => {
+          const outlierN = analysis.outliers[0]?.row.participation || 0;
+          return allowedConfidence.has(confidenceFor(outlierN));
+        }),
+    [segments, results, noFilters, allowedConfidence]
   );
 
   return (
@@ -138,11 +145,16 @@ function GapRows({
 
         <td className={AI_TITLE_CELL}>
           {segment.label}
-          {masked.length > 0 && (
-            <span className="mt-0.5 block truncate text-[11px] font-medium text-muted-foreground">
-              {masked.length} sin muestra suficiente
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            {masked.length > 0 && (
+              <span className="truncate text-[11px] font-medium text-muted-foreground">
+                {masked.length} sin muestra suficiente
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-text-secondary">
+              Confianza {confidenceFor(outliers[0]?.row.participation || 0)}
             </span>
-          )}
+          </div>
         </td>
 
         <td className="hidden py-3 text-right text-[11.5px] tabular-nums text-text-secondary sm:table-cell">

@@ -462,7 +462,7 @@ const CONFIDENCE_MEDIUM_N = 100;
 /** A theme this negative is confirmation, not coincidence. */
 const QUAL_CONFIRM_SHARE = 60;
 
-const confidenceFor = (n: number): Priority["confidence"] =>
+export const confidenceFor = (n: number): Priority["confidence"] =>
   n >= CONFIDENCE_HIGH_N ? "alta" : n >= CONFIDENCE_MEDIUM_N ? "media" : "baja";
 
 /**

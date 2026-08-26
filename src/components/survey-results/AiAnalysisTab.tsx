@@ -33,6 +33,7 @@ import {
   findingsAtLevel,
   resolveScope,
   sentimentRollup,
+  confidenceFor,
   type AlertTarget,
 } from "./summaryModel";
 
@@ -123,16 +124,29 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
     [findings, sentiment.topics]
   );
 
-  const filteredPriorities = React.useMemo(() => {
+  const allowedConfidence = React.useMemo(() => {
     const allowed = new Set<string>();
     if (confidence.levels.has("high")) allowed.add("alta");
     if (confidence.levels.has("medium")) allowed.add("media");
     if (confidence.levels.has("low")) allowed.add("baja");
-    
-    return priorities.filter((p) => allowed.has(p.confidence));
-  }, [priorities, confidence.levels]);
+    return allowed;
+  }, [confidence.levels]);
+
+  const filteredPriorities = React.useMemo(() => {
+    return priorities.filter((p) => allowedConfidence.has(p.confidence));
+  }, [priorities, allowedConfidence]);
 
   const strengths = React.useMemo(() => buildStrengths(findings), [findings]);
+  const filteredStrengths = React.useMemo(() => {
+    return strengths.filter((s) => allowedConfidence.has(confidenceFor(s.n)));
+  }, [strengths, allowedConfidence]);
+
+  const filteredSentiment = React.useMemo(() => {
+    return {
+      ...sentiment,
+      topics: sentiment.topics.filter(t => allowedConfidence.has(confidenceFor(t.total)))
+    };
+  }, [sentiment, allowedConfidence]);
 
   // Per-person demographics cannot be a column of a cut, the same rule the
   // Resumen's brechas block follows.
@@ -271,23 +285,22 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
                 <InsightGroupList groups={visibleGroups} isAnalyzing={isAnalyzing} />
               )}
 
-              {filteredPriorities.length > 0 && (
-                <AiPrioritiesSection
-                  priorities={filteredPriorities}
-                  numbering={visibleGroups.length + 1}
-                  onNavigate={onNavigate}
-                />
-              )}
+              <AiPrioritiesSection
+                priorities={filteredPriorities}
+                numbering={visibleGroups.length + 1}
+                onNavigate={onNavigate}
+              />
 
-              <AiStrengthsSection strengths={strengths} numbering={visibleGroups.length + (filteredPriorities.length > 0 ? 2 : 1)} />
+              <AiStrengthsSection strengths={filteredStrengths} numbering={visibleGroups.length + 2} />
 
               <AiGapsSection
                 segments={gapSegments}
                 results={results}
-                numbering={visibleGroups.length + (filteredPriorities.length > 0 ? 3 : 2)}
+                numbering={visibleGroups.length + 3}
+                allowedConfidence={allowedConfidence}
               />
 
-              <AiVoiceSection sentiment={sentiment} numbering={visibleGroups.length + (filteredPriorities.length > 0 ? 4 : 3)} />
+              <AiVoiceSection sentiment={filteredSentiment} numbering={visibleGroups.length + 4} />
             </>
           )}
         </div>

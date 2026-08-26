@@ -10,7 +10,7 @@ import {
   AiSectionMeta,
 } from "./AiSectionCard";
 import { FAVORABILITY_TARGET, POSITIVE, YELLOW, formatPercent } from "./favorabilityScale";
-import type { Finding } from "./summaryModel";
+import { type Finding, confidenceFor } from "./summaryModel";
 
 const formatCount = (value: number) => new Intl.NumberFormat("es-CO").format(value);
 
@@ -61,9 +61,14 @@ export function AiStrengthsSection({
 
                 <td className={AI_TITLE_CELL}>
                   {finding.title}
-                  <span className="mt-0.5 block truncate text-[11px] font-medium text-muted-foreground">
-                    {index === 0 ? "El aspecto mejor evaluado de la medición" : finding.parent}
-                  </span>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <span className="truncate text-[11px] font-medium text-muted-foreground">
+                      {index === 0 ? "El aspecto mejor evaluado de la medición" : finding.parent}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-text-secondary">
+                      Confianza {confidenceFor(finding.n)}
+                    </span>
+                  </div>
                 </td>
 
                 <td className="hidden py-3 text-right text-[11.5px] tabular-nums text-text-secondary sm:table-cell">
