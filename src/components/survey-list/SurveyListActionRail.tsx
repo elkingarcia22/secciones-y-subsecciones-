@@ -166,48 +166,50 @@ export function SurveyListActionRail({
       keepOpen={selectedCount > 0}
       contextual={contextual}
       persistent={
-        <>
-          <RailButton
-            icon={<GitCompare className="h-[20px] w-[20px]" strokeWidth={2.3} />}
-            label="Comparar encuestas"
-            onClick={onCompare}
-          />
+        selectedCount === 0 ? (
+          <>
+            <RailButton
+              icon={<GitCompare className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+              label="Comparar encuestas"
+              onClick={onCompare}
+            />
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                aria-label="Crear encuesta"
-                className="flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Crear encuesta"
+                  className="flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                >
+                  <Plus className="h-4 w-4" strokeWidth={2.6} />
+                  Crear encuesta
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                side="top"
+                sideOffset={16}
+                className="w-[280px] rounded-2xl border-zinc-800/80 bg-zinc-900 p-2 text-zinc-400 shadow-[0_8px_30px_rgb(0,0,0,0.24)]"
               >
-                <Plus className="h-4 w-4" strokeWidth={2.6} />
-                Crear encuesta
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              side="top"
-              sideOffset={16}
-              className="w-[280px] rounded-2xl border-zinc-800/80 bg-zinc-900 p-2 text-zinc-400 shadow-[0_8px_30px_rgb(0,0,0,0.24)]"
-            >
-              <PopoverTitle className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-                Opciones de creación
-              </PopoverTitle>
-              <RailCreateOption
-                icon={<Plus className="h-5 w-5" strokeWidth={2.2} />}
-                title="Crear en blanco"
-                description="Empieza desde cero"
-                onClick={onCreateBlank}
-              />
-              <RailCreateOption
-                icon={<Layout className="h-5 w-5" strokeWidth={2.2} />}
-                title="Crear con plantilla"
-                description="Usa un diseño predefinido"
-                onClick={onCreateFromTemplate}
-              />
-            </PopoverContent>
-          </Popover>
-        </>
+                <PopoverTitle className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                  Opciones de creación
+                </PopoverTitle>
+                <RailCreateOption
+                  icon={<Plus className="h-5 w-5" strokeWidth={2.2} />}
+                  title="Crear en blanco"
+                  description="Empieza desde cero"
+                  onClick={onCreateBlank}
+                />
+                <RailCreateOption
+                  icon={<Layout className="h-5 w-5" strokeWidth={2.2} />}
+                  title="Crear con plantilla"
+                  description="Usa un diseño predefinido"
+                  onClick={onCreateFromTemplate}
+                />
+              </PopoverContent>
+            </Popover>
+          </>
+        ) : null
       }
     />
   );

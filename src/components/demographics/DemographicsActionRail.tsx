@@ -92,14 +92,16 @@ export function DemographicsActionRail({
       keepOpen={selectedCount > 0}
       contextual={contextual}
       persistent={
-        <button
-          type="button"
-          onClick={onCreate}
-          className="flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2.6} />
-          Crear demográfico
-        </button>
+        selectedCount === 0 ? (
+          <button
+            type="button"
+            onClick={onCreate}
+            className="flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2.6} />
+            Crear demográfico
+          </button>
+        ) : null
       }
     />
   );
