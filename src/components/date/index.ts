@@ -1,6 +1,7 @@
 // Date & Range Input Components
 export { DatePicker, type DatePickerProps } from './DatePicker'
 export { DateRangePicker, type DateRangePickerProps } from './DateRangePicker'
+export { DualDateRangePicker, type DualDateRangePickerProps } from './DualDateRangePicker'
 export { MonthPicker, type MonthPickerProps } from './MonthPicker'
 export { QuarterSelector, type QuarterSelectorProps } from './QuarterSelector'
 export { PeriodSelector, type PeriodSelectorProps, type PeriodSelectorOption } from './PeriodSelector'

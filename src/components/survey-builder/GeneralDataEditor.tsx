@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DateRangePicker } from "@/components/date";
+import { DualDateRangePicker } from "@/components/date";
 import {
   Select,
   SelectContent,
@@ -152,26 +152,20 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
           />
         </Field>
 
-        {/* A single DateRangePicker gives the Avianca/Despegar booking experience,
-            showing two months and allowing the user to select the range in one go. */}
-        <div className="grid gap-4 sm:grid-cols-1">
-          <DateRangePicker
-            label="Fechas de la encuesta"
-            placeholder="Selecciona el rango (Inicio - Cierre)"
-            locale="es"
-            value={{
-              from: startDate ?? undefined,
-              to: parseISODate(draft.endDate) ?? undefined,
-            }}
-            error={startDateError || endDateError}
-            onChange={(range) => {
-              onChange({
-                startDate: toISODate(range?.from),
-                endDate: toISODate(range?.to),
-              });
-            }}
-          />
-        </div>
+        {/* Flight-booking experience: two distinct inputs for start and end dates with a unified dual-month range picker */}
+        <DualDateRangePicker
+          startDate={startDate}
+          endDate={parseISODate(draft.endDate)}
+          startError={startDateError}
+          endError={endDateError}
+          locale="es"
+          onChange={({ startDate: newStart, endDate: newEnd }) => {
+            onChange({
+              startDate: toISODate(newStart),
+              endDate: toISODate(newEnd),
+            });
+          }}
+        />
 
         <Field label="Tipo de encuesta" error={kindError}>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
