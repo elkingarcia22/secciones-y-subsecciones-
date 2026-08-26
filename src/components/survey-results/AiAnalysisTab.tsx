@@ -90,8 +90,28 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
     () => buildOpenComments(draft, results, respondents),
     [draft, results, respondents]
   );
-  // The tab reads the model's own labels: corrections live in the comments
-  // view, which owns that state and is where a reader goes to make them.
+  const [progress, setProgress] = React.useState(0);
+  
+  React.useEffect(() => {
+    if (isAnalyzing) {
+      let current = 0;
+      const interval = setInterval(() => {
+        current += Math.floor(Math.random() * 15) + 5;
+        if (current >= 100) {
+          clearInterval(interval);
+          setProgress(100);
+          setTimeout(() => {
+             setIsAnalyzing(false);
+             setProgress(0);
+          }, 400);
+        } else {
+          setProgress(current);
+        }
+      }, 300);
+      return () => clearInterval(interval);
+    }
+  }, [isAnalyzing]);
+
   const noOverrides = React.useMemo(() => new Map<string, Sentiment>(), []);
   const sentiment = React.useMemo(
     () => sentimentRollup(comments, noOverrides),
@@ -102,6 +122,16 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
     () => buildPriorities(findings, sentiment.topics),
     [findings, sentiment.topics]
   );
+
+  const filteredPriorities = React.useMemo(() => {
+    const allowed = new Set<string>();
+    if (confidence.levels.has("high")) allowed.add("alta");
+    if (confidence.levels.has("medium")) allowed.add("media");
+    if (confidence.levels.has("low")) allowed.add("baja");
+    
+    return priorities.filter((p) => allowed.has(p.confidence));
+  }, [priorities, confidence.levels]);
+
   const strengths = React.useMemo(() => buildStrengths(findings), [findings]);
 
   // Per-person demographics cannot be a column of a cut, the same rule the
@@ -224,43 +254,42 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
             </div>
           </div>
 
-          <AnalysisSummary summary={analysis.summary} isAnalyzing={isAnalyzing} />
-
-          {visibleGroups.length === 0 ? (
-            <EmptyState
-              icon={Sparkles}
-              title="Sin lecturas con esta confiabilidad"
-              description="Ninguna de las lecturas de esta medición cae en las bandas seleccionadas. Vuelve a marcarlas en «Confiabilidad» para ver el análisis completo."
-              className="border-none bg-transparent shadow-none"
-            />
+          {isAnalyzing ? (
+            <AnalyzingLoader progress={progress} />
           ) : (
-            <InsightGroupList groups={visibleGroups} isAnalyzing={isAnalyzing} />
+            <>
+              <AnalysisSummary summary={analysis.summary} isAnalyzing={isAnalyzing} />
+
+              {visibleGroups.length === 0 ? (
+                <EmptyState
+                  icon={Sparkles}
+                  title="Sin lecturas con esta confiabilidad"
+                  description="Ninguna de las lecturas de esta medición cae en las bandas seleccionadas. Vuelve a marcarlas en «Confiabilidad» para ver el análisis completo."
+                  className="border-none bg-transparent shadow-none"
+                />
+              ) : (
+                <InsightGroupList groups={visibleGroups} isAnalyzing={isAnalyzing} />
+              )}
+
+              {filteredPriorities.length > 0 && (
+                <AiPrioritiesSection
+                  priorities={filteredPriorities}
+                  numbering={visibleGroups.length + 1}
+                  onNavigate={onNavigate}
+                />
+              )}
+
+              <AiStrengthsSection strengths={strengths} numbering={visibleGroups.length + (filteredPriorities.length > 0 ? 2 : 1)} />
+
+              <AiGapsSection
+                segments={gapSegments}
+                results={results}
+                numbering={visibleGroups.length + (filteredPriorities.length > 0 ? 3 : 2)}
+              />
+
+              <AiVoiceSection sentiment={sentiment} numbering={visibleGroups.length + (filteredPriorities.length > 0 ? 4 : 3)} />
+            </>
           )}
-
-          {/*
-            The evidence the reading rests on, as four more blocks of the same
-            stack. They come after the lecturas on purpose: the AI states what it
-            concludes, then the reader can walk down what it concluded it from —
-            what to attend first, what to lean on, where the groups pull apart,
-            and in whose words. The numbering continues rather than restarting,
-            because to the reader this is one document, not two lists that
-            happen to share a tab.
-          */}
-          <AiPrioritiesSection
-            priorities={priorities}
-            numbering={visibleGroups.length + 1}
-            onNavigate={onNavigate}
-          />
-
-          <AiStrengthsSection strengths={strengths} numbering={visibleGroups.length + 2} />
-
-          <AiGapsSection
-            segments={gapSegments}
-            results={results}
-            numbering={visibleGroups.length + 3}
-          />
-
-          <AiVoiceSection sentiment={sentiment} numbering={visibleGroups.length + 4} />
         </div>
       </div>
     </div>
@@ -303,6 +332,73 @@ function AnalysisSummary({
       ) : (
         <p className="max-w-5xl text-[13px] leading-[1.75] text-text-primary">{summary}</p>
       )}
+    </div>
+  );
+}
+
+function AnalyzingLoader({ progress }: { progress: number }) {
+  return (
+    <div className="relative flex flex-col min-h-[300px] p-[2px] rounded-xl bg-ai-gradient shimmer-mirror shadow-sm animate-in fade-in duration-300 select-none">
+      <div className="relative z-10 flex-1 w-full bg-ai-mesh-card rounded-[calc(var(--radius-xl)-2px)] flex flex-col items-center justify-center p-6 gap-6">
+        
+        {/* Pulsing UBITS AI Icon */}
+        <div className="relative w-16 h-16 flex items-center justify-center mb-1">
+          <div className="absolute w-11 h-11 rounded-full bg-ai-gradient opacity-20 blur-xl animate-pulse" />
+          <svg width="42" height="42" viewBox="0 0 24 24" className="relative">
+            <defs>
+              <linearGradient id="aiLoaderIconGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="hsl(var(--ai-gradient-start))" />
+                <stop offset="100%" stopColor="hsl(var(--ai-gradient-end))" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M12,3 Q12,12 3,12 Q12,12 12,21 Q12,12 21,12 Q12,12 12,3 Z"
+              fill="none"
+              stroke="url(#aiLoaderIconGrad)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="animate-[pulse_1.8s_infinite_ease-in-out]"
+            />
+            <path
+              d="M19,5 Q19,7 17,7 Q19,7 19,9 Q19,7 21,7 Q19,7 19,5 Z"
+              fill="url(#aiLoaderIconGrad)"
+              className="animate-[pulse_1.3s_infinite_ease-in-out] [animation-delay:0.3s]"
+            />
+            <circle
+              cx="5.5"
+              cy="18.5"
+              r="1.75"
+              fill="url(#aiLoaderIconGrad)"
+              className="animate-[pulse_1.5s_infinite_ease-in-out] [animation-delay:0.6s]"
+            />
+          </svg>
+        </div>
+        
+        <div className="flex flex-col items-center gap-1.5 text-center">
+          <p className="text-[16px] font-bold text-ai-gradient">
+            Generando nuevo análisis
+          </p>
+        </div>
+
+        <div className="w-full max-w-sm flex flex-col gap-2">
+          <div className="flex justify-between items-end text-[11.5px] font-bold">
+            <span className="text-text-secondary">Procesando respuestas</span>
+            <span className="text-ai-gradient">
+              {progress}%
+            </span>
+          </div>
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden relative">
+            <div 
+              className="h-full bg-ai-gradient rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-center text-[11px] text-text-secondary mt-2">
+            Estamos extrayendo nuevos hallazgos y cruzando los datos...
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
