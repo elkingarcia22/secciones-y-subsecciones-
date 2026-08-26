@@ -191,17 +191,26 @@ export const DualDateRangePicker = React.forwardRef<
   const hasEnd = !!tempTo;
   const canApply = hasStart;
 
-  const [isAnimating, setIsAnimating] = React.useState(false);
-  const prevStepRef = React.useRef(activeStep);
+  const [transitionEnabled, setTransitionEnabled] = React.useState(false);
+  const [renderedStep, setRenderedStep] = React.useState(activeStep);
 
   React.useEffect(() => {
-    if (activeStep !== prevStepRef.current) {
-      setIsAnimating(true);
-      const timer = setTimeout(() => setIsAnimating(false), 500);
-      prevStepRef.current = activeStep;
-      return () => clearTimeout(timer);
+    if (activeStep !== renderedStep) {
+      // Step 1: Enable transition class
+      setTransitionEnabled(true);
+      
+      // Step 2: Wait for React to render the transition class, then change the transform value
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setRenderedStep(activeStep);
+          // Step 3: Remove transition class after animation finishes (500ms)
+          setTimeout(() => {
+            setTransitionEnabled(false);
+          }, 550);
+        });
+      });
     }
-  }, [activeStep]);
+  }, [activeStep, renderedStep]);
 
   return (
     <div ref={ref} className={cn("flex flex-col gap-1.5 w-full", className)}>
@@ -313,10 +322,10 @@ export const DualDateRangePicker = React.forwardRef<
           <div
             className={cn(
               "w-max rounded-2xl border border-border/80 bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] overflow-hidden origin-top",
-              isAnimating && "transition-transform duration-500 ease-in-out"
+              transitionEnabled && "transition-transform duration-500 ease-in-out"
             )}
             style={{
-              transform: activeStep === "start" ? "translateX(0)" : "translateX(calc(var(--radix-popover-trigger-width) - 100%))"
+              transform: renderedStep === "start" ? "translateX(0)" : "translateX(calc(var(--radix-popover-trigger-width) - 100%))"
             }}
           >
             {/* Header step switcher tabs inside the popover */}
