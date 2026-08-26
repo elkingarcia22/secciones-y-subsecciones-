@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
+import { SHELL_MENU_PANEL } from "./shellPanel";
 import { CURRENT_USER, NOTIFICATIONS } from "./appShellData";
 import type { ShellBreadcrumb, ShellBreadcrumbBadge } from "./shellTypes";
 
@@ -122,7 +123,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <PopoverContent
             align="end"
             sideOffset={8}
-            className="max-h-[340px] w-[300px] overflow-y-auto rounded-2xl border-border/60 p-2 shadow-[var(--shadow-drawer)]"
+            className={cn("max-h-[340px] w-[300px] overflow-y-auto", SHELL_MENU_PANEL)}
           >
             <div className="flex flex-col gap-1">
               {NOTIFICATIONS.map((notification) => (
@@ -153,7 +154,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <PopoverContent
             align="end"
             sideOffset={8}
-            className="w-[230px] rounded-2xl border-border/60 p-2 shadow-[var(--shadow-drawer)]"
+            className={cn("w-[230px]", SHELL_MENU_PANEL)}
           >
             <div className="-mx-2 mb-2 border-b border-border/60 px-5 pb-3 pt-1">
               <div className="text-sm font-bold text-text-primary">{CURRENT_USER.name}</div>

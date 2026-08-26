@@ -1,7 +1,6 @@
 export { BuilderIdentity } from "./BuilderIdentity";
-export { BuilderFooter } from "./BuilderFooter";
-export { AutosaveIndicator } from "./AutosaveIndicator";
 export { BuilderSideRail } from "./BuilderSideRail";
+export { AutosaveIndicator } from "./AutosaveIndicator";
 export { SectionsPanel } from "./SectionsPanel";
 export { SectionTreeItem } from "./SectionTreeItem";
 export { SectionEditor } from "./SectionEditor";
@@ -24,4 +23,3 @@ export * from "./sectionFileImport";
 export * from "./sectionTree";
 export * from "./stepper";
 export * from "./surveyBuilderTypes";
-export * from "./BuilderRightPanel";

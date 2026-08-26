@@ -5,10 +5,16 @@ import {
 } from "@/mocks/questionResponses";
 import {
   flattenResultSections,
+  heatmapBySegment,
+  participationBySegment,
   unitFromSeed,
   type Distribution,
+  type HeatmapData,
+  type HeatmapRow,
   type QuestionResult,
   type SectionResult,
+  type SegmentDefinition,
+  type SegmentFilter,
   type SurveyResults,
 } from "@/mocks/surveyResults";
 import {
@@ -265,24 +271,6 @@ export function defaultFindingLevel(scope: SummaryScope): FindingLevel {
   }
   return "question";
 }
-
-/* ----------------------------------------------------------------- bloques */
-
-/**
- * The blocks of the page, each one hideable from "Vista".
- *
- * No entry for the AI analysis: it is a tab of its own, and a strip on the
- * Resumen advertising it added a sixth block that stated no finding — the tabs
- * are already the way there.
- */
-export type SummaryBlock = "prioridades" | "fortalezas" | "brechas" | "voz";
-
-export const SUMMARY_BLOCKS: readonly { id: SummaryBlock; label: string }[] = [
-  { id: "prioridades", label: "Prioridades de esta medición" },
-  { id: "fortalezas", label: "Fortalezas para apalancar" },
-  { id: "brechas", label: "Dónde existen brechas" },
-  { id: "voz", label: "Voz de los colaboradores" },
-];
 
 /* ---------------------------------------------------------------- sentimiento */
 
@@ -673,6 +661,169 @@ export function segmentStandings(
       invited: row?.invited ?? 0,
       masked: row?.belowThreshold ?? false,
     };
+  });
+}
+
+
+/* --------------------------------------------------------------------- brechas */
+
+/**
+ * Where the groups of a demographic pull apart.
+ *
+ * Lives here rather than in the block that draws it because the downloaded
+ * report states the same brechas: two readings of one measurement that disagree
+ * about which area is doing worst is exactly the failure this model exists to
+ * prevent.
+ */
+
+/** A group this far under the average is an outlier, not noise. */
+export const OUTLIER_GAP = 0.15;
+
+/** Outliers shown before the block stops being a shortcut to the heatmap. */
+export const MAX_OUTLIERS = 4;
+
+/** A gap only counts when it separates groups this far apart on the 1–5 scale. */
+export const MIN_REPORTABLE_SPREAD = 1.5;
+
+export interface SegmentGaps {
+  segment: SegmentDefinition;
+  widest: WidestGap | null;
+  outliers: readonly { row: SegmentStanding; gap: number }[];
+  masked: readonly SegmentStanding[];
+  average: number;
+}
+
+/** Everything this block reads off one demographic, or null when it says nothing. */
+export function analyseSegmentGaps(
+  segment: SegmentDefinition,
+  results: SurveyResults,
+  filters: readonly SegmentFilter[]
+): SegmentGaps | null {
+  const heatmap = heatmapBySegment(results, segment, filters);
+  const participation = participationBySegment(results, segment, filters);
+  const standings = segmentStandings(heatmap.columns, heatmap.columnTotals, participation);
+
+  const scored = standings.filter((row) => row.score !== null && !row.masked);
+  const masked = standings.filter((row) => row.score === null || row.masked);
+
+  const average =
+    scored.length === 0
+      ? 0
+      : scored.reduce((sum, row) => sum + (row.score ?? 0), 0) / scored.length;
+
+  const outliers = scored
+    .map((row) => ({ row, gap: (row.score ?? 0) - average }))
+    .filter((entry) => entry.gap <= -OUTLIER_GAP)
+    .sort((a, b) => a.gap - b.gap)
+    .slice(0, MAX_OUTLIERS);
+
+  const widest = widestGap(heatmap);
+
+  if (!widest && outliers.length === 0) return null;
+  return { segment, widest, outliers, masked, average };
+}
+
+export interface WidestGap {
+  rowLabel: string;
+  min: number;
+  minLabel: string;
+  max: number;
+  maxLabel: string;
+  spread: number;
+}
+
+/**
+ * The single widest score spread anywhere in the grid, read off the question
+ * rows — in this mock the per-group variation lives there, and a question is
+ * also the actionable unit: "Claridad estratégica va de 1,6 en Gente y Cultura
+ * a 5,0 en Producto" names both the subject and the two rooms to visit.
+ */
+export function widestGap(heatmap: HeatmapData): WidestGap | null {
+  let best: WidestGap | null = null;
+
+  const visit = (rows: readonly HeatmapRow[]) => {
+    for (const row of rows) {
+      if (row.kind === "question") {
+        let min = Infinity;
+        let max = -Infinity;
+        let minIndex = -1;
+        let maxIndex = -1;
+        row.cells.forEach((cell, index) => {
+          if (cell.score === null || cell.masked || cell.unscored) return;
+          if (cell.score < min) {
+            min = cell.score;
+            minIndex = index;
+          }
+          if (cell.score > max) {
+            max = cell.score;
+            maxIndex = index;
+          }
+        });
+        if (minIndex >= 0 && maxIndex >= 0 && minIndex !== maxIndex) {
+          const spread = Math.round((max - min) * 10) / 10;
+          if (spread >= MIN_REPORTABLE_SPREAD && (!best || spread > best.spread)) {
+            best = {
+              rowLabel: row.label,
+              min,
+              minLabel: heatmap.columns[minIndex]?.label ?? "",
+              max,
+              maxLabel: heatmap.columns[maxIndex]?.label ?? "",
+              spread,
+            };
+          }
+        }
+      }
+      visit(row.children);
+    }
+  };
+
+  visit(heatmap.rows);
+  return best;
+}
+
+/**
+ * The demographics an open comment actually carries.
+ *
+ * `OpenComment` keeps área and país and nothing else, so those are the only
+ * demographics a comment list can honestly be narrowed by — a control offering
+ * "Antigüedad" over a list that cannot read it is a filter that does nothing.
+ */
+export const COMMENT_FILTER_KEYS: readonly string[] = ["area", "country"];
+
+/**
+ * Whether a comment was written by somebody the filters keep.
+ *
+ * Only the demographics a comment actually carries can be honoured; an
+ * anonymous survey strips them, and then a filtered comment list would be a
+ * fiction. So an unknown value is kept rather than guessed at, and the card
+ * keeps saying what it counted.
+ *
+ * A filter names an option by *id* while a comment carries the option's *label*
+ * — the directory writes "Tecnología", the demographic block writes
+ * "…-dem-area-o6" — so `segments` is what closes the gap. Without it every
+ * comparison fails and a filtered list comes back empty, which is why the
+ * callers pass `results.segments`.
+ */
+export function commentMatchesFilters(
+  comment: OpenComment,
+  filters: readonly SegmentFilter[],
+  segments: readonly SegmentDefinition[] = []
+): boolean {
+  // Grouped by demographic first: several options of one demographic are a
+  // union ("Área: Producto o Tecnología"), different demographics intersect.
+  const byKey = new Map<string, string[]>();
+  for (const filter of filters) {
+    const segment = segments.find((candidate) => candidate.key === filter.key);
+    const label =
+      segment?.options.find((option) => option.id === filter.optionId)?.label ?? filter.optionId;
+    const group = byKey.get(filter.key);
+    if (group) group.push(label);
+    else byKey.set(filter.key, [label]);
+  }
+
+  return [...byKey.entries()].every(([key, labels]) => {
+    const value = key === "area" ? comment.area : key === "country" ? comment.country : null;
+    return value === null || labels.some((label) => value === label);
   });
 }
 

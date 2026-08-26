@@ -58,7 +58,7 @@ export function MiniMetricCard({
         "flex flex-col gap-3 rounded-2xl border p-5",
         !bgColor && !active && "border-border/60 bg-surface",
         active && "border-brand bg-brand/[0.04] shadow-[0_0_0_1px_theme(colors.brand.DEFAULT)]",
-        // The same lift the Resumen cards use (SummaryStrengths), so a card
+        // The same lift the report's other interactive cards use, so a card
         // that reacts to the pointer reacts the way they already do.
         interactive && "text-left transition-transform duration-300",
         interactive && !disabled && "hover:scale-[1.01] hover:shadow-md active:scale-[0.99]",

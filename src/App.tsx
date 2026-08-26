@@ -46,7 +46,6 @@ function App() {
   // editor as "Editar", opened at the one panel the person asked for.
   const [builderInitialStep, setBuilderInitialStep] = React.useState<FixedBlockId>("general");
   const [resultsSurveyId, setResultsSurveyId] = React.useState<string | null>(null);
-  const [blankSurveysCreated, setBlankSurveysCreated] = React.useState(0);
   // Owned here rather than inside the table: the metric cards that set these
   // live above the tabs, outside the table's subtree.
   const [listFilters, setListFilters] = React.useState<SurveyListFilters>(NO_FILTERS);
@@ -180,7 +179,6 @@ function App() {
           <SurveyBuilder
             initialDraft={editingDraft}
             initialStep={builderInitialStep}
-            menuOrientation={!editingDraft && blankSurveysCreated === 1 ? "right" : "bottom"}
             onExit={handleBuilderExit}
             onDraftChange={handleDraftChange}
           />
@@ -228,7 +226,6 @@ function App() {
               <EncuestasDashboard
                 surveys={surveys}
                 onCreateBlank={() => {
-                  setBlankSurveysCreated((prev) => prev + 1);
                   setEditingDraft(undefined);
                   setBuilderInitialStep("general");
                   setView("builder");

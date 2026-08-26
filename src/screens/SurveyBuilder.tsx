@@ -3,21 +3,19 @@ import { TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { moveItemById } from "@/lib/reorder";
 import { useAutosave } from "@/hooks/useAutosave";
-import { useAnchorOffset } from "@/hooks/useAnchorOffset";
+import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
 
 import { createBlankSurveyDraft } from "@/mocks/surveyBuilderMocks";
 import { ShellHeaderSlot } from "@/components/app-shell";
 import type { TableSelectionActions } from "@/components/action-rail";
 import {
-  BuilderSideRail,
   BuilderIdentity,
   DemographicsEditor,
   GeneralDataEditor,
   PagesEditor,
   ParticipantsEditor,
   SectionsPanel,
-  BuilderRightPanel,
-  BuilderFooter,
+  BuilderSideRail,
   MINUTES_PER_QUESTION,
   REQUIRED_STEPS,
   STEPPER_ORDER,
@@ -32,8 +30,10 @@ import {
   duplicateQuestion,
   findQuestionOwner,
   findSection,
+  flattenSections,
   insertAfterSibling,
   isBranch,
+  isQuestionComplete,
   isStepComplete,
   isStepReachable,
   moveQuestionTo,
@@ -69,7 +69,6 @@ interface SurveyBuilderProps {
    * making the person walk there.
    */
   initialStep?: FixedBlockId;
-  menuOrientation?: "right" | "bottom";
   onExit: (draft?: SurveyDraft) => void;
   /**
    * Publishes the draft as it changes. Leaving the builder is the shell
@@ -100,7 +99,6 @@ const buildEmptySection = (title: string): SurveySection => ({
 export function SurveyBuilder({
   initialDraft,
   initialStep = "general",
-  menuOrientation = "bottom",
   onExit,
   onDraftChange,
 }: SurveyBuilderProps) {
@@ -212,20 +210,18 @@ export function SurveyBuilder({
   // question, a toggle — moves the indicator.
   const autosave = useAutosave(draft);
 
-  // The rail floats at the bottom normally, but the right sidebar uses the offset calculation
-  // to track the active row.
   const workspaceRef = React.useRef<HTMLDivElement>(null);
-  const railContainerRef = React.useRef<HTMLDivElement>(null);
-  const rightRailRef = React.useRef<HTMLDivElement>(null);
-  const railRef = React.useRef<HTMLDivElement>(null); // For the bottom rail
-  const isRailScrolling = false; // no longer needed for fixed bottom rail
-  
-  const { offset: rightRailOffset, isScrolling: isRightRailScrolling } = useAnchorOffset(
-    railContainerRef,
-    workspaceRef,
-    rightRailRef,
-    [draft.sections, selection]
-  );
+  const railRef = React.useRef<HTMLDivElement>(null);
+
+  // Bumped whenever validation opens a question the author didn't click on
+  // themselves, so the workspace scrolls it into view instead of leaving it
+  // open somewhere off-screen.
+  const [scrollToAnchorTick, setScrollToAnchorTick] = React.useState(0);
+  React.useEffect(() => {
+    if (scrollToAnchorTick === 0) return;
+    const anchor = workspaceRef.current?.querySelector<HTMLElement>(`[${ANCHOR_ATTRIBUTE}]`);
+    anchor?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [scrollToAnchorTick]);
 
   const questionCount = React.useMemo(() => countQuestions(draft.sections), [draft.sections]);
   // No questions yet genuinely means no time to estimate — the floor only
@@ -239,9 +235,38 @@ export function SurveyBuilder({
     [draft.sections]
   );
 
+  const allSectionsHaveQuestions = React.useMemo(() => {
+    if (draft.sections.length === 0) return true;
+    const checkSections = (sections: typeof draft.sections): boolean => {
+      for (const section of sections) {
+        if (section.questions.length === 0) {
+          return false;
+        }
+        if (section.children.length > 0) {
+          if (!checkSections(section.children)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    };
+    return checkSections(draft.sections);
+  }, [draft.sections]);
+
+  // A section "with a question" only counts once every question in the whole
+  // tree is actually answerable — blank wording, an unset scale, or empty
+  // options don't make a question anyone could take.
+  const allQuestionsComplete = React.useMemo(
+    () =>
+      flattenSections(draft.sections).every((entry) =>
+        entry.section.questions.every(isQuestionComplete)
+      ),
+    [draft.sections]
+  );
+
   const stepInput: StepperStatusInput = React.useMemo(
-    () => ({ draft, visitedSteps, hasSectionWithQuestion }),
-    [draft, visitedSteps, hasSectionWithQuestion]
+    () => ({ draft, visitedSteps, hasSectionWithQuestion, allSectionsHaveQuestions, allQuestionsComplete }),
+    [draft, visitedSteps, hasSectionWithQuestion, allSectionsHaveQuestions, allQuestionsComplete]
   );
 
   /**
@@ -294,6 +319,25 @@ export function SurveyBuilder({
   };
 
   /**
+   * Selects and opens the first question anywhere in the tree that is
+   * missing a required field, and asks the workspace to scroll it into view.
+   * Returns whether one was found, so callers can fall back to a different
+   * message when every question already qualifies.
+   */
+  const focusFirstIncompleteQuestion = (): boolean => {
+    for (const entry of flattenSections(draft.sections)) {
+      const question = entry.section.questions.find((item) => !isQuestionComplete(item));
+      if (question) {
+        selectSection(entry.section.id);
+        setEditingQuestionId(question.id);
+        setScrollToAnchorTick((tick) => tick + 1);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  /**
    * Surfaces why a locked step or action stayed locked. When the earliest
    * incomplete required step is "general", the blocker is a specific empty
    * field rather than an unvisited page — so this also flips on the inline
@@ -319,7 +363,11 @@ export function SurveyBuilder({
     }
     if (blockingStep === "sections") {
       setSectionsValidationTouched(true);
-      toast.error("Añade al menos una sección con preguntas para continuar.");
+      if (hasSectionWithQuestion && !allSectionsHaveQuestions) {
+        toast.error("Todas las secciones deben tener al menos una pregunta para continuar.");
+      } else {
+        toast.error("Añade al menos una sección con preguntas para continuar.");
+      }
       return;
     }
     toast.error("Completa los pasos anteriores para desbloquear este paso.");
@@ -790,6 +838,7 @@ export function SurveyBuilder({
     onConfirmDeleteSection: confirmDelete,
     onCancelDeleteSection: () => setPendingDeleteId(null),
     editingQuestionId,
+    showQuestionValidation: sectionsValidationTouched,
     onOpenQuestion: handleOpenQuestion,
     onQuestionChange: handleQuestionChange,
     onCloseQuestion: () => setEditingQuestionId(null),
@@ -875,6 +924,13 @@ export function SurveyBuilder({
           <div className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-2.5 text-[12px] font-medium text-destructive animate-in fade-in duration-200">
             <TriangleAlert className="h-4 w-4 shrink-0" strokeWidth={2.2} />
             Añade al menos una sección con preguntas para poder finalizar la encuesta.
+          </div>
+        )}
+
+        {sectionsValidationTouched && hasSectionWithQuestion && !allQuestionsComplete && (
+          <div className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-2.5 text-[12px] font-medium text-destructive animate-in fade-in duration-200">
+            <TriangleAlert className="h-4 w-4 shrink-0" strokeWidth={2.2} />
+            Completa los campos obligatorios de la pregunta señalada para poder continuar.
           </div>
         )}
 
@@ -976,14 +1032,22 @@ export function SurveyBuilder({
     if (hasFailing("pages")) setFixedValidationTouched(true);
 
     // Drop the author on the first incomplete step in menu order so the
-    // red marker lands right in front of them.
-    handleSelectStep(failing[0]);
+    // red marker lands right in front of them. Sections whose only problem is
+    // an unanswerable question drop straight onto that question instead of
+    // just the step's first section.
+    const sectionsHasIncompleteQuestion =
+      failing[0] === "sections" && hasSectionWithQuestion && focusFirstIncompleteQuestion();
+    if (!sectionsHasIncompleteQuestion) {
+      handleSelectStep(failing[0]);
+    }
 
     const label: Record<StepperStepId, string> = {
       general: "Completa el nombre, el tipo y las fechas de la encuesta",
       participants: "Selecciona al menos un participante para finalizar",
       demographics: "Activa al menos un dato demográfico o desactívala",
-      sections: "Añade al menos una sección con preguntas",
+      sections: sectionsHasIncompleteQuestion
+        ? "Completa los campos obligatorios de la pregunta señalada"
+        : "Añade al menos una sección con preguntas",
       pages: "Escribe el contenido de las páginas de encuesta activas",
     };
     toast.error(
@@ -1047,116 +1111,58 @@ export function SurveyBuilder({
             {renderMainPanel()}
           </div>
 
-          {/* The bottom action bar provides navigation and save actions on all steps, 
+          {/* The bottom action bar provides navigation and save actions on all steps,
               and contextual creation actions on specific steps. */}
-          {menuOrientation === "bottom" && (
-            <BuilderSideRail
-              ref={railRef}
-              offset={0}
-              isScrolling={isRailScrolling}
-              isSectionsStepActive={isSectionsStepActive}
-              isDemographicsStepActive={isDemographicsStepActive}
-              isPagesStepActive={activeStep === "pages"}
-              onAddSection={handleAddRootSection}
-              onAddSubsection={() => selectedSection && handleAddSubsection(selectedSection.id)}
-              onAddSiblingSubsection={() =>
-                selectedSection && handleAddSiblingSubsection(selectedSection.id)
+          <BuilderSideRail
+            ref={railRef}
+            offset={0}
+            isScrolling={false}
+            isSectionsStepActive={isSectionsStepActive}
+            isDemographicsStepActive={isDemographicsStepActive}
+            isPagesStepActive={activeStep === "pages"}
+            onAddSection={handleAddRootSection}
+            onAddSubsection={() => selectedSection && handleAddSubsection(selectedSection.id)}
+            onAddSiblingSubsection={() =>
+              selectedSection && handleAddSiblingSubsection(selectedSection.id)
+            }
+            onAddLevelTwoSubsection={() => {
+              if (selectedEntry && selectedEntry.parentId) {
+                handleAddSiblingSubsection(selectedEntry.parentId);
               }
-              onAddLevelTwoSubsection={() => {
-                if (selectedEntry && selectedEntry.parentId) {
-                  handleAddSiblingSubsection(selectedEntry.parentId);
-                }
-              }}
-              onAddQuestion={handleAddQuestion}
-              onOpenAnswerBank={() =>
-                toast.info("El banco de respuestas llega en el siguiente paso.")
-              }
-              onOpenQuestionBank={() => setIsQuestionBankOpen(true)}
-              onAddDemographic={handleAddCustomDemographic}
-              onImportSections={handleImportSections}
-              onPreview={handlePreview}
-              previewBlockedReason={
-                canPreview(draft) ? null : "Añade al menos una pregunta para ver la vista previa"
-              }
-              sectionCount={draft.sections.length}
-              questionCount={questionCount}
-              estimatedMinutes={estimatedMinutes}
-              participantsCount={participantsTotal}
-              demographicsCount={draft.demographics.fields.length}
-              addQuestionBlockedReason={addQuestionBlockedReason}
-              addSubsectionBlockedReason={addSubsectionBlockedReason}
-              addDemographicBlockedReason={addDemographicBlockedReason}
-              showAddSubsection={showAddSubsection}
-              selectedDepth={selectedEntry ? selectedEntry.depth : null}
-              onSave={() => toast.success("Encuesta guardada")}
-              onContinue={handleContinue}
-              canContinue={canContinue}
-              continueLabel={continueLabel}
-              continueDisabledReason={continueDisabledReason}
-              activeStep={activeStep}
-              participantsSelectionCount={participantsSelectionCount}
-              onClearParticipantsSelection={clearParticipantsSelection}
-              onDeleteParticipantsSelection={deleteParticipantsSelection}
-            />
-          )}
+            }}
+            onAddQuestion={handleAddQuestion}
+            onOpenAnswerBank={() =>
+              toast.info("El banco de respuestas llega en el siguiente paso.")
+            }
+            onOpenQuestionBank={() => setIsQuestionBankOpen(true)}
+            onAddDemographic={handleAddCustomDemographic}
+            onImportSections={handleImportSections}
+            onPreview={handlePreview}
+            previewBlockedReason={
+              canPreview(draft) ? null : "Añade al menos una pregunta para ver la vista previa"
+            }
+            sectionCount={draft.sections.length}
+            questionCount={questionCount}
+            estimatedMinutes={estimatedMinutes}
+            participantsCount={participantsTotal}
+            demographicsCount={draft.demographics.fields.length}
+            addQuestionBlockedReason={addQuestionBlockedReason}
+            addSubsectionBlockedReason={addSubsectionBlockedReason}
+            addDemographicBlockedReason={addDemographicBlockedReason}
+            showAddSubsection={showAddSubsection}
+            selectedDepth={selectedEntry ? selectedEntry.depth : null}
+            onSave={() => toast.success("Encuesta guardada")}
+            onContinue={handleContinue}
+            canContinue={canContinue}
+            continueLabel={continueLabel}
+            continueDisabledReason={continueDisabledReason}
+            activeStep={activeStep}
+            participantsSelectionCount={participantsSelectionCount}
+            onClearParticipantsSelection={clearParticipantsSelection}
+            onDeleteParticipantsSelection={deleteParticipantsSelection}
+          />
         </div>
-
-        {menuOrientation === "right" && activeStep !== "general" && activeStep !== "participants" && (
-          <div ref={railContainerRef} className="self-start h-full pb-8 z-40 relative">
-            <BuilderRightPanel
-              ref={rightRailRef}
-              offset={rightRailOffset}
-              isScrolling={isRightRailScrolling}
-              isSectionsStepActive={isSectionsStepActive}
-              isDemographicsStepActive={isDemographicsStepActive}
-              isPagesStepActive={activeStep === "pages"}
-              onAddSection={handleAddRootSection}
-              onAddSubsection={() => selectedSection && handleAddSubsection(selectedSection.id)}
-              onAddSiblingSubsection={() =>
-                selectedSection && handleAddSiblingSubsection(selectedSection.id)
-              }
-              onAddLevelTwoSubsection={() => {
-                if (selectedEntry && selectedEntry.parentId) {
-                  handleAddSiblingSubsection(selectedEntry.parentId);
-                }
-              }}
-              onAddQuestion={handleAddQuestion}
-              onOpenAnswerBank={() =>
-                toast.info("El banco de respuestas llega en el siguiente paso.")
-              }
-              onOpenQuestionBank={() => setIsQuestionBankOpen(true)}
-              onAddDemographic={handleAddCustomDemographic}
-              onImportSections={handleImportSections}
-              onPreview={handlePreview}
-              previewBlockedReason={
-                canPreview(draft) ? null : "Añade al menos una pregunta para ver la vista previa"
-              }
-              addQuestionBlockedReason={addQuestionBlockedReason}
-              addSubsectionBlockedReason={addSubsectionBlockedReason}
-              addDemographicBlockedReason={addDemographicBlockedReason}
-              showAddSubsection={showAddSubsection}
-              selectedDepth={selectedEntry ? selectedEntry.depth : null}
-              sectionCount={draft.sections.length}
-              questionCount={questionCount}
-              estimatedMinutes={estimatedMinutes}
-              participantsCount={participantsTotal}
-              demographicsCount={draft.demographics.fields.length}
-            />
-          </div>
-        )}
       </div>
-
-      {menuOrientation !== "bottom" && (
-        <BuilderFooter 
-          stepNumber={["general", "participants", "sections", "pages"].indexOf(activeStep as any) >= 0 ? ["general", "participants", "sections", "pages"].indexOf(activeStep as any) + 1 : null}
-          totalRequiredSteps={REQUIRED_STEPS}
-          canContinue={canContinue}
-          continueLabel={continueLabel}
-          continueDisabledReason={continueDisabledReason}
-          onSave={() => toast.success("Encuesta guardada")}
-          onContinue={handleContinue}
-        />
-      )}
 
       <SurveyPreviewDrawer draft={draft} open={isPreviewOpen} onOpenChange={setIsPreviewOpen} />
       <QuestionBankDrawer open={isQuestionBankOpen} onOpenChange={setIsQuestionBankOpen} onAddQuestions={handleAddBankQuestions} />

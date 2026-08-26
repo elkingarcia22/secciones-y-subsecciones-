@@ -6,11 +6,18 @@ import type { QuestionOption } from "./surveyBuilderTypes";
 
 interface QuestionOptionsEditorProps {
   options: readonly QuestionOption[];
+  /** True once the author has tried to leave the sections step with a blank
+   * option still in this list. */
+  showValidation?: boolean;
   onChange: (options: readonly QuestionOption[]) => void;
 }
 
 /** The answer options of a single-choice, multi-choice or dropdown question. */
-export function QuestionOptionsEditor({ options, onChange }: QuestionOptionsEditorProps) {
+export function QuestionOptionsEditor({
+  options,
+  showValidation = false,
+  onChange,
+}: QuestionOptionsEditorProps) {
   const canRemove = options.length > MIN_OPTIONS;
   const canAdd = options.length < MAX_OPTIONS;
 
@@ -27,7 +34,10 @@ export function QuestionOptionsEditor({ options, onChange }: QuestionOptionsEdit
       </p>
 
       <ul className="flex flex-col gap-2">
-        {options.map((option, index) => (
+        {options.map((option, index) => {
+          const isEmpty = option.label.trim() === "";
+          const showError = showValidation && isEmpty;
+          return (
           <li key={option.id} className="flex items-center gap-2.5">
             <span className="w-4 shrink-0 text-right text-[11px] font-semibold tabular-nums text-muted-foreground/70">
               {index + 1}
@@ -37,7 +47,12 @@ export function QuestionOptionsEditor({ options, onChange }: QuestionOptionsEdit
               onChange={(event) => updateLabel(option.id, event.target.value)}
               placeholder="Escribe una opción de respuesta"
               aria-label={`Opción de respuesta ${index + 1}`}
-              className="h-10 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-[13px] text-text-primary outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/70"
+              className={cn(
+                "h-10 min-w-0 flex-1 rounded-md border bg-surface px-3 text-[13px] text-text-primary outline-none transition-all focus:ring-2 placeholder:text-muted-foreground/70",
+                showError
+                  ? "border-destructive focus:border-destructive focus:ring-destructive/25"
+                  : "border-border focus:border-primary focus:ring-primary/25"
+              )}
             />
             <Tooltip>
               <TooltipTrigger asChild>
@@ -61,7 +76,8 @@ export function QuestionOptionsEditor({ options, onChange }: QuestionOptionsEdit
               </TooltipContent>
             </Tooltip>
           </li>
-        ))}
+          );
+        })}
       </ul>
 
       {canAdd && (

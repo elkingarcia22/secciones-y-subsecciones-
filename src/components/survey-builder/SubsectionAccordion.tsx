@@ -206,6 +206,7 @@ export function SubsectionAccordion({ entry, ...handlers }: SubsectionAccordionP
               sectionId={section.id}
               questions={section.questions}
               editingQuestionId={handlers.editingQuestionId}
+              showQuestionValidation={handlers.showQuestionValidation}
               onOpenQuestion={handlers.onOpenQuestion}
               onQuestionChange={handlers.onQuestionChange}
               onCloseQuestion={handlers.onCloseQuestion}

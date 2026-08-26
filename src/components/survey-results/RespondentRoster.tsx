@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check, Search, ShieldCheck, X } from "lucide-react";
+import { Check, Search, ShieldCheck } from "lucide-react";
 import { useResetOnChange } from "@/lib/useResetOnChange";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -7,15 +7,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/feedback";
 import type { Respondent } from "@/mocks/questionResponses";
 import { bandForScore, formatScore } from "./favorabilityScale";
-import {
-  matchesRosterFilters,
-  RosterFilterButton,
-  RosterFilterChips,
-  useRosterFacets,
-  useRosterScoreBands,
-  type RosterFacetKey,
-  type RosterFilters,
-} from "./RosterFilters";
+import { RosterFilterChips, type RosterFilterState } from "./RosterFilters";
 
 /** How many people the list shows before asking for more. */
 const PAGE_SIZE = 40;
@@ -27,7 +19,12 @@ interface RespondentRosterProps {
   /** Set when the reader arrived from an answer: only these people are listed. */
   drillIds: ReadonlySet<string> | null;
   drillLabel: string | null;
-  onClearDrill: () => void;
+  /**
+   * The narrowing, owned by the tab's toolbar. Only the chips and the count
+   * live here now — "Filtros" itself sits beside "Personalizar", where the
+   * report's other controls of that kind are.
+   */
+  filters: RosterFilterState;
 }
 
 /**
@@ -45,47 +42,16 @@ export function RespondentRoster({
   onSelect,
   drillIds,
   drillLabel,
-  onClearDrill,
+  filters,
 }: RespondentRosterProps) {
   const [query, setQuery] = React.useState("");
-  const [filters, setFilters] = React.useState<RosterFilters>({});
   const [limit, setLimit] = React.useState(PAGE_SIZE);
-
-  const facets = useRosterFacets(respondents);
-  const bands = useRosterScoreBands(respondents);
-
-  const applyFilter = React.useCallback((key: RosterFacetKey, value: string) => {
-    setFilters((current) => {
-      const rest = Object.fromEntries(
-        Object.entries(current).filter(([candidate]) => candidate !== key)
-      );
-      return value === "" ? rest : { ...rest, [key]: value };
-    });
-  }, []);
-
-  const removeFilter = React.useCallback(
-    (key: RosterFacetKey) => applyFilter(key, ""),
-    [applyFilter]
-  );
-
-  /** Bands add up rather than replace each other: the filter is a set. */
-  const toggleBand = React.useCallback((id: string) => {
-    setFilters((current) => {
-      const selected = current.bands ?? [];
-      const next = selected.includes(id)
-        ? selected.filter((candidate) => candidate !== id)
-        : [...selected, id];
-      return { ...current, bands: next.length > 0 ? next : undefined };
-    });
-  }, []);
-
-  const clearFilters = React.useCallback(() => setFilters({}), []);
 
   const visible = React.useMemo(() => {
     const needle = query.trim().toLowerCase();
     return respondents.filter((person) => {
       if (drillIds && !drillIds.has(person.id)) return false;
-      if (!matchesRosterFilters(person, filters)) return false;
+      if (!filters.matches(person)) return false;
       if (!needle) return true;
       return (
         person.name.toLowerCase().includes(needle) ||
@@ -97,43 +63,29 @@ export function RespondentRoster({
 
   // A new search, a new filter or a new drill-down starts from the top again.
   useResetOnChange(
-    `${query}|${JSON.stringify(filters)}|${drillLabel ?? ""}`,
+    `${query}|${filters.signature}|${drillLabel ?? ""}`,
     () => setLimit(PAGE_SIZE)
   );
 
   return (
     <div className="flex min-h-0 flex-col gap-3">
       <div className="flex flex-col gap-2.5">
-        <div className="flex items-center gap-2">
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar persona"
-              className="h-9 pl-9 text-[12.5px]"
-              aria-label="Buscar persona"
-            />
-          </div>
-          <RosterFilterButton
-            facets={facets}
-            bands={bands}
-            filters={filters}
-            onApply={applyFilter}
-            onToggleBand={toggleBand}
-            onClear={clearFilters}
+        {/* Search only: "Filtros" moved up to the toolbar, so the column keeps
+            just the field that belongs to this list and nothing else. */}
+        <div className="relative min-w-0">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Buscar persona"
+            className="h-9 pl-9 text-[12.5px]"
+            aria-label="Buscar persona"
           />
         </div>
 
-        {/* Drill label removed as per user request */}
-
-        <RosterFilterChips
-          facets={facets}
-          bands={bands}
-          filters={filters}
-          onRemove={removeFilter}
-          onToggleBand={toggleBand}
-        />
+        {/* The chips stay with the list: they say what is hiding rows here, and
+            the count right below them is what they are read against. */}
+        <RosterFilterChips state={filters} />
 
         <p className="text-[11px] font-medium text-muted-foreground tabular-nums">
           {visible.length} de {respondents.length} personas

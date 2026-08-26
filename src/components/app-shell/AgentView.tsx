@@ -25,7 +25,7 @@ export const AgentView: React.FC = () => {
           {firstName}!
         </h1>
 
-        <div className="rounded-3xl border border-border/70 bg-surface p-4 shadow-[var(--shadow-card)]">
+        <div className="rounded-3xl border border-border/70 bg-surface p-4 shadow-card">
           <textarea
             ref={inputRef}
             rows={2}
@@ -65,7 +65,7 @@ export const AgentView: React.FC = () => {
                 setPrompt(suggestion);
                 inputRef.current?.focus();
               }}
-              className="rounded-2xl border border-border/70 bg-surface p-4 text-left text-[13px] font-medium leading-snug text-text-secondary transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:text-text-primary hover:shadow-[var(--shadow-card)]"
+              className="rounded-2xl border border-border/70 bg-surface p-4 text-left text-[13px] font-medium leading-snug text-text-secondary transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:text-text-primary hover:shadow-card"
             >
               {suggestion}
             </button>

@@ -11,7 +11,12 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AI_GRADIENT,
@@ -23,6 +28,7 @@ import {
   type NavChild,
   type NavRoot,
 } from "./appShellData";
+import { SHELL_MENU_PANEL } from "./shellPanel";
 import type { ShellMode } from "./shellTypes";
 
 const GoogleMark: React.FC<{ className?: string }> = ({ className }) => (
@@ -248,103 +254,119 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   return (
     <aside
       className={cn(
-        "flex h-full shrink-0 flex-col rounded-2xl border border-border/60 bg-surface p-3 pt-4 shadow-[var(--shadow-card)] transition-[width,transform] duration-200",
+        "flex h-full shrink-0 flex-col rounded-2xl border border-border/60 bg-surface p-3 pt-4 shadow-card transition-[width,transform] duration-200",
         collapsed ? "w-16" : "w-60",
         // Mobile: the sidebar floats as a drawer above the content.
-        "max-lg:fixed max-lg:bottom-2 max-lg:left-2 max-lg:top-2 max-lg:z-50 max-lg:w-60 max-lg:shadow-[var(--shadow-drawer)]",
+        "max-lg:fixed max-lg:bottom-2 max-lg:left-2 max-lg:top-2 max-lg:z-50 max-lg:w-60 max-lg:shadow-drawer",
         mobileOpen ? "max-lg:translate-x-0" : "max-lg:-translate-x-[calc(100%+16px)]"
       )}
     >
       {/* ---------- Company identity ---------- */}
-      <div className={cn("mb-4 flex h-8 items-center", collapsed && "justify-center")}>
-        <Popover open={companyMenuOpen} onOpenChange={setCompanyMenuOpen}>
-          <PopoverTrigger asChild>
-            <button
-              className={cn(
-                "group flex h-8 w-full items-center gap-2 rounded-lg px-1 text-left",
-                collapsed && "w-auto justify-center px-0"
-              )}
-              title={activeCompany.name}
-            >
-              <CompanyMark company={activeCompany} />
-              {!collapsed && (
-                <>
+      <Popover open={companyMenuOpen} onOpenChange={setCompanyMenuOpen}>
+        {/* The whole identity row is the anchor — not the trigger — so the menu
+            hangs from the sidebar's left edge in both states instead of
+            jumping to wherever the "..." button happens to sit. */}
+        <PopoverAnchor asChild>
+          <div className={cn("mb-4 flex h-8 items-center gap-1", collapsed && "justify-center")}>
+            {collapsed ? (
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg"
+                  title={activeCompany.name}
+                  aria-label={`Menú de ${activeCompany.name}`}
+                >
+                  <CompanyMark company={activeCompany} />
+                </button>
+              </PopoverTrigger>
+            ) : (
+              <>
+                <div className="flex h-8 min-w-0 flex-1 items-center gap-2 px-1" title={activeCompany.name}>
+                  <CompanyMark company={activeCompany} />
                   <span className="min-w-0 flex-1 truncate text-base font-bold tracking-tight text-text-primary">
                     {activeCompany.name}
                   </span>
-                  <MoreHorizontal
-                    className={cn(
-                      "h-4 w-4 shrink-0 text-text-muted transition-colors group-hover:text-text-primary",
-                      companyMenuOpen && "text-text-primary"
-                    )}
-                  />
-                </>
-              )}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            align="start"
-            sideOffset={8}
-            className="w-[220px] rounded-2xl border-border/60 p-2 shadow-[var(--shadow-drawer)]"
-          >
-            <div className="flex flex-col py-0.5">
-              <div className="flex min-h-6 items-center justify-between gap-3 rounded-lg px-2 text-xs hover:bg-background">
-                <span className="font-medium text-text-muted">Licencias:</span>
-                <span className="font-semibold tabular-nums text-text-primary">
-                  {numberFormat.format(activeCompany.licenses[0])}/{numberFormat.format(activeCompany.licenses[1])}
-                </span>
-              </div>
-              <div className="flex min-h-6 items-center justify-between gap-3 rounded-lg px-2 text-xs hover:bg-background">
-                <span className="font-medium text-text-muted">Créditos:</span>
-                <span className="font-semibold tabular-nums text-text-primary">
-                  {numberFormat.format(activeCompany.credits[0])}/{numberFormat.format(activeCompany.credits[1])}
-                </span>
-              </div>
-            </div>
-            <div className="-mx-2 my-2 h-px bg-border/60" />
-            <div className="px-2 pb-1.5 pt-1 text-xs font-medium text-text-muted">Configuración</div>
-            {COMPANY_MENU_LINKS.map((label) => (
-              <button
-                key={label}
-                onClick={() => setCompanyMenuOpen(false)}
-                className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-background hover:text-text-primary"
-              >
-                {label}
-              </button>
-            ))}
-            <div className="-mx-2 my-2 h-px bg-border/60" />
-            <div className="px-2 pb-1.5 pt-1 text-xs font-medium text-text-muted">Empresas</div>
-            <div className="flex flex-col gap-0.5">
-              {COMPANIES.map((company) => {
-                const isActive = company.id === activeCompanyId;
-                return (
+                </div>
+                {/* Trigger scoped to the "..." button, not the whole row, so
+                    the row itself stays a plain label rather than a control. */}
+                <PopoverTrigger asChild>
                   <button
-                    key={company.id}
-                    onClick={() => {
-                      setActiveCompanyId(company.id);
-                      setCompanyMenuOpen(false);
-                    }}
+                    type="button"
+                    aria-label="Más opciones de la empresa"
                     className={cn(
-                      "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-background",
-                      isActive && "font-semibold text-text-primary"
+                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-background hover:text-text-primary",
+                      companyMenuOpen && "bg-background text-text-primary"
                     )}
                   >
-                    <CompanyMark company={company} size="sm" />
-                    <span className="min-w-0 flex-1 truncate">{company.name}</span>
-                    {isActive && <Check className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.5} />}
+                    <MoreHorizontal className="h-4 w-4" />
                   </button>
-                );
-              })}
+                </PopoverTrigger>
+              </>
+            )}
+          </div>
+        </PopoverAnchor>
+        <PopoverContent
+          align="start"
+          sideOffset={8}
+          className={cn("w-[248px]", SHELL_MENU_PANEL)}
+        >
+          <div className="flex flex-col py-0.5">
+            <div className="flex min-h-6 items-center justify-between gap-3 rounded-lg px-2 text-xs hover:bg-background">
+              <span className="font-medium text-text-muted">Licencias:</span>
+              <span className="font-semibold tabular-nums text-text-primary">
+                {numberFormat.format(activeCompany.licenses[0])}/{numberFormat.format(activeCompany.licenses[1])}
+              </span>
             </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+            <div className="flex min-h-6 items-center justify-between gap-3 rounded-lg px-2 text-xs hover:bg-background">
+              <span className="font-medium text-text-muted">Créditos:</span>
+              <span className="font-semibold tabular-nums text-text-primary">
+                {numberFormat.format(activeCompany.credits[0])}/{numberFormat.format(activeCompany.credits[1])}
+              </span>
+            </div>
+          </div>
+          <div className="-mx-2 my-2 h-px bg-border/60" />
+          <div className="px-2 pb-1.5 pt-1 text-xs font-medium text-text-muted">Configuración</div>
+          {COMPANY_MENU_LINKS.map((label) => (
+            <button
+              key={label}
+              onClick={() => setCompanyMenuOpen(false)}
+              className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-background hover:text-text-primary"
+            >
+              {label}
+            </button>
+          ))}
+          <div className="-mx-2 my-2 h-px bg-border/60" />
+          <div className="px-2 pb-1.5 pt-1 text-xs font-medium text-text-muted">Empresas</div>
+          <div className="flex flex-col gap-0.5">
+            {COMPANIES.map((company) => {
+              const isActive = company.id === activeCompanyId;
+              return (
+                <button
+                  key={company.id}
+                  onClick={() => {
+                    setActiveCompanyId(company.id);
+                    setCompanyMenuOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-background",
+                    isActive && "font-semibold text-text-primary"
+                  )}
+                >
+                  <CompanyMark company={company} size="sm" />
+                  <span className="min-w-0 flex-1 truncate">{company.name}</span>
+                  {isActive && <Check className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.5} />}
+                </button>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
 
       {/* ---------- Workspace / Agente IA segmented ---------- */}
       {!collapsed && (
         <div className="relative mb-4 flex shrink-0 rounded-[10px] bg-background p-1">
           <span
-            className="absolute bottom-1 left-1 top-1 z-0 w-[calc(50%-4px)] rounded-lg bg-surface shadow-[var(--shadow-card)] transition-transform duration-300 ease-[cubic-bezier(.34,1.4,.5,1)]"
+            className="absolute bottom-1 left-1 top-1 z-0 w-[calc(50%-4px)] rounded-lg bg-surface shadow-card transition-transform duration-300 ease-[cubic-bezier(.34,1.4,.5,1)]"
             style={{ transform: mode === "agent" ? "translateX(100%)" : "translateX(0)" }}
           />
           <span

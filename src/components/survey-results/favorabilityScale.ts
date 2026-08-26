@@ -195,7 +195,7 @@ export const THREE_TIER_FAVORABILITY_LEGEND: readonly ScaleLegendItem[] = [
  *
  * That view never shows the five 1–5 bands: its legend, its KPI cards and its
  * breakdown dots all speak Favorables / Neutrales / Desfavorables (+ NS/NR).
- * So "Vista" there has to offer the same four buckets — offering five bands a
+ * So "Personalizar" there has to offer the same four buckets — offering five bands a
  * reader cannot see anywhere on the screen is what made the control read as
  * broken. The heatmap keeps `FAVORABILITY_BANDS`, since its cells are colored
  * by that finer scale.

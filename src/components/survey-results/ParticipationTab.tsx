@@ -54,9 +54,6 @@ interface ParticipationTabProps {
   onSelectionChange: (ids: ReadonlySet<string>) => void;
 }
 
-/** Below this, a group needs a nudge rather than a report. */
-const PARTICIPATION_TARGET = 70;
-
 /** Matches the directory pager in the participants step. */
 const PAGE_SIZES = [10, 25, 50] as const;
 
@@ -292,7 +289,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-6 p-6 sm:p-8">
+      <div className="flex flex-col gap-6 py-6 sm:py-8">
         {/* Métricas de participación — mismas tarjetas que las de favorabilidad */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           <MiniMetricCard
@@ -688,9 +685,6 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
 
 function GroupRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSelected: boolean; onToggle: () => void }) {
   const missing = row.invited - row.completed - row.inProgress;
-  // A group that hasn't started reads as neutral, not urgent — the warning
-  // color is for a group falling behind, not one that is simply at zero yet.
-  const isLow = row.rate > 0 && row.rate < PARTICIPATION_TARGET;
   const animatedRate = useAnimatedValue(row.rate, 1000);
 
   return (
@@ -748,13 +742,8 @@ function GroupRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSele
       </TableCell>
       <TableCell className="w-[220px] py-3 pr-6">
         <div className="flex items-center justify-end gap-3">
-          <Progress value={animatedRate} color={isLow ? "warning" : "primary"} className="h-1.5 w-32 shrink-0 [&>div]:transition-none" />
-          <span
-            className={cn(
-              "min-w-[44px] text-right text-[12px] tabular-nums text-text-secondary",
-              isLow ? "text-status-warning font-semibold" : ""
-            )}
-          >
+          <Progress value={animatedRate} color="primary" className="h-1.5 w-32 shrink-0 [&>div]:transition-none" />
+          <span className="min-w-[44px] text-right text-[12px] tabular-nums text-text-secondary">
             {formatPercent(animatedRate)}
           </span>
         </div>

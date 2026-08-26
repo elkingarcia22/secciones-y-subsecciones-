@@ -1,5 +1,19 @@
 import { participantCount } from "./participants";
-import type { SurveyDraft } from "./surveyBuilderTypes";
+import type { SurveyDraft, SurveySection } from "./surveyBuilderTypes";
+
+function hasQuestionsInAllSections(sections: readonly SurveySection[]): boolean {
+  for (const section of sections) {
+    if (section.questions.length === 0) {
+      return false;
+    }
+    if (section.children.length > 0) {
+      if (!hasQuestionsInAllSections(section.children)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
 
 /**
  * Survey builder stepper — the left panel as a sequence of steps.
@@ -65,6 +79,10 @@ export interface StepperStatusInput {
   visitedSteps: ReadonlySet<StepperStepId>;
   /** At least one section with at least one question, across the whole tree. */
   hasSectionWithQuestion: boolean;
+  /** Every section has at least one question (no empty sections). */
+  allSectionsHaveQuestions: boolean;
+  /** Every question across the whole tree has its required fields filled in. */
+  allQuestionsComplete: boolean;
 }
 
 export type StepState = "complete" | "active" | "locked" | "available";
@@ -78,7 +96,7 @@ export type StepState = "complete" | "active" | "locked" | "available";
  */
 export function isStepComplete(
   step: StepperStepId,
-  { draft, visitedSteps, hasSectionWithQuestion }: StepperStatusInput
+  { draft, visitedSteps, hasSectionWithQuestion, allSectionsHaveQuestions, allQuestionsComplete }: StepperStatusInput
 ): boolean {
   switch (step) {
     case "general":
@@ -98,7 +116,7 @@ export function isStepComplete(
         (!draft.demographics.enabled || draft.demographics.fields.length > 0)
       );
     case "sections":
-      return hasSectionWithQuestion;
+      return hasSectionWithQuestion && allSectionsHaveQuestions && allQuestionsComplete;
     // Participants has content of its own now, so it is judged on that content
     // rather than on having been opened: a survey with nobody to answer it
     // isn't a step anyone finished.

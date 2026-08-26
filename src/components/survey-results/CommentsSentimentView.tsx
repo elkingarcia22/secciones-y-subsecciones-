@@ -43,13 +43,19 @@ interface CommentsSentimentViewProps {
   overrides: ReadonlyMap<string, Sentiment>;
   /** Search and filters, owned by the toolbar up in the header row. */
   filters: CommentFiltersState;
-  /** Levels still showing their totals, straight from "Vista". */
+  /** Levels still showing their totals, straight from "Personalizar". */
   visibleLevels: ReadonlySet<ResultLevel>;
   onOverride: (commentId: string, sentiment: Sentiment) => void;
   onResetOverride: (commentId: string) => void;
   /** Set when the reader jumped here from one open question. */
   focusQuestionId: string | null;
   onClearFocus: () => void;
+  /**
+   * Whether "Filtrar a fondo" is narrowing the population. It only changes what
+   * an empty list is allowed to claim: with a filter on, no comments means the
+   * filter left none, not that the survey never asked an open question.
+   */
+  populationFiltered?: boolean;
 }
 
 /**
@@ -77,6 +83,7 @@ export function CommentsSentimentView({
   onResetOverride,
   focusQuestionId,
   onClearFocus,
+  populationFiltered = false,
 }: CommentsSentimentViewProps) {
   const scoped = React.useMemo(
     () => scopeToQuestion(comments, focusQuestionId),
@@ -120,7 +127,13 @@ export function CommentsSentimentView({
   const firstBranch = React.useMemo(() => defaultOpenBranch(outline), [outline]);
 
   if (comments.length === 0) {
-    return (
+    return populationFiltered ? (
+      <EmptyState
+        icon={Search}
+        title="Sin comentarios en esta población"
+        description="Nadie de los grupos que dejaste en el filtro escribió una respuesta abierta. Quita o cambia el filtro para volver a verlas."
+      />
+    ) : (
       <EmptyState
         icon={MessageSquareQuote}
         title="Esta encuesta no tiene preguntas abiertas"
@@ -207,7 +220,7 @@ function HiddenValue() {
   return (
     <span
       className="inline-flex h-5 items-center px-1.5 text-[12px] font-medium leading-none text-muted-foreground/40"
-      title="Total oculto: este nivel está desmarcado en Vista"
+      title="Total oculto: este nivel está desmarcado en Personalizar"
     >
       —
     </span>

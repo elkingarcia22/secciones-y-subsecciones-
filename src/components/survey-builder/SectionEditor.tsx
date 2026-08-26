@@ -201,6 +201,7 @@ export function SectionEditor({
                   sectionId={section.id}
                   questions={section.questions}
                   editingQuestionId={handlers.editingQuestionId}
+                  showQuestionValidation={handlers.showQuestionValidation}
                   onOpenQuestion={handlers.onOpenQuestion}
                   onQuestionChange={handlers.onQuestionChange}
                   onCloseQuestion={handlers.onCloseQuestion}

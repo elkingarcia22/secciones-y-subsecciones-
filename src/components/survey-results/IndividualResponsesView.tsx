@@ -13,6 +13,7 @@ import {
 } from "@/mocks/questionResponses";
 import type { SectionResult } from "@/mocks/surveyResults";
 import { RespondentRoster } from "./RespondentRoster";
+import type { RosterFilterState } from "./RosterFilters";
 import { RespondentSheet } from "./RespondentSheet";
 
 /** A jump from an answer tally: "the 128 people who answered 4 here". */
@@ -30,7 +31,8 @@ interface IndividualResponsesViewProps {
   comments: readonly OpenComment[];
   sentimentOverrides: ReadonlyMap<string, Sentiment>;
   drill: AnswerDrillDown | null;
-  onClearDrill: () => void;
+  /** Narrowing the roster, owned by the tab's toolbar. */
+  rosterFilters: RosterFilterState;
   anonymous: boolean;
   highlightBands?: ReadonlySet<string>;
   hasHiddenBands?: boolean;
@@ -56,7 +58,7 @@ export function IndividualResponsesView({
   comments,
   sentimentOverrides,
   drill,
-  onClearDrill,
+  rosterFilters,
   anonymous,
   highlightBands,
   hasHiddenBands,
@@ -126,7 +128,7 @@ export function IndividualResponsesView({
             onSelect={setSelectedId}
             drillIds={drillIds}
             drillLabel={drillLabel}
-            onClearDrill={onClearDrill}
+            filters={rosterFilters}
           />
         </aside>
 

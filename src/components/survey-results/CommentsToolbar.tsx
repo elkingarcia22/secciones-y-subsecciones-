@@ -17,6 +17,7 @@ import {
   type OpenComment,
   type Sentiment,
 } from "@/mocks/questionResponses";
+import type { SegmentDefinition, SegmentFilter } from "@/mocks/surveyResults";
 import { ScaleToggle } from "./ScaleToggle";
 import { SENTIMENT_ORDER, SENTIMENT_STYLES } from "./sentimentScale";
 
@@ -44,7 +45,7 @@ export interface CommentFiltersState {
  * The comment filters, owned by the header row rather than by the list.
  *
  * The view they narrow is rendered further down the page, so the state lives
- * with the toolbar's owner and travels to both — the same way "Vista" and
+ * with the toolbar's owner and travels to both — the same way "Personalizar" and
  * "Filtros" are held above the tree they act on.
  */
 export function useCommentFilters(): CommentFiltersState {
@@ -195,6 +196,20 @@ export function CommentsSearchBox({
 }
 
 /**
+ * The demographic narrowing the comments share with the rest of the tab.
+ *
+ * It is `useResultsFilters`' own state, passed through rather than copied: the
+ * sections and the comments of one tab must never disagree about who is in
+ * view.
+ */
+export interface CommentSegmentFilters {
+  segments: readonly SegmentDefinition[];
+  filters: readonly SegmentFilter[];
+  onApplyFilter: (key: string, optionId: string) => void;
+  onClearFilters: () => void;
+}
+
+/**
  * "Filtros" for the comments, in the shape Favorabilidad already gives it.
  *
  * Theme, sentiment and the corrections check used to be a string of chips
@@ -207,12 +222,29 @@ export function CommentsFiltersButton({
   filters,
   topics,
   counts,
+  segmentFilters,
 }: {
   filters: CommentFiltersState;
   topics: readonly string[];
   counts: CommentFilterCounts;
+  /**
+   * The demographic narrowing, when the reading has demographics to narrow by.
+   * It is the same "Filtrar a fondo" the sections view carries — a comment is
+   * written by a person in an área and a país just like an answer is, so the
+   * two views narrow through the same control instead of one of them sending
+   * the reader back to another tab to do it.
+   */
+  segmentFilters?: CommentSegmentFilters;
 }) {
   const [open, setOpen] = React.useState(false);
+
+  const deepCount = segmentFilters?.filters.length ?? 0;
+  const activeCount = filters.activeCount + deepCount;
+
+  const clearAll = () => {
+    filters.clear();
+    segmentFilters?.onClearFilters();
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -224,14 +256,17 @@ export function CommentsFiltersButton({
         >
           <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.2} />
           Filtros
-          {filters.activeCount > 0 && (
+          {activeCount > 0 && (
             <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[10.5px]">
-              {filters.activeCount}
+              {activeCount}
             </Badge>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[300px] p-0">
+      <PopoverContent
+        align="end"
+        className="w-[300px] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-0"
+      >
         <div className="flex flex-col gap-3 p-3">
           <div className="flex flex-col gap-0.5">
             <PopoverTitle className="text-[13px]">Filtrar comentarios</PopoverTitle>
@@ -305,11 +340,59 @@ export function CommentsFiltersButton({
             />
           </div>
 
-          {filters.activeCount > 0 && (
+          {segmentFilters && segmentFilters.segments.length > 0 && (
+            <div className="flex flex-col gap-3 border-t border-border/30 pt-3">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[12.5px] font-semibold text-text-primary">
+                  Filtrar a fondo
+                </span>
+                <span className="text-[12px] leading-relaxed text-muted-foreground">
+                  Deja solo los comentarios de ciertos valores de un demográfico.
+                </span>
+              </div>
+              {segmentFilters.segments.map((candidate) => {
+                const activeFilter = segmentFilters.filters.find(
+                  (filter) => filter.key === candidate.key
+                );
+                return (
+                  <div key={candidate.key} className="flex items-center gap-2.5">
+                    <span className="w-[85px] shrink-0 truncate text-[12.5px] font-medium text-text-secondary">
+                      {candidate.label}
+                    </span>
+                    <Select
+                      value={activeFilter?.optionId ?? ""}
+                      onValueChange={(value) =>
+                        segmentFilters.onApplyFilter(candidate.key, value)
+                      }
+                    >
+                      <SelectTrigger
+                        aria-label={`Filtrar los comentarios por ${candidate.label}`}
+                        className="h-8 flex-1 rounded-md border-transparent bg-muted/40 px-2.5 text-[12.5px] hover:bg-muted/60 focus:ring-1 focus:ring-primary/20"
+                      >
+                        <SelectValue placeholder="Sin filtrar" className="text-muted-foreground" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        <SelectItem value="" className="text-[12.5px]">
+                          Sin filtrar
+                        </SelectItem>
+                        {candidate.options.map((option) => (
+                          <SelectItem key={option.id} value={option.id} className="text-[12.5px]">
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {activeCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={filters.clear}
+              onClick={clearAll}
               className="justify-start rounded-none border-t border-border/30 px-0 pb-1 pt-3 text-[12px] text-primary hover:bg-transparent hover:underline"
             >
               Quitar filtros

@@ -10,6 +10,10 @@ import type { SurveyQuestion, SurveySection } from "./surveyBuilderTypes";
 export interface QuestionListHandlers {
   /** The single question currently open in edit mode, anywhere in the survey. */
   editingQuestionId: string | null;
+  /** True once the author has tried to leave the sections step with an
+   * incomplete question still open — flips on its missing-field highlighting
+   * rather than showing errors on a form nobody has tried to submit yet. */
+  showQuestionValidation: boolean;
   onOpenQuestion: (questionId: string) => void;
   /** Every edit lands straight in the survey — there is no draft to save. */
   onQuestionChange: (sectionId: string, question: SurveyQuestion) => void;
@@ -44,6 +48,7 @@ export function SectionQuestions({
   sectionId,
   questions,
   editingQuestionId,
+  showQuestionValidation,
   onOpenQuestion,
   onQuestionChange,
   onCloseQuestion,
@@ -108,6 +113,7 @@ export function SectionQuestions({
           <QuestionEditor
             question={questions[editingIndex]}
             index={editingIndex}
+            showValidation={showQuestionValidation}
             onChange={(question) => onQuestionChange(sectionId, question)}
             onClose={onCloseQuestion}
             onDuplicate={() => onDuplicateQuestion(questions[editingIndex].id)}

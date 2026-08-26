@@ -39,6 +39,10 @@ interface QuestionEditorProps {
   /** The question as it stands in the survey right now. */
   question: SurveyQuestion;
   index: number;
+  /** True once the author has tried to leave the sections step with this
+   * question still incomplete — flips on the missing-field highlighting
+   * rather than greeting a blank form with errors. */
+  showValidation?: boolean;
   /** Every change writes straight to the survey — there is no draft to save. */
   onChange: (question: SurveyQuestion) => void;
   /** Click outside (or Escape) closes the editor; anything typed is already committed. */
@@ -46,6 +50,8 @@ interface QuestionEditorProps {
   onDuplicate: () => void;
   onRemove: () => void;
 }
+
+const REQUIRED_FIELD_HINT = "Este campo es obligatorio";
 
 /**
  * The expanded form for one question. Which fields appear is driven entirely by
@@ -59,6 +65,7 @@ interface QuestionEditorProps {
 export function QuestionEditor({
   question,
   index,
+  showValidation = false,
   onChange,
   onClose,
   onDuplicate,
@@ -80,6 +87,9 @@ export function QuestionEditor({
     patchScale({ followUps: { ...scale.followUps, ...patch } });
 
   const showFollowUps = isScale && supportsFollowUps(scale.kind) && scale.followUpEnabled;
+
+  const statementError =
+    showValidation && question.statement.trim() === "" ? REQUIRED_FIELD_HINT : undefined;
 
   // A long form pushes the footer below the fold, so the removal prompt can be
   // raised by a click the author can't see the answer to. Bring it to them.
@@ -167,14 +177,19 @@ export function QuestionEditor({
       </div>
 
       {/* Statement */}
-      <Field label="Pregunta o enunciado">
+      <Field label="Pregunta o enunciado" error={statementError}>
         <textarea
           value={question.statement}
           onChange={(event) => onChange({ ...question, statement: event.target.value })}
           placeholder="Escribe aquí la pregunta o enunciado"
           aria-label="Pregunta o enunciado"
           rows={2}
-          className="w-full resize-y rounded-md border border-border bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-text-primary outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/70"
+          className={cn(
+            "w-full resize-y rounded-md border bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-text-primary outline-none transition-all focus:ring-2 placeholder:text-muted-foreground/70",
+            statementError
+              ? "border-destructive focus:border-destructive focus:ring-destructive/25"
+              : "border-border focus:border-primary focus:ring-primary/25"
+          )}
         />
       </Field>
 
@@ -202,6 +217,7 @@ export function QuestionEditor({
       {hasOptions(question.type) && (
         <QuestionOptionsEditor
           options={question.options}
+          showValidation={showValidation}
           onChange={(options) => onChange({ ...question, options })}
         />
       )}
@@ -314,11 +330,20 @@ export function QuestionEditor({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
       <span className="text-[11.5px] font-semibold text-text-secondary">{label}</span>
       {children}
+      {error && <span className="text-[11.5px] text-destructive">{error}</span>}
     </label>
   );
 }

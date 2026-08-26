@@ -179,25 +179,85 @@ export function matchesRosterFilters(person: Respondent, filters: RosterFilters)
 export const countRosterFilters = (filters: RosterFilters): number =>
   FACET_LABELS.filter((facet) => Boolean(filters[facet.key])).length + (filters.bands?.length ?? 0);
 
-interface RosterFilterButtonProps {
+/**
+ * Everything that narrows the roster, as one piece of state.
+ *
+ * It lives above the roster rather than inside it: the trigger sits in the
+ * tab's toolbar next to "Personalizar", beside the other controls of its kind,
+ * while the list it narrows is a pane further down the page. Both read the same
+ * object, so the count beside the search and the badge on the toolbar can never
+ * disagree.
+ */
+export interface RosterFilterState {
+  filters: RosterFilters;
   facets: readonly RosterFacet[];
   bands: readonly RosterScoreBand[];
-  filters: RosterFilters;
-  onApply: (key: RosterFacetKey, value: string) => void;
-  onToggleBand: (id: string) => void;
-  onClear: () => void;
+  activeCount: number;
+  applyFilter: (key: RosterFacetKey, value: string) => void;
+  removeFilter: (key: RosterFacetKey) => void;
+  toggleBand: (id: string) => void;
+  clear: () => void;
+  /** Whether one person survives what is currently set. */
+  matches: (person: Respondent) => boolean;
+  /** Changes whenever the narrowing does — for resetting a paged list. */
+  signature: string;
 }
 
-export function RosterFilterButton({
-  facets,
-  bands,
-  filters,
-  onApply,
-  onToggleBand,
-  onClear,
-}: RosterFilterButtonProps) {
+export function useRosterFilters(respondents: readonly Respondent[]): RosterFilterState {
+  const [filters, setFilters] = React.useState<RosterFilters>({});
+
+  const facets = useRosterFacets(respondents);
+  const bands = useRosterScoreBands(respondents);
+
+  const applyFilter = React.useCallback((key: RosterFacetKey, value: string) => {
+    setFilters((current) => {
+      const rest = Object.fromEntries(
+        Object.entries(current).filter(([candidate]) => candidate !== key)
+      );
+      return value === "" ? rest : { ...rest, [key]: value };
+    });
+  }, []);
+
+  const removeFilter = React.useCallback(
+    (key: RosterFacetKey) => applyFilter(key, ""),
+    [applyFilter]
+  );
+
+  /** Bands add up rather than replace each other: the filter is a set. */
+  const toggleBand = React.useCallback((id: string) => {
+    setFilters((current) => {
+      const selected = current.bands ?? [];
+      const next = selected.includes(id)
+        ? selected.filter((candidate) => candidate !== id)
+        : [...selected, id];
+      return { ...current, bands: next.length > 0 ? next : undefined };
+    });
+  }, []);
+
+  const clear = React.useCallback(() => setFilters({}), []);
+
+  const matches = React.useCallback(
+    (person: Respondent) => matchesRosterFilters(person, filters),
+    [filters]
+  );
+
+  return {
+    filters,
+    facets,
+    bands,
+    activeCount: countRosterFilters(filters),
+    applyFilter,
+    removeFilter,
+    toggleBand,
+    clear,
+    matches,
+    signature: JSON.stringify(filters),
+  };
+}
+
+export function RosterFilterButton({ state }: { state: RosterFilterState }) {
+  const { facets, bands, filters, activeCount, applyFilter: onApply, toggleBand: onToggleBand, clear: onClear } = state;
   const [open, setOpen] = React.useState(false);
-  const activeCount = countRosterFilters(filters);
   const selectedBands = filters.bands ?? [];
 
   // One band in the whole roster narrows nothing, the same rule the facets follow.
@@ -298,19 +358,8 @@ export function RosterFilterButton({
 }
 
 /** The active filters as removable chips, so what is narrowing stays visible. */
-export function RosterFilterChips({
-  facets,
-  bands,
-  filters,
-  onRemove,
-  onToggleBand,
-}: {
-  facets: readonly RosterFacet[];
-  bands: readonly RosterScoreBand[];
-  filters: RosterFilters;
-  onRemove: (key: RosterFacetKey) => void;
-  onToggleBand: (id: string) => void;
-}) {
+export function RosterFilterChips({ state }: { state: RosterFilterState }) {
+  const { facets, bands, filters, removeFilter: onRemove, toggleBand: onToggleBand } = state;
   const activeFacets = facets.filter((facet) => Boolean(filters[facet.key]));
   const activeBands = bands.filter((band) => (filters.bands ?? []).includes(band.id));
   if (activeFacets.length === 0 && activeBands.length === 0) return null;

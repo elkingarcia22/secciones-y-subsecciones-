@@ -32,13 +32,15 @@ import {
   commentTopics,
   useCommentFilters,
 } from "./CommentsToolbar";
-import { PARTICIPANT_SCORE_LEGEND, tierForScore } from "./favorabilityScale";
+import { PARTICIPANT_SCORE_LEGEND } from "./favorabilityScale";
 import { IndividualResponsesView, type AnswerDrillDown } from "./IndividualResponsesView";
 import { MeasurementScaleButton } from "./MeasurementScaleButton";
 import { MiniMetricCard, AnimatedNumber } from "./MiniMetricCard";
 import { QuestionBreakdownView } from "./QuestionBreakdownView";
 import { QuestionViewSwitch, type QuestionView } from "./QuestionViewSwitch";
 import { ResultsFilterChips, ResultsFilterControls, THREE_TIER_HIGHLIGHT } from "./ResultsFilterToolbar";
+import { RosterFilterButton, useRosterFilters } from "./RosterFilters";
+import { COMMENT_FILTER_KEYS, commentMatchesFilters } from "./summaryModel";
 import {
   SENTIMENT_NEGATIVE_CEILING,
   SENTIMENT_POSITIVE_FLOOR,
@@ -114,26 +116,48 @@ export function QuestionDetailTab({
     () => buildAnswerMatrix(respondents, breakdowns),
     [respondents, breakdowns]
   );
+
+  // "Por persona" narrows through the toolbar like every other view: the state
+  // lives here so its trigger can sit beside "Personalizar" instead of inside
+  // the roster pane, while the chips and the count stay next to the list.
+  const rosterFilters = useRosterFilters(respondents);
   const comments = React.useMemo(
     () => buildOpenComments(draft, { ...results, sections }, respondents),
     [draft, results, sections, respondents]
   );
 
-  const topics = React.useMemo(() => commentTopics(comments), [comments]);
+  // "Filtrar a fondo" narrows who is in view, and a comment carries the same
+  // demographics an answer does — so the same filter that reshapes the sections
+  // reshapes the comment list, its counts and its KPIs. An anonymous survey
+  // strips the demographics, and there `commentMatchesFilters` keeps the
+  // comment rather than inventing a group for it.
+  const scopedComments = React.useMemo(
+    () => comments.filter((comment) => commentMatchesFilters(comment, filtersState.filters, segments)),
+    [comments, filtersState.filters, segments]
+  );
+
+  // Only the demographics a comment carries are offered: the rest would look
+  // like a filter and behave like nothing.
+  const commentSegments = React.useMemo(
+    () => segments.filter((candidate) => COMMENT_FILTER_KEYS.includes(candidate.key)),
+    [segments]
+  );
+
+  const topics = React.useMemo(() => commentTopics(scopedComments), [scopedComments]);
 
   // The counts the filter popover shows are of the comments actually in play —
   // one question's when the reader arrived from it, all of them otherwise.
   const commentCounts = React.useMemo(
-    () => commentFilterCounts(scopeToQuestion(comments, focusQuestionId), overrides),
-    [comments, focusQuestionId, overrides]
+    () => commentFilterCounts(scopeToQuestion(scopedComments, focusQuestionId), overrides),
+    [scopedComments, focusQuestionId, overrides]
   );
 
   // The KPI reads the corrections rather than counting them: a label the reader
   // fixed should move the average, which is the only reason correcting one is
   // worth the click.
   const sentiment = React.useMemo(
-    () => sentimentAverage(sentimentTotals(comments, overrides)),
-    [comments, overrides]
+    () => sentimentAverage(sentimentTotals(scopedComments, overrides)),
+    [scopedComments, overrides]
   );
 
   const totals = React.useMemo(() => {
@@ -170,7 +194,7 @@ export function QuestionDetailTab({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="grid shrink-0 grid-cols-2 gap-3 px-6 pt-6 sm:grid-cols-3 sm:px-8 sm:pt-8 lg:grid-cols-5">
+      <div className="grid shrink-0 grid-cols-2 gap-3 pt-6 sm:grid-cols-3 sm:pt-8 lg:grid-cols-5">
         <MiniMetricCard
           icon={ListChecks}
           label="Preguntas"
@@ -189,14 +213,14 @@ export function QuestionDetailTab({
         <MiniMetricCard
           icon={MessageSquareQuote}
           label="Comentarios abiertos"
-          value={<AnimatedNumber value={comments.length} format={formatCount} />}
+          value={<AnimatedNumber value={scopedComments.length} format={formatCount} />}
         />
         <SentimentAverageCard average={sentiment} />
       </div>
 
       {/* pb-20: the screen's floating action rail hovers over the last ~80px of
           the scroll area, and this tab's lists end in a real control. */}
-      <div className="min-h-0 flex-1 px-6 pb-20 pt-6 sm:px-8">
+      <div className="min-h-0 flex-1 pb-20 pt-6">
         <div className="flex flex-col gap-6 rounded-2xl border border-border/50 bg-surface p-6 shadow-sm sm:p-8">
           {/* Same sticky toolbar the Favorabilidad views use: title, count, the
               shared filters, the view switch and the scale legend. */}
@@ -214,11 +238,12 @@ export function QuestionDetailTab({
                     ? totals.questions
                     : view === "people"
                       ? respondents.length
-                      : comments.length}
+                      : scopedComments.length}
                 </Badge>
               </div>
 
               <div className="ml-auto flex items-center justify-end gap-3">
+                {view === "people" && <RosterFilterButton state={rosterFilters} />}
                 {(view === "breakdown" || view === "people") && (
                   <ResultsFilterControls
                     segments={segments}
@@ -253,8 +278,14 @@ export function QuestionDetailTab({
                       filters={commentFilters}
                       topics={topics}
                       counts={commentCounts}
+                      segmentFilters={{
+                        segments: commentSegments,
+                        filters: filtersState.filters,
+                        onApplyFilter: filtersState.applyFilter,
+                        onClearFilters: filtersState.clearFilters,
+                      }}
                     />
-                    {/* Only "Vista" travels over from Favorabilidad: there is
+                    {/* Only "Personalizar" travels over from Favorabilidad: there is
                         no score to resaltar here, and "Ver por" pivots a table
                         this view doesn't have. */}
                     <ResultsFilterControls
@@ -293,7 +324,7 @@ export function QuestionDetailTab({
               </div>
             </div>
 
-            {view === "breakdown" && (
+            {(view === "breakdown" || view === "comments") && (
               <ResultsFilterChips
                 filters={filtersState.filters}
                 segments={segments}
@@ -329,7 +360,7 @@ export function QuestionDetailTab({
               comments={comments}
               sentimentOverrides={overrides}
               drill={drill}
-              onClearDrill={() => setDrill(null)}
+              rosterFilters={rosterFilters}
               anonymous={draft.visibility === "anonymous"}
               highlightBands={filtersState.tierBands}
               hasHiddenBands={filtersState.hasHiddenTierBands}
@@ -339,7 +370,7 @@ export function QuestionDetailTab({
           {view === "comments" && (
             <CommentsSentimentView
               sections={sections}
-              comments={comments}
+              comments={scopedComments}
               overrides={overrides}
               filters={commentFilters}
               visibleLevels={filtersState.visibleLevels}
@@ -347,6 +378,7 @@ export function QuestionDetailTab({
               onResetOverride={clearSentiment}
               focusQuestionId={focusQuestionId}
               onClearFocus={() => setFocusQuestionId(null)}
+              populationFiltered={filtersState.filters.length > 0}
             />
           )}
         </div>

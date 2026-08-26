@@ -59,7 +59,7 @@ export function FavorabilityTab({ results, segment, onSegmentChange }: Favorabil
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="grid shrink-0 grid-cols-2 gap-3 px-6 pt-6 sm:grid-cols-3 sm:px-8 sm:pt-8 lg:grid-cols-5">
+      <div className="grid shrink-0 grid-cols-2 gap-3 pt-6 sm:grid-cols-3 sm:pt-8 lg:grid-cols-5">
         <MiniMetricCard
           icon={BarChart3}
           label="Total de favorabilidad"
@@ -113,7 +113,7 @@ export function FavorabilityTab({ results, segment, onSegmentChange }: Favorabil
       </div>
 
       <div className="min-h-0 flex-1 flex flex-col">
-        <div className="px-6 sm:px-8 pt-6 pb-6 min-h-0 flex-1">
+        <div className="pt-6 pb-6 min-h-0 flex-1">
           {activeSubTab === "questions" ? (
             <QuestionsTab
               results={results}

@@ -234,3 +234,25 @@ export function likertSteps(question: SurveyQuestion): readonly string[] {
   if (question.scale.kind === "likert-nom035") return NOM_035_STEPS;
   return RATING_STEPS[question.scale.ratingType ?? "agreement"];
 }
+
+/**
+ * Whether a question has everything it needs to be a real, answerable
+ * question — not just a row that exists. Drives whether the sections step can
+ * be left: a section "with a question" that is actually blank wording, an
+ * unset scale, or empty answer options isn't a question anyone could answer.
+ */
+export function isQuestionComplete(question: SurveyQuestion): boolean {
+  if (question.statement.trim() === "") return false;
+
+  if (question.type === "scale") {
+    if (question.scale.kind === null) return false;
+    if (needsRatingType(question.scale.kind) && question.scale.ratingType === null) return false;
+  }
+
+  if (hasOptions(question.type)) {
+    if (question.options.length < MIN_OPTIONS) return false;
+    if (question.options.some((option) => option.label.trim() === "")) return false;
+  }
+
+  return true;
+}

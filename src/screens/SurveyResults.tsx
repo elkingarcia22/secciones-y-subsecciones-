@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Users, PieChart, MessageSquare, ListChecks, Target, Sparkles, LayoutDashboard } from "lucide-react";
+import { Users, PieChart, MessageSquare, ListChecks, Target, Sparkles } from "lucide-react";
 import type { SurveyDraft } from "@/components/survey-builder";
 import { UbitsTabs, type TabItem } from "@/components/navigation";
 import {
@@ -11,14 +11,10 @@ import {
   ParticipationTab,
   QuestionDetailTab,
   ResultsActionRail,
-  SCOPE_ALL,
-  VIEW_GENERAL,
-  SummaryTab,
   useDownloadCenter,
 } from "@/components/survey-results";
 import { EmptyState } from "@/components/feedback";
 import { buildSurveyResults, participationBySegment } from "@/mocks/surveyResults";
-import type { SegmentFilter } from "@/mocks/surveyResults";
 import type { SurveyListItem } from "@/mocks/types";
 
 interface SurveyResultsProps {
@@ -28,10 +24,9 @@ interface SurveyResultsProps {
   history?: readonly SurveyListItem[];
 }
 
-type TabId = "summary" | "participation" | "favorability" | "questions" | "nps" | "ai";
+type TabId = "participation" | "favorability" | "questions" | "nps" | "ai";
 
 const TABS: readonly TabItem[] = [
-  { id: "summary", label: "Resumen", icon: <LayoutDashboard className="h-4 w-4" /> },
   { id: "participation", label: "Participación", icon: <PieChart className="h-4 w-4" /> },
   { id: "favorability", label: "Favorabilidad", icon: <MessageSquare className="h-4 w-4" /> },
   { id: "questions", label: "Preguntas", icon: <ListChecks className="h-4 w-4" /> },
@@ -42,17 +37,16 @@ const TABS: readonly TabItem[] = [
 /**
  * Results of a finished measurement.
  *
- * Five views over one aggregate, with the three headline numbers pinned above
- * them. The numbers stay put on purpose: every tab is a different way of cutting
- * the same result, and losing sight of the overall favorability while reading a
- * single area is how a report produces confident wrong conclusions.
+ * Five views over one aggregate. Análisis con IA is where the reading closes:
+ * the AI's own claims first, then the evidence they rest on — priorities,
+ * strengths, gaps and voice — as one continuous document.
  *
  * The chosen demographic is screen state, not tab state — going from
  * "participación por área" to "heatmap por área" is one thought, and having to
  * re-pick the segment on arrival breaks it.
  */
 export function SurveyResults({ draft, item, history = [] }: SurveyResultsProps) {
-  const [activeTab, setActiveTab] = React.useState<TabId>("summary");
+  const [activeTab, setActiveTab] = React.useState<TabId>("participation");
 
   const results = React.useMemo(
     () => buildSurveyResults({ draft, item, history }),
@@ -85,46 +79,6 @@ export function SurveyResults({ draft, item, history = [] }: SurveyResultsProps)
       : participationRows
           .filter((row) => selectedGroupIds.has(row.id))
           .reduce((sum, row) => sum + missingOf(row), 0);
-
-  // The Resumen's scope lives here for the same reason the chosen demographic
-  // does: narrowing to "2.1 Mi líder directo", stepping into Participación to
-  // check a group and coming back should return the reader to where they were,
-  // not to the whole survey.
-  const [summaryScopeId, setSummaryScopeId] = React.useState<string>(SCOPE_ALL);
-  const [summaryFilters, setSummaryFilters] = React.useState<readonly SegmentFilter[]>([]);
-
-  /**
-   * The Resumen's "Ver por". It opens on the whole measurement — a summary
-   * answers "¿cómo nos fue?" before "¿a quién?" — which is a reading the other
-   * tabs cannot hold, so it needs its own state rather than sharing
-   * `segmentKey`. Naming a cut here still moves the rest of the report onto it:
-   * "resumen por área" and "heatmap por área" is one thought.
-   */
-  const [summaryViewBy, setSummaryViewBy] = React.useState<string>(VIEW_GENERAL);
-  const changeSummaryViewBy = React.useCallback((key: string) => {
-    setSummaryViewBy(key);
-    if (key !== VIEW_GENERAL) setSegmentKey(key);
-  }, []);
-
-  /**
-   * Toggles one value of a demographic. A demographic holds as many values as
-   * the reader picks — "Área: Producto y Tecnología" — so this adds and removes
-   * rather than replacing: the whole Resumen then reads over that union.
-   * An empty `optionId` clears the demographic entirely.
-   */
-  const applySummaryFilter = React.useCallback((key: string, optionId: string) => {
-    setSummaryFilters((current) => {
-      if (optionId === "") return current.filter((candidate) => candidate.key !== key);
-      const isOn = current.some(
-        (candidate) => candidate.key === key && candidate.optionId === optionId
-      );
-      return isOn
-        ? current.filter(
-            (candidate) => !(candidate.key === key && candidate.optionId === optionId)
-          )
-        : [...current, { key, optionId }];
-    });
-  }, []);
 
   // The download center outlives the drawer: closing it must not kill a report
   // mid-preparation, and the floating widget reads the same list.
@@ -167,25 +121,6 @@ return (
           back-to-back with no overlap and no uncovered sliver between them.
         */}
         <div aria-hidden className="sticky top-0 z-40 h-4 bg-background" />
-        {activeTab === "summary" && (
-          <SummaryTab
-            draft={draft}
-            results={results}
-            segment={segment ?? results.segments[0]}
-            segments={results.segments.filter((candidate) => !candidate.perPerson)}
-            onSegmentChange={setSegmentKey}
-            viewBy={summaryViewBy}
-            onViewByChange={changeSummaryViewBy}
-            onNavigate={(target) => setActiveTab(target as TabId)}
-            scopeId={summaryScopeId}
-            onScopeChange={setSummaryScopeId}
-            filters={summaryFilters}
-            onApplyFilter={applySummaryFilter}
-            onRemoveFilter={(key) => applySummaryFilter(key, "")}
-            onClearFilters={() => setSummaryFilters([])}
-          />
-        )}
-
         {activeTab === "participation" &&
           (segment ? (
             <ParticipationTab
@@ -222,8 +157,14 @@ return (
             <NoSegments />
           ))}
 
-        {activeTab === "nps" && <NpsTab results={results} />}
-        {activeTab === "ai" && <AiAnalysisTab results={results} />}
+        {activeTab === "nps" && <NpsTab draft={draft} results={results} />}
+        {activeTab === "ai" && (
+          <AiAnalysisTab
+            draft={draft}
+            results={results}
+            onNavigate={(target) => setActiveTab(target as TabId)}
+          />
+        )}
       </main>
 
       <ResultsActionRail
@@ -240,6 +181,7 @@ return (
       <DownloadReportsDrawer
         open={downloadsOpen}
         onOpenChange={setDownloadsOpen}
+        draft={draft}
         results={results}
         entries={downloads.entries}
         onStart={(request) => {

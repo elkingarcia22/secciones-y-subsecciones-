@@ -10,7 +10,7 @@ interface ResultsSubTabSwitchProps {
 
 /**
  * The Preguntas/Heatmap switch, living in the sticky filter row next to
- * "Vista" instead of its own row above it — one less horizontal band before
+ * "Personalizar" instead of its own row above it — one less horizontal band before
  * the reader reaches the results, and the switch now sits beside the
  * controls that already shape what those two views show.
  */

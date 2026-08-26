@@ -551,10 +551,6 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                       if (files.length > 0) handleImportFiles(files);
                     }}
                   />
-
-                  <AnimatedActionItem animKey={stepChangeKey} staggerIndex={5} skipColorFlash>
-                    <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "mx-2 my-2 w-px")} />
-                  </AnimatedActionItem>
                 </>
               )}
 
@@ -601,9 +597,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                       table's ticks *are* the audience, so it reports no remove. */}
                   {onDeleteParticipantsSelection && (
                     <>
-                      <AnimatedActionItem animKey={stepChangeKey} staggerIndex={1} skipColorFlash>
-                        <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "mx-1 my-2 w-px")} />
-                      </AnimatedActionItem>
+                      <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
                       <AnimatedActionItem animKey={stepChangeKey} staggerIndex={2}>
                         <RailButton tooltipSide={isRight ? "left" : "top"}
                           icon={
@@ -617,9 +611,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                       </AnimatedActionItem>
                     </>
                   )}
-                  <AnimatedActionItem animKey={stepChangeKey} staggerIndex={3} skipColorFlash>
-                    <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "mx-2 my-2 w-px")} />
-                  </AnimatedActionItem>
+                  <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
                 </>
               )}
 
@@ -653,7 +645,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
               )}
 
               {(isSectionsStepActive || isDemographicsStepActive || isPagesStepActive) && (
-                <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "mx-2 my-2 w-px")} />
+                <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
               )}
 
               <HoverCard>

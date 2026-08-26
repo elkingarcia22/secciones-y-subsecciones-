@@ -88,8 +88,8 @@ export const SURVEY_KIND_LABELS: Readonly<Record<SurveyKind, string>> = {
   cultura: "Cultura",
   clima: "Clima",
   enps: "eNPS",
-  otros: "Otros",
   ia: "Evaluación y adopción de IA",
+  otros: "Otros",
 };
 
 /**

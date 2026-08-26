@@ -33,8 +33,6 @@ export * from "./FavorabilityBreakdown";
 export { CommentsSummaryBar } from "./CommentsSummaryBar";
 export { InsightGroupList, type InsightGroup } from "./InsightGroupList";
 export * from "./insightConfidence";
-export { SummaryTab } from "./SummaryTab";
-export { SummaryFilterBar } from "./SummaryFilterBar";
 export * from "./summaryModel";
 export {
   InsightConfidenceFilter,

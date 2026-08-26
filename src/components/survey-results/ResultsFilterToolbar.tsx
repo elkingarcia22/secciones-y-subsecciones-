@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Eye, ListFilter, ListTree, SlidersHorizontal, X } from "lucide-react";
+import { ListFilter, ListTree, Settings2, SlidersHorizontal, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverDescription, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
@@ -27,7 +27,7 @@ interface ResultsFilterControlsProps {
   onResetBands: () => void;
   showViewBy?: boolean;
   /**
-   * Whether "Vista" offers the highlight bands at all. Preguntas counts
+   * Whether "Personalizar" offers the highlight bands at all. Preguntas counts
    * answers rather than scoring them, so there is no band for a reader to
    * light there and the popover is just "Niveles".
    */
@@ -40,6 +40,12 @@ interface ResultsFilterControlsProps {
   highlightScale?: HighlightScale;
   hiddenLevelOptions?: ResultLevel[];
   showFilters?: boolean;
+  /**
+   * Whether "Personalizar" appears at all. A view that draws no scores — the
+   * eNPS depth reading — has neither levels to hide nor bands to light, and an
+   * empty popover is worse than a missing button.
+   */
+  showCustomize?: boolean;
 }
 
 /**
@@ -96,10 +102,11 @@ export const THREE_TIER_HIGHLIGHT: HighlightScale = {
 
 /**
  * "Ver por", its own "Filtros" popover for narrowing the population, and one
- * combined "Vista" popover for "Niveles" and "Resaltar" — display concerns
- * stacked behind a single trigger, kept apart from "Filtros" since narrowing
- * the data and just changing how it's displayed are different kinds of
- * action. Same controls in the heatmap and the questions view, so a reader
+ * combined "Personalizar" popover for "Niveles" and "Resaltar" — display
+ * concerns stacked behind a single trigger, kept apart from "Filtros" since
+ * narrowing the data and just changing how it's displayed are different kinds
+ * of action. It is not called "Vista": next to "Ver por" the two read as the
+ * same control, and only one of them changes what is being looked at. Same controls in the heatmap and the questions view, so a reader
  * who narrowed down in one still sees that narrowing in the other.
  */
 export function ResultsFilterControls({
@@ -123,6 +130,7 @@ export function ResultsFilterControls({
   highlightScale = FAVORABILITY_HIGHLIGHT,
   hiddenLevelOptions = [],
   showFilters = true,
+  showCustomize = true,
 }: ResultsFilterControlsProps) {
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [viewOpen, setViewOpen] = React.useState(false);
@@ -198,7 +206,10 @@ export function ResultsFilterControls({
                         onValueChange={(val) => onApplyFilter(candidate.key, val)}
                       >
                         <SelectTrigger className="h-8 flex-1 rounded-md border-transparent bg-muted/40 px-2.5 text-[12.5px] hover:bg-muted/60 focus:ring-1 focus:ring-primary/20">
-                          <SelectValue />
+                          {/* Un trigger vacío no dice si el demográfico está sin
+                              tocar o si algo se rompió. Mismo texto que el
+                              Resumen y el roster: "Sin filtrar". */}
+                          <SelectValue placeholder="Sin filtrar" className="text-muted-foreground" />
                         </SelectTrigger>
                         <SelectContent position="popper">
                           <SelectItem value="" className="text-[12.5px]">
@@ -230,6 +241,7 @@ export function ResultsFilterControls({
         </Popover>
       )}
 
+      {showCustomize && (
       <Popover open={viewOpen} onOpenChange={setViewOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -237,8 +249,8 @@ export function ResultsFilterControls({
             size="sm"
             className="h-9 justify-start gap-2 rounded-lg border-border bg-surface px-3 text-[12.5px] text-text-primary transition-colors hover:bg-border/30"
           >
-            <Eye className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.2} />
-            Vista
+            <Settings2 className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.2} />
+            Personalizar
             {activeAdjustments > 0 && (
               <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[10.5px]">
                 {activeAdjustments}
@@ -314,6 +326,7 @@ export function ResultsFilterControls({
           )}
         </PopoverContent>
       </Popover>
+      )}
     </div>
   );
 }

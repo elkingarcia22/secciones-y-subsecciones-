@@ -1,12 +1,22 @@
 import * as React from "react";
 import { AlertTriangle, Lightbulb, RefreshCw, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { SurveyDraft } from "@/components/survey-builder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/feedback";
+import {
+  buildOpenComments,
+  buildRespondents,
+  type Sentiment,
+} from "@/mocks/questionResponses";
 import { buildSurveyAnalysis, type InsightKind } from "@/mocks/surveyInsights";
 import type { SurveyResults } from "@/mocks/surveyResults";
+import { AiGapsSection } from "./AiGapsSection";
+import { AiPrioritiesSection } from "./AiPrioritiesSection";
+import { AiStrengthsSection } from "./AiStrengthsSection";
+import { AiVoiceSection } from "./AiVoiceSection";
 import {
   InsightConfidenceFilter,
   useConfidenceFilter,
@@ -15,9 +25,22 @@ import { CONFIDENCE_LEGEND, CONFIDENCE_ORDER, type InsightConfidence } from "./i
 import { InsightGroupList, type InsightGroup } from "./InsightGroupList";
 import { MeasurementScaleButton } from "./MeasurementScaleButton";
 import { MiniMetricCard, AnimatedNumber } from "./MiniMetricCard";
+import {
+  SCOPE_ALL,
+  buildPriorities,
+  buildStrengths,
+  defaultFindingLevel,
+  findingsAtLevel,
+  resolveScope,
+  sentimentRollup,
+  type AlertTarget,
+} from "./summaryModel";
 
 interface AiAnalysisTabProps {
+  draft: SurveyDraft;
   results: SurveyResults;
+  /** Opens the tab that can answer whatever the reader just pressed. */
+  onNavigate: (target: AlertTarget) => void;
 }
 
 /** How long the mock re-analysis takes, in ms. */
@@ -45,10 +68,48 @@ const KIND_ORDER: readonly InsightKind[] = ["finding", "risk", "recommendation"]
  * same shell as Comentarios: the numbers on top, the summary as one strip, and
  * the claims as rows that open onto the figure they rest on.
  */
-export function AiAnalysisTab({ results }: AiAnalysisTabProps) {
+export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps) {
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
   const confidence = useConfidenceFilter();
   const analysis = React.useMemo(() => buildSurveyAnalysis(results), [results]);
+
+  /* ------------------------------------------------------------- evidencia */
+
+  // The blocks that used to live in Resumen — prioridades, fortalezas, brechas
+  // y voz — read over the whole measurement here. This tab has no scope bar and
+  // no demographic filters of its own, so there is only one population to read,
+  // which is the same one the AI's own lecturas rest on.
+  const scope = React.useMemo(() => resolveScope(results, SCOPE_ALL), [results]);
+  const findings = React.useMemo(
+    () => findingsAtLevel(scope, defaultFindingLevel(scope)),
+    [scope]
+  );
+
+  const respondents = React.useMemo(() => buildRespondents(draft, results), [draft, results]);
+  const comments = React.useMemo(
+    () => buildOpenComments(draft, results, respondents),
+    [draft, results, respondents]
+  );
+  // The tab reads the model's own labels: corrections live in the comments
+  // view, which owns that state and is where a reader goes to make them.
+  const noOverrides = React.useMemo(() => new Map<string, Sentiment>(), []);
+  const sentiment = React.useMemo(
+    () => sentimentRollup(comments, noOverrides),
+    [comments, noOverrides]
+  );
+
+  const priorities = React.useMemo(
+    () => buildPriorities(findings, sentiment.topics),
+    [findings, sentiment.topics]
+  );
+  const strengths = React.useMemo(() => buildStrengths(findings), [findings]);
+
+  // Per-person demographics cannot be a column of a cut, the same rule the
+  // Resumen's brechas block follows.
+  const gapSegments = React.useMemo(
+    () => results.segments.filter((candidate) => !candidate.perPerson),
+    [results.segments]
+  );
 
   // The analysis is derived synchronously; the delay only exists so the state
   // the real feature will have — "this takes a moment" — is visible in the UI.
@@ -98,7 +159,7 @@ export function AiAnalysisTab({ results }: AiAnalysisTabProps) {
     <div className="flex h-full min-h-0 flex-col">
       {/* The same KPI row every other tab opens with. What the analysis is made
           of, so the reader knows the size of the reading before entering it. */}
-      <div className="grid shrink-0 grid-cols-2 gap-3 px-6 pt-6 sm:grid-cols-4 sm:px-8 sm:pt-8">
+      <div className="grid shrink-0 grid-cols-2 gap-3 pt-6 sm:grid-cols-4 sm:pt-8">
         <MiniMetricCard
           icon={Search}
           label="Hallazgos"
@@ -128,7 +189,7 @@ export function AiAnalysisTab({ results }: AiAnalysisTabProps) {
       </div>
 
       {/* pb-20: the screen's floating action rail hovers over the last ~80px. */}
-      <div className="min-h-0 flex-1 px-6 pb-20 pt-6 sm:px-8">
+      <div className="min-h-0 flex-1 pb-20 pt-6">
         <div className="flex flex-col gap-6 rounded-2xl border border-border/50 bg-surface p-6 shadow-sm sm:p-8">
           {/* Same sticky toolbar the Preguntas and Favorabilidad views use. */}
           <div className="sticky top-4 z-30 -mt-6 bg-surface pb-2 pt-6 sm:-mt-8 sm:pt-8">
@@ -175,6 +236,31 @@ export function AiAnalysisTab({ results }: AiAnalysisTabProps) {
           ) : (
             <InsightGroupList groups={visibleGroups} isAnalyzing={isAnalyzing} />
           )}
+
+          {/*
+            The evidence the reading rests on, as four more blocks of the same
+            stack. They come after the lecturas on purpose: the AI states what it
+            concludes, then the reader can walk down what it concluded it from —
+            what to attend first, what to lean on, where the groups pull apart,
+            and in whose words. The numbering continues rather than restarting,
+            because to the reader this is one document, not two lists that
+            happen to share a tab.
+          */}
+          <AiPrioritiesSection
+            priorities={priorities}
+            numbering={visibleGroups.length + 1}
+            onNavigate={onNavigate}
+          />
+
+          <AiStrengthsSection strengths={strengths} numbering={visibleGroups.length + 2} />
+
+          <AiGapsSection
+            segments={gapSegments}
+            results={results}
+            numbering={visibleGroups.length + 3}
+          />
+
+          <AiVoiceSection sentiment={sentiment} numbering={visibleGroups.length + 4} />
         </div>
       </div>
     </div>

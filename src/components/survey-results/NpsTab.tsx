@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   List,
   Info,
+  MessagesSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,9 +22,11 @@ import type {
   SegmentDefinition, SegmentFilter, SurveyResults,
 } from "@/mocks/surveyResults";
 import { npsBySection, npsBySegmentData } from "@/mocks/surveyResults";
+import { npsDepthBySection, npsDepthTotals } from "@/mocks/npsDepth";
+import type { SurveyDraft } from "@/components/survey-builder";
+import { NpsDepthView } from "./NpsDepthView";
 import { depthTheme, SECTION_HEADER_DIVIDER, SIBLING_DIVIDER } from "@/components/survey-builder/depthTheme";
 import { MiniMetricCard, AnimatedNumber } from "./MiniMetricCard";
-import { FormulaBlock } from "./FormulaBlock";
 import {
   POSITIVE_TEXT,
   YELLOW_TEXT,
@@ -61,7 +64,7 @@ const NPS_HIGHLIGHT: HighlightScale = {
   })),
 };
 
-type NpsView = "dimensions" | "segment";
+type NpsView = "dimensions" | "segment" | "depth";
 
 function npsScoreColor(score: number): { bg: string; text: string; border: string } {
   const band = npsBandForScore(score);
@@ -185,7 +188,7 @@ function NpsHiddenLevelValue() {
   return (
     <span
       className="inline-flex h-5 items-center px-1.5 text-[12px] font-medium leading-none text-muted-foreground/40"
-      title="Total oculto: este nivel está desmarcado en Vista"
+      title="Total oculto: este nivel está desmarcado en Personalizar"
     >
       —
     </span>
@@ -548,6 +551,11 @@ function NpsViewSwitch({ value, onChange }: { value: NpsView; onChange: (v: NpsV
           <LayoutGrid className="h-3.5 w-3.5" />
           Por segmento
         </TabsTrigger>
+        <TabsTrigger value="depth"
+          className="flex h-full items-center gap-2 rounded-md px-3 py-0 text-[13px] font-medium transition-all data-[state=active]:bg-surface data-[state=active]:text-brand data-[state=active]:shadow-sm text-muted-foreground hover:text-text-primary">
+          <MessagesSquare className="h-3.5 w-3.5" />
+          Profundidad
+        </TabsTrigger>
       </TabsList>
     </Tabs>
   );
@@ -556,10 +564,12 @@ function NpsViewSwitch({ value, onChange }: { value: NpsView; onChange: (v: NpsV
 // ─── NpsTab ──────────────────────────────────────────────────────────────────
 
 interface NpsTabProps {
+  /** The survey itself: the depth view reads the author's own outline. */
+  draft: SurveyDraft;
   results: SurveyResults;
 }
 
-export function NpsTab({ results }: NpsTabProps) {
+export function NpsTab({ draft, results }: NpsTabProps) {
   const segments = results.segments;
   const gridSegments = segments.filter((s) => !s.perPerson);
 
@@ -595,6 +605,11 @@ export function NpsTab({ results }: NpsTabProps) {
     return count(dimensionsData);
   }, [dimensionsData]);
 
+  const depthTotals = React.useMemo(
+    () => npsDepthTotals(npsDepthBySection(draft, results, filtersState.filters)),
+    [draft, results, filtersState.filters]
+  );
+
   const segmentData = React.useMemo(
     () => activeSegment ? npsBySegmentData(results, activeSegment, filtersState.filters) : null,
     [results, activeSegment, filtersState.filters]
@@ -602,10 +617,10 @@ export function NpsTab({ results }: NpsTabProps) {
   const totalSegments = segmentData?.columns.length ?? 0;
 
   return (
-    // `p-6 sm:p-8` and `gap-6` are the frame Participación sets and every other
-    // tab repeats. eNPS was the one running edge to edge on the screen's own
-    // padding, which made its cards both wider and higher than the rest.
-    <div className="flex flex-col gap-6 p-6 sm:p-8">
+    // `py-6 sm:py-8` and `gap-6` are the frame Participación sets and every
+    // other tab repeats. Horizontal padding stays with the screen so every
+    // tab's content lines up with the tab strip above it.
+    <div className="flex flex-col gap-6 py-6 sm:py-8">
       {/* Bare on the page, like the KPI row of every other tab: boxing it in a
           second card was what set eNPS apart, and what pushed the detail below
           it further down than anywhere else. */}
@@ -650,11 +665,28 @@ export function NpsTab({ results }: NpsTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-4 pb-2">
             <div className="flex items-center gap-2">
               <h3 className="text-[13px] font-bold text-text-primary">
-                {view === "dimensions" ? "Detalle por secciones eNPS" : "eNPS por segmento demografico"}
+                {view === "dimensions"
+                  ? "Detalle por secciones eNPS"
+                  : view === "segment"
+                    ? "eNPS por segmento demografico"
+                    : "Preguntas de profundidad"}
               </h3>
               <Badge variant="neutral" className="h-5 px-1.5 text-[11px] font-semibold tabular-nums">
-                {view === "dimensions" ? totalQuestions : totalSegments}
+                {view === "dimensions"
+                  ? totalQuestions
+                  : view === "segment"
+                    ? totalSegments
+                    : depthTotals.questions}
               </Badge>
+              {view === "depth" && depthTotals.people > 0 && (
+                // The coverage belongs next to the count: a list of answers
+                // without the share of people who wrote them is an anecdote.
+                <span className="text-[11.5px] font-medium text-muted-foreground">
+                  {depthTotals.answered.toLocaleString("es-CO")} respuestas de{" "}
+                  {depthTotals.people.toLocaleString("es-CO")} personas ·{" "}
+                  {depthTotals.coverage}% de cobertura
+                </span>
+              )}
             </div>
             
             <div className="flex items-center justify-end gap-3 ml-auto">
@@ -678,6 +710,9 @@ export function NpsTab({ results }: NpsTabProps) {
                   showViewBy={view === "segment"}
                   highlightScale={NPS_HIGHLIGHT}
                   hiddenLevelOptions={view === "segment" ? ["question"] : []}
+                  // Profundidad draws no scores, so "Personalizar" — levels and
+                  // highlight bands — would be a popover with nothing in it.
+                  showCustomize={view !== "depth"}
                 />
               )}
               <NpsViewSwitch value={view} onChange={setView} />
@@ -703,6 +738,8 @@ export function NpsTab({ results }: NpsTabProps) {
             visibleLevels={filtersState.visibleLevels}
             highlightBands={filtersState.highlightBands}
           />
+        ) : view === "depth" ? (
+          <NpsDepthView draft={draft} results={results} filters={filtersState.filters} />
         ) : activeSegment ? (
           <SegmentView
             results={results}
