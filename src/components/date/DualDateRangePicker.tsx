@@ -289,64 +289,71 @@ export const DualDateRangePicker = React.forwardRef<
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-auto p-0 rounded-2xl border-border/80 bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] z-50 overflow-hidden transition-all duration-300 ease-in-out"
-          align={activeStep === "start" ? "start" : "end"}
+          className="w-[var(--radix-popover-trigger-width)] p-0 bg-transparent border-none shadow-none z-50"
+          align="start"
           sideOffset={8}
           onPointerDownOutside={() => {
             // Keep selection when clicking outside
             onChange?.({ startDate: tempFrom, endDate: tempTo });
           }}
         >
-          {/* Header step switcher tabs inside the popover */}
-          <div className="flex items-center border-b border-border/50 bg-muted/20 px-4 py-2.5">
-            <div className="flex items-center gap-2 text-xs font-semibold text-text-secondary">
-              <button
-                type="button"
-                onClick={() => setActiveStep("start")}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all cursor-pointer",
-                  activeStep === "start"
-                    ? "bg-surface text-primary shadow-xs ring-1 ring-border font-bold"
-                    : "text-muted-foreground hover:text-text-primary hover:bg-surface/50"
-                )}
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                <span>Inicio:</span>
-                <span className={cn(hasStart ? "text-text-primary" : "text-muted-foreground italic")}>
-                  {hasStart ? formatFlightDate(tempFrom, locale) : "Sin definir"}
-                </span>
-              </button>
-
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-
-              <button
-                type="button"
-                onClick={() => setActiveStep("end")}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all cursor-pointer",
-                  activeStep === "end"
-                    ? "bg-surface text-primary shadow-xs ring-1 ring-border font-bold"
-                    : "text-muted-foreground hover:text-text-primary hover:bg-surface/50"
-                )}
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                <span>Cierre:</span>
-                <span className={cn(hasEnd ? "text-text-primary" : "text-muted-foreground italic")}>
-                  {hasEnd ? formatFlightDate(tempTo, locale) : "Sin definir"}
-                </span>
-              </button>
-            </div>
-
-            <div className="ml-auto text-[11px] font-medium text-muted-foreground">
-              {activeStep === "start" ? "Selecciona fecha de inicio" : (hasEnd ? "" : "Selecciona fecha de cierre")}
-            </div>
-          </div>
-
-          {/* Dual Month Calendar */}
+          {/* Animated sliding container */}
           <div
-            className="p-3"
-            onMouseLeave={() => setHoverDate(undefined)}
+            className="w-max rounded-2xl border border-border/80 bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] overflow-hidden transition-transform duration-500 ease-in-out origin-top"
+            style={{
+              transform: activeStep === "start" ? "translateX(0)" : "translateX(calc(var(--radix-popover-trigger-width) - 100%))"
+            }}
           >
+            {/* Header step switcher tabs inside the popover */}
+            <div className="flex items-center border-b border-border/50 bg-muted/20 px-4 py-2.5">
+              <div className="flex items-center gap-2 text-xs font-semibold text-text-secondary">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep("start")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all cursor-pointer",
+                    activeStep === "start"
+                      ? "bg-surface text-primary shadow-xs ring-1 ring-border font-bold"
+                      : "text-muted-foreground hover:text-text-primary hover:bg-surface/50"
+                  )}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span>Inicio:</span>
+                  <span className={cn(hasStart ? "text-text-primary" : "text-muted-foreground italic")}>
+                    {hasStart ? formatFlightDate(tempFrom, locale) : "Sin definir"}
+                  </span>
+                </button>
+
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+
+                <button
+                  type="button"
+                  onClick={() => setActiveStep("end")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all cursor-pointer",
+                    activeStep === "end"
+                      ? "bg-surface text-primary shadow-xs ring-1 ring-border font-bold"
+                      : "text-muted-foreground hover:text-text-primary hover:bg-surface/50"
+                  )}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span>Cierre:</span>
+                  <span className={cn(hasEnd ? "text-text-primary" : "text-muted-foreground italic")}>
+                    {hasEnd ? formatFlightDate(tempTo, locale) : "Sin definir"}
+                  </span>
+                </button>
+              </div>
+
+              <div className="ml-auto text-[11px] font-medium text-muted-foreground pl-6 pr-2">
+                {activeStep === "start" ? "Selecciona fecha de inicio" : (hasEnd ? "" : "Selecciona fecha de cierre")}
+              </div>
+            </div>
+
+            {/* Dual Month Calendar */}
+            <div
+              className="p-3"
+              onMouseLeave={() => setHoverDate(undefined)}
+            >
             <Calendar
               mode="range"
               locale={calendarLocale}
@@ -398,6 +405,7 @@ export const DualDateRangePicker = React.forwardRef<
                 Aplicar
               </button>
             </div>
+          </div>
           </div>
         </PopoverContent>
       </Popover>
