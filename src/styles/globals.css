@@ -272,16 +272,29 @@
       radial-gradient(55% 34% at 18% 0%, rgba(46, 198, 255, 0.16), transparent 65%),
       radial-gradient(45% 30% at 55% 0%, rgba(124, 58, 237, 0.08), transparent 65%),
       radial-gradient(50% 34% at 88% 0%, rgba(244, 63, 94, 0.12), transparent 65%);
-    background-size: 100% 130%;
-    animation: mesh-shift-vertical 10s ease-in-out infinite alternate;
+    background-size: 200% 200%;
+    animation: mesh-drift 12s ease-in-out infinite alternate;
   }
 
-  @keyframes mesh-shift-vertical {
+  /* Animated subtle mesh background for the agent page */
+  .bg-ai-mesh-agent {
+    background-image: 
+      radial-gradient(55% 34% at 18% 0%, rgba(46, 198, 255, 0.16), transparent 65%),
+      radial-gradient(45% 30% at 55% 0%, rgba(124, 58, 237, 0.08), transparent 65%),
+      radial-gradient(50% 34% at 88% 0%, rgba(244, 63, 94, 0.12), transparent 65%);
+    background-size: 200% 200%;
+    animation: mesh-drift 14s ease-in-out infinite alternate;
+  }
+
+  @keyframes mesh-drift {
     0% {
       background-position: 0% 0%;
     }
+    50% {
+      background-position: 100% 40%;
+    }
     100% {
-      background-position: 0% 100%;
+      background-position: 30% 100%;
     }
   }
 

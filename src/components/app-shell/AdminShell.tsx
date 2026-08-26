@@ -23,11 +23,6 @@ interface AdminShellProps {
   children: React.ReactNode;
 }
 
-/** Soft AI glow painted behind everything while the agent surface is active. */
-const AGENT_GLOW =
-  "radial-gradient(55% 34% at 18% 0%, rgba(46,198,255,0.16), transparent 65%)," +
-  "radial-gradient(45% 30% at 55% 0%, rgba(124,58,237,0.08), transparent 65%)," +
-  "radial-gradient(50% 34% at 88% 0%, rgba(244,63,94,0.12), transparent 65%)";
 
 export const AdminShell: React.FC<AdminShellProps> = ({
   breadcrumb,
@@ -84,8 +79,10 @@ export const AdminShell: React.FC<AdminShellProps> = ({
 
   return (
     <div
-      className="flex h-dvh w-full gap-2 overflow-hidden bg-background p-2 font-sans"
-      style={isAgent ? { backgroundImage: AGENT_GLOW } : undefined}
+      className={cn(
+        "flex h-dvh w-full gap-2 overflow-hidden bg-background p-2 font-sans",
+        isAgent && "bg-ai-mesh-agent"
+      )}
     >
       <AppSidebar
         collapsed={collapsed}
