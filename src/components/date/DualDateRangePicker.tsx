@@ -195,76 +195,102 @@ export const DualDateRangePicker = React.forwardRef<
     <div ref={ref} className={cn("flex flex-col gap-1.5 w-full", className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <div className="flex flex-col gap-1.5 w-full">
-            {/* Unified Input Container */}
-            <div
-              className={cn(
-                "relative flex w-full rounded-xl border bg-surface transition-all",
-                open ? "border-primary ring-2 ring-primary/20 shadow-sm" : "border-border hover:border-border-hover",
-                (startError || endError) && !open && "border-destructive",
-                disabled && "opacity-50 cursor-not-allowed"
-              )}
-            >
-              {/* Animated active background pill (slides left to right) */}
-              {open && (
-                <div
-                  className={cn(
-                    "absolute top-1 bottom-1 w-[calc(50%-6px)] rounded-lg bg-primary/10 transition-transform duration-300 ease-out z-0",
-                    activeStep === "start" ? "translate-x-1" : "translate-x-[calc(100%+8px)]"
-                  )}
-                />
-              )}
-
-              {/* Left Side: Fecha de Inicio */}
+          <div className="grid gap-4 sm:grid-cols-2 w-full">
+            {/* Input Fecha de Inicio */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[12.5px] font-semibold text-text-primary">
+                {startLabel}
+              </span>
               <button
                 type="button"
                 onClick={handleOpenStart}
                 disabled={disabled}
                 aria-label={startLabel}
-                className="relative z-10 flex flex-1 flex-col items-start justify-center gap-0.5 px-4 py-2.5 text-left outline-none rounded-l-xl"
+                className={cn(
+                  "relative flex h-11 w-full items-center gap-2.5 rounded-lg border bg-surface px-3.5 text-left text-[13px] transition-all",
+                  open && activeStep === "start"
+                    ? "border-primary ring-2 ring-primary/20 bg-primary/[0.03] shadow-sm"
+                    : "border-border hover:border-border-hover",
+                  startError && "border-destructive focus:border-destructive",
+                  disabled && "opacity-50 cursor-not-allowed"
+                )}
               >
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <CalendarIcon className="h-3.5 w-3.5" strokeWidth={2.5} />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">{startLabel}</span>
-                </div>
-                <span className={cn("text-[14px] font-medium leading-tight", hasStart ? "text-text-primary" : "text-muted-foreground/50")}>
+                <CalendarIcon
+                  className={cn(
+                    "h-4 w-4 shrink-0 transition-colors",
+                    hasStart ? "text-primary" : "text-muted-foreground"
+                  )}
+                  strokeWidth={2}
+                />
+                <span
+                  className={cn(
+                    "truncate font-medium text-[13px]",
+                    hasStart ? "text-text-primary" : "text-muted-foreground/70"
+                  )}
+                >
                   {hasStart ? formatFlightDate(tempFrom, locale) : startPlaceholder}
                 </span>
+
+                {/* Subtle active indicator dot */}
+                {open && activeStep === "start" && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                )}
               </button>
+              {startError && (
+                <span className="text-[11.5px] text-destructive">{startError}</span>
+              )}
+            </div>
 
-              {/* Vertical Divider */}
-              <div className="relative z-10 w-px bg-border my-2" />
-
-              {/* Right Side: Fecha de Cierre */}
+            {/* Input Fecha de Cierre */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[12.5px] font-semibold text-text-primary">
+                {endLabel}
+              </span>
               <button
                 type="button"
                 onClick={handleOpenEnd}
                 disabled={disabled}
                 aria-label={endLabel}
-                className="relative z-10 flex flex-1 flex-col items-start justify-center gap-0.5 px-4 py-2.5 text-left outline-none rounded-r-xl"
+                className={cn(
+                  "relative flex h-11 w-full items-center gap-2.5 rounded-lg border bg-surface px-3.5 text-left text-[13px] transition-all",
+                  open && activeStep === "end"
+                    ? "border-primary ring-2 ring-primary/20 bg-primary/[0.03] shadow-sm"
+                    : "border-border hover:border-border-hover",
+                  endError && "border-destructive focus:border-destructive",
+                  disabled && "opacity-50 cursor-not-allowed"
+                )}
               >
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <CalendarIcon className="h-3.5 w-3.5" strokeWidth={2.5} />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">{endLabel}</span>
-                </div>
-                <span className={cn("text-[14px] font-medium leading-tight", hasEnd ? "text-text-primary" : "text-muted-foreground/50")}>
+                <CalendarIcon
+                  className={cn(
+                    "h-4 w-4 shrink-0 transition-colors",
+                    hasEnd ? "text-primary" : "text-muted-foreground"
+                  )}
+                  strokeWidth={2}
+                />
+                <span
+                  className={cn(
+                    "truncate font-medium text-[13px]",
+                    hasEnd ? "text-text-primary" : "text-muted-foreground/70"
+                  )}
+                >
                   {hasEnd ? formatFlightDate(tempTo, locale) : endPlaceholder}
                 </span>
+
+                {/* Subtle active indicator dot */}
+                {open && activeStep === "end" && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                )}
               </button>
+              {endError && (
+                <span className="text-[11.5px] text-destructive">{endError}</span>
+              )}
             </div>
-            
-            {/* Error Messages */}
-            {(startError || endError) && (
-              <span className="text-[11.5px] text-destructive px-1">
-                {startError || endError}
-              </span>
-            )}
           </div>
         </PopoverTrigger>
 
         <PopoverContent
           className="w-auto p-0 rounded-2xl border-border/80 bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] z-50 overflow-hidden"
-          align="start"
+          align={activeStep === "start" ? "start" : "end"}
           sideOffset={8}
           onPointerDownOutside={() => {
             // Keep selection when clicking outside
