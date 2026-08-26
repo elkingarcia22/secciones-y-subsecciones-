@@ -119,11 +119,11 @@ function Calendar({
           defaultClassNames.today
         ),
         outside: cn(
-          "text-muted-foreground/40 aria-selected:text-muted-foreground/40",
+          "text-muted-foreground/60 aria-selected:text-muted-foreground/60",
           defaultClassNames.outside
         ),
         disabled: cn(
-          "text-muted-foreground/30 cursor-not-allowed",
+          "text-muted-foreground/60 cursor-not-allowed",
           defaultClassNames.disabled
         ),
         hidden: cn("invisible", defaultClassNames.hidden),
