@@ -210,10 +210,10 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
                   variant="outline"
                   onClick={() => setIsAnalyzing(true)}
                   disabled={isAnalyzing}
-                  className="h-9 gap-2 text-[13px] font-semibold"
+                  className="h-9 gap-2 text-[13px] font-bold border-ai-gradient-surface hover:opacity-80 transition-opacity"
                 >
-                  <RefreshCw className={cn("h-3.5 w-3.5", isAnalyzing && "animate-spin")} />
-                  {isAnalyzing ? "Analizando…" : "Re-analizar"}
+                  <RefreshCw className={cn("h-3.5 w-3.5 text-[#2d5cf7]", isAnalyzing && "animate-spin")} />
+                  <span className="text-ai-gradient">{isAnalyzing ? "Analizando…" : "Re-analizar"}</span>
                 </Button>
                 <MeasurementScaleButton
                   items={CONFIDENCE_LEGEND}

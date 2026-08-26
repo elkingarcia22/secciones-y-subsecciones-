@@ -219,6 +219,12 @@
                 linear-gradient(135deg, hsl(var(--ai-gradient-start)), hsl(var(--ai-gradient-end))) border-box !important;
   }
 
+  .border-ai-gradient-surface {
+    border: 1px solid transparent !important;
+    background: linear-gradient(hsl(var(--color-surface-hsl)), hsl(var(--color-surface-hsl))) padding-box,
+                linear-gradient(135deg, hsl(var(--ai-gradient-start)), hsl(var(--ai-gradient-end))) border-box !important;
+  }
+
   .shadow-ai-premium {
     box-shadow: var(--shadow-ai-premium) !important;
   }
