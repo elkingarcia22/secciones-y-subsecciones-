@@ -234,22 +234,18 @@ export function SurveyBuilder({
     [draft.sections]
   );
 
+  // Mirrors the "Esta sección está vacía" empty state in SectionEditor: a
+  // section is empty only when it has neither its own questions nor
+  // subsections. A container section with no direct questions is fine as
+  // long as every subsection underneath it carries content.
   const allSectionsHaveQuestions = React.useMemo(() => {
-    if (draft.sections.length === 0) return true;
-    const checkSections = (sections: typeof draft.sections): boolean => {
-      for (const section of sections) {
-        if (section.questions.length === 0) {
-          return false;
-        }
-        if (section.children.length > 0) {
-          if (!checkSections(section.children)) {
-            return false;
-          }
-        }
+    const isSectionFilled = (section: (typeof draft.sections)[number]): boolean => {
+      if (section.questions.length === 0 && section.children.length === 0) {
+        return false;
       }
-      return true;
+      return section.children.every(isSectionFilled);
     };
-    return checkSections(draft.sections);
+    return draft.sections.every(isSectionFilled);
   }, [draft.sections]);
 
   // A section "with a question" only counts once every question in the whole

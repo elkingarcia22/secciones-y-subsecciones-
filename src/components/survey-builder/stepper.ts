@@ -1,19 +1,5 @@
 import { participantCount } from "./participants";
-import type { SurveyDraft, SurveySection } from "./surveyBuilderTypes";
-
-function hasQuestionsInAllSections(sections: readonly SurveySection[]): boolean {
-  for (const section of sections) {
-    if (section.questions.length === 0) {
-      return false;
-    }
-    if (section.children.length > 0) {
-      if (!hasQuestionsInAllSections(section.children)) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
+import type { SurveyDraft } from "./surveyBuilderTypes";
 
 /**
  * Survey builder stepper — the left panel as a sequence of steps.
