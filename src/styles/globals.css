@@ -483,3 +483,27 @@
     scrollbar-width: none;
   }
 }
+/* ── Motion reducida ───────────────────────────────────────
+ *
+ * Los overlays (drawers, diálogos, popovers) entran y salen con animaciones
+ * declaradas en `tailwind.config.js`. Con `prefers-reduced-motion: reduce` el
+ * panel debe seguir apareciendo y desapareciendo — Radix espera a que la
+ * animación termine para desmontar, así que no se puede quitar del todo — pero
+ * sin recorrido: se resuelve en 1ms y solo queda el cambio de estado.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="sheet-content"],
+  [data-slot="sheet-overlay"],
+  [data-slot="dialog-content"],
+  [data-slot="dialog-overlay"],
+  [data-slot="alert-dialog-content"],
+  [data-slot="alert-dialog-overlay"],
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="tooltip-content"],
+  [data-slot="hover-card-content"] {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+  }
+}

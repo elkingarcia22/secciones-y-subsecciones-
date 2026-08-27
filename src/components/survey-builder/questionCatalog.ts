@@ -132,13 +132,13 @@ export const supportsDontKnow = (kind: ScaleType | null): boolean =>
 const emptyFollowUps = (): NpsFollowUps => ({ detractors: "", neutrals: "", promoters: "" });
 
 export const buildOption = (label = ""): QuestionOption => ({
-  id: `opt-${crypto.randomUUID()}`,
+  id: `opt-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
   label,
 });
 
 /** A brand-new question: an unconfigured Likert, the most common case. */
 export const buildQuestion = (overrides: Partial<SurveyQuestion> = {}): SurveyQuestion => ({
-  id: `q-${crypto.randomUUID()}`,
+  id: `q-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
   statement: "",
   type: "scale",
   required: true,
@@ -193,7 +193,7 @@ export function changeScaleType(question: SurveyQuestion, kind: ScaleType): Surv
 export function duplicateQuestion(question: SurveyQuestion): SurveyQuestion {
   return {
     ...question,
-    id: `q-${crypto.randomUUID()}`,
+    id: `q-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
     scale: { ...question.scale, followUps: { ...question.scale.followUps } },
     options: question.options.map((option) => ({ ...option, id: buildOption().id })),
   };

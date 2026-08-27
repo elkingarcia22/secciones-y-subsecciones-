@@ -161,7 +161,7 @@ export function buildSystemDemographic(key: string): DemographicField | null {
   if (!entry) return null;
 
   return {
-    id: `dem-${crypto.randomUUID()}`,
+    id: `dem-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
     label: entry.label,
     source: "system",
     catalogKey: entry.key,
@@ -246,7 +246,7 @@ export function buildLibraryDemographic(key: string): DemographicField | null {
   if (!entry) return null;
 
   return {
-    id: `dem-${crypto.randomUUID()}`,
+    id: `dem-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
     label: entry.label,
     source: "library",
     catalogKey: entry.key,
@@ -260,7 +260,7 @@ export function buildLibraryDemographic(key: string): DemographicField | null {
 
 export function buildCustomDemographic(): DemographicField {
   return {
-    id: `dem-${crypto.randomUUID()}`,
+    id: `dem-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
     label: "",
     source: "custom",
     catalogKey: null,
@@ -288,7 +288,7 @@ export const importedCatalogKey = (column: string): string => `import:${column}`
  */
 export function buildImportedDemographic(entry: ImportedDemographic): DemographicField {
   return {
-    id: `dem-${crypto.randomUUID()}`,
+    id: `dem-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
     label: entry.label,
     source: "import",
     catalogKey: importedCatalogKey(entry.key),

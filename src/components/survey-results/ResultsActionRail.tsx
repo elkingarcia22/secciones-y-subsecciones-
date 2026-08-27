@@ -200,17 +200,14 @@ export function ResultsActionRail({
                 </button>
               </HoverCardTrigger>
               <HoverCardContent
-                // Centered on the button rather than flush with its edge —
-                // the trigger is small and square, so an offset alignment
-                // would visibly overshoot to one side.
                 align="center"
                 side="top"
                 sideOffset={16}
-                className="w-[280px] rounded-xl p-4 shadow-rail border-white/10 bg-surface-nav text-white/60"
+                className="w-[280px] rounded-xl p-3 shadow-rail border-white/10 bg-surface-nav text-white/60"
               >
-                <p className="text-[13px] font-semibold text-white">Información</p>
-                <div className="my-3 h-px bg-white/10" />
-                <dl className="flex flex-col gap-3">
+                <div className="px-1 text-[13px] font-semibold text-white leading-none">Información</div>
+                <div className="mt-2 mb-2 h-px bg-white/10" />
+                <div className="flex flex-col gap-1.5 px-1 pb-0.5">
                   {draft.kind && (
                     <InfoRow icon={Tag} label="Tipo" value={SURVEY_KIND_LABELS[draft.kind]} />
                   )}
@@ -221,7 +218,7 @@ export function ResultsActionRail({
                   <InfoRow icon={Users} label="Audiencia" value={`${results.participation.invited.toLocaleString("es-CO")} invitados`} />
                   <InfoRow icon={CalendarRange} label="Fecha de inicio" value={start ?? "—"} />
                   <InfoRow icon={CalendarRange} label="Fecha de finalización" value={end ?? "—"} />
-                </dl>
+                </div>
               </HoverCardContent>
             </HoverCard>
 
@@ -288,11 +285,11 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="flex items-center gap-2 text-[13px] text-white/60">
+      <span className="flex items-center gap-2 text-[13px] text-white/60 leading-none">
         <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
         {label}
-      </dt>
-      <dd className="text-[13px] font-semibold tabular-nums text-white">{value}</dd>
+      </span>
+      <span className="text-[13px] font-semibold tabular-nums text-white leading-none">{value}</span>
     </div>
   );
 }

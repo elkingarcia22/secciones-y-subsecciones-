@@ -137,7 +137,7 @@ export type SurveyStatus = "draft" | "scheduled" | "live" | "closed";
 
 export const SURVEY_STATUS_LABELS: Readonly<Record<SurveyStatus, string>> = {
   draft: "Borrador",
-  scheduled: "Programada",
+  scheduled: "Por iniciar",
   live: "En curso",
   closed: "Finalizada",
 };

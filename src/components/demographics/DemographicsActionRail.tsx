@@ -1,4 +1,4 @@
-import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   ActionRailShell,
   AnimatedActionItem,
@@ -14,6 +14,7 @@ interface DemographicsActionRailProps {
   /** The lone selected row, when exactly one is selected. */
   selected: { id: string; name: string; origin: "system" | "user" } | null;
   onCreate: () => void;
+  onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -33,6 +34,7 @@ export function DemographicsActionRail({
   selectedCount,
   selected,
   onCreate,
+  onView,
   onEdit,
   onDuplicate,
   onDelete,
@@ -59,6 +61,16 @@ export function DemographicsActionRail({
         {mode === "single" && selected && (
           <AnimatedActionItem animKey={animKey} staggerIndex={2}>
             <RailButton
+              icon={<Eye className="h-[20px] w-[20px]" strokeWidth={2} />}
+              label="Ver"
+              onClick={() => onView(selected.id)}
+            />
+          </AnimatedActionItem>
+        )}
+
+        {mode === "single" && selected && (
+          <AnimatedActionItem animKey={animKey} staggerIndex={3}>
+            <RailButton
               icon={<Pencil className="h-[20px] w-[20px]" strokeWidth={2} />}
               label="Editar"
               onClick={() => onEdit(selected.id)}
@@ -67,7 +79,7 @@ export function DemographicsActionRail({
           </AnimatedActionItem>
         )}
 
-        <AnimatedActionItem animKey={animKey} staggerIndex={3}>
+        <AnimatedActionItem animKey={animKey} staggerIndex={4}>
           <RailButton
             icon={<Copy className="h-[20px] w-[20px]" strokeWidth={2} />}
             label={mode === "bulk" ? `Duplicar (${selectedCount})` : "Duplicar"}
@@ -75,7 +87,7 @@ export function DemographicsActionRail({
           />
         </AnimatedActionItem>
 
-        <AnimatedActionItem animKey={animKey} staggerIndex={4}>
+        <AnimatedActionItem animKey={animKey} staggerIndex={5}>
           <RailButton
             icon={<Trash2 className="h-[20px] w-[20px]" strokeWidth={2} />}
             label={mode === "bulk" ? `Eliminar (${selectedCount})` : "Eliminar"}

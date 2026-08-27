@@ -16,6 +16,8 @@ import { COMPARATIVE_SURVEYS_LIST } from "@/mocks/comparativeMocks";
 import { createPublishedSurveyDraft } from "@/mocks/surveyPreviewMocks";
 import { formatSurveyDate } from "@/components/survey-list/surveyListDates";
 import type { SurveyDraft, FixedBlockId } from "@/components/survey-builder";
+import { activateAllCatalogDemographics } from "@/components/survey-builder/demographics";
+import { getLibraryDemographics, buildLibraryDemographic } from "@/components/survey-builder/demographicsLibrary";
 import type { SurveyListItem } from "@/mocks/types";
 import type { ShellBreadcrumb } from "@/components/app-shell";
 
@@ -83,8 +85,8 @@ function App() {
         id: surveyId,
         name: savedDraft.name || "Encuesta sin título",
         type: savedDraft.general?.type || "Clima",
-        status: "Borrador",
-        statusVariant: "default",
+        status: savedDraft.status === "scheduled" ? "Por iniciar" : "Borrador",
+        statusVariant: savedDraft.status === "scheduled" ? "neutral" : "default",
         startDate: savedDraft.general?.startDate || "-",
         endDate: savedDraft.general?.endDate || "-",
         participants: 0,
@@ -236,6 +238,14 @@ function App() {
                 }}
                 onCreateFromTemplate={(template) => {
                   const draftClone = JSON.parse(JSON.stringify(template));
+                  
+                  // Always activate library demographics for all templates
+                  draftClone.demographics.fields = activateAllCatalogDemographics(
+                    [],
+                    getLibraryDemographics(),
+                    buildLibraryDemographic
+                  );
+
                   setEditingDraft(draftClone);
                   setBuilderInitialSelection(undefined);
                   setBuilderInitialStep("general");

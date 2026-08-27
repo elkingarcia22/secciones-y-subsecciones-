@@ -1,5 +1,6 @@
+import * as React from "react";
 import { Copy, Download, GitCompare, Layout, Plus, Trash2 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   ActionRailShell,
   AnimatedActionItem,
@@ -75,6 +76,7 @@ export function SurveyListActionRail({
   // Keyed on the status too: moving between two surveys at different stages
   // swaps the whole action set, which is exactly the change the stagger exists
   // to announce.
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const animKey = useContextChangeKey(
     mode === "single" ? `single:${selectedSurvey?.status ?? ""}` : mode
   );
@@ -115,6 +117,7 @@ export function SurveyListActionRail({
             {overflow.length > 0 && (
               <AnimatedActionItem animKey={animKey} staggerIndex={2 + inline.length}>
                 <RailOverflowMenu
+                  onOpenChange={setIsMenuOpen}
                   items={overflow.map((id) => {
                     const spec = SURVEY_ACTIONS[id];
                     const Icon = spec.icon;
@@ -163,7 +166,7 @@ export function SurveyListActionRail({
 
   return (
     <ActionRailShell
-      keepOpen={selectedCount > 0}
+      keepOpen={selectedCount > 0 || isMenuOpen}
       contextual={contextual}
       persistent={
         selectedCount === 0 ? (
@@ -174,7 +177,7 @@ export function SurveyListActionRail({
               onClick={onCompare}
             />
 
-            <Popover>
+            <Popover onOpenChange={setIsMenuOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
@@ -186,14 +189,11 @@ export function SurveyListActionRail({
                 </button>
               </PopoverTrigger>
               <PopoverContent
-                align="end"
+                align="center"
                 side="top"
                 sideOffset={16}
                 className="w-[280px] rounded-2xl border-white/10 bg-surface-nav p-2 text-white/60 shadow-rail"
               >
-                <PopoverTitle className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white/45">
-                  Opciones de creación
-                </PopoverTitle>
                 <RailCreateOption
                   icon={<Plus className="h-5 w-5" strokeWidth={2} />}
                   title="Crear en blanco"

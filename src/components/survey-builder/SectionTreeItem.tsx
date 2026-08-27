@@ -34,6 +34,7 @@ interface SectionTreeItemProps {
 
 /** One row of the sections tree. */
 export function SectionTreeItem({
+  readOnly,
   entry,
   isActive,
   isCollapsed,

@@ -299,7 +299,7 @@ function buildImportedSection(node: ImportedSection, depth: number): SurveySecti
     depth === 1 && node.questions.length > 0
       ? [
           {
-            id: `section-${crypto.randomUUID()}`,
+            id: `section-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
             title: "Preguntas",
             description: "",
             questions: node.questions.map(buildImportedQuestion),
@@ -314,7 +314,7 @@ function buildImportedSection(node: ImportedSection, depth: number): SurveySecti
       : [];
 
   return {
-    id: `section-${crypto.randomUUID()}`,
+    id: `section-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
     title: node.title,
     description: node.description,
     questions: ownQuestions,

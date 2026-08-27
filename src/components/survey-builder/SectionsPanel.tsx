@@ -22,6 +22,7 @@ import {
   type StepperStatusInput,
   type StepperStepId,
 } from "./stepper";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SectionsPanelProps {
   readOnly?: boolean;
@@ -66,10 +67,20 @@ function StepMarker({ step, state, hasError }: { step: StepperStepId; state: Ste
 
   return (
     <div className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface">
+      {/* Ripple effect when completing a step */}
+      {state === "complete" && !hasError && (
+        <motion.div
+          className="absolute inset-0 rounded-full bg-status-positive/40"
+          initial={{ scale: 1, opacity: 0.8 }}
+          animate={{ scale: 2.2, opacity: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+        />
+      )}
+
       <span
         aria-hidden
         className={cn(
-          "absolute inset-0 flex items-center justify-center rounded-full text-[11px] font-bold tabular-nums transition-all",
+          "absolute inset-0 flex items-center justify-center rounded-full text-[11px] font-bold tabular-nums transition-colors duration-500",
           hasError && "bg-destructive/15 text-destructive ring-1 ring-destructive/30",
           !hasError && state === "active" && "bg-primary text-primary-foreground",
           !hasError && state === "complete" && "bg-status-positive/15 text-status-positive",
@@ -77,13 +88,58 @@ function StepMarker({ step, state, hasError }: { step: StepperStepId; state: Ste
           !hasError && state === "locked" && "bg-border/40 text-muted-foreground/60"
         )}
       >
-        {state === "complete" ? (
-          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-        ) : number !== null ? (
-          number
-        ) : (
-          <span className="h-1.5 w-1.5 rounded-full bg-current" />
-        )}
+        <AnimatePresence initial={false}>
+          {state === "complete" ? (
+            <motion.div
+              key="check"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              transition={{ type: "spring", bounce: 0.5, duration: 0.5 }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <motion.path
+                  d="M20 6L9 17L4 12"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
+                />
+              </svg>
+            </motion.div>
+          ) : number !== null ? (
+            <motion.span
+              key="number"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              {number}
+            </motion.span>
+          ) : (
+            <motion.span
+              key="dot"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            </motion.span>
+          )}
+        </AnimatePresence>
       </span>
     </div>
   );
@@ -119,16 +175,22 @@ function StepperRow({ step, state, hasNext, hasError, onSelect }: StepperRowProp
         disabled={isLocked}
         aria-current={state === "active" ? "step" : undefined}
         className={cn(
-          "flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-          state === "active" && "bg-primary/10",
+          "relative flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
           !isLocked && state !== "active" && "hover:bg-surface-muted",
           isLocked && "cursor-not-allowed"
         )}
       >
+        {state === "active" && (
+          <motion.div
+            layoutId="active-stepper-bg"
+            className="absolute inset-0 rounded-xl bg-primary/10"
+            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+          />
+        )}
         <StepMarker step={step} state={state} hasError={hasError} />
         <span
           className={cn(
-            "min-w-0 flex-1 truncate text-[13px] tracking-tight transition-colors",
+            "relative z-10 min-w-0 flex-1 truncate text-[13px] tracking-tight transition-colors duration-300",
             state === "active" && "font-semibold text-primary",
             state === "complete" && "font-medium text-text-primary",
             hasError && "font-medium text-destructive",
@@ -236,7 +298,7 @@ export function SectionsPanel({
 
   if (isCollapsed) {
     return (
-      <aside className="flex w-[52px] shrink-0 flex-col items-center gap-3 self-start overflow-y-auto rounded-2xl border border-border/60 bg-surface p-2 py-3 shadow-card max-h-full">
+      <aside className="flex w-[52px] shrink-0 flex-col items-center gap-3 self-start overflow-y-auto overflow-x-hidden rounded-2xl border border-border/60 bg-surface p-2 py-3 shadow-card max-h-full scrollbar-none">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -268,7 +330,7 @@ export function SectionsPanel({
   }
 
   return (
-    <aside className="flex w-[288px] shrink-0 flex-col self-start overflow-y-auto rounded-2xl border border-border/60 bg-surface p-2 shadow-card max-h-full">
+    <aside className="flex w-[288px] shrink-0 flex-col self-start overflow-y-auto overflow-x-hidden rounded-2xl border border-border/60 bg-surface p-2 shadow-card max-h-full">
       <div className="mb-2 flex items-center justify-between pl-3 pr-1 pt-1.5">
         <h2 className="text-[13px] font-semibold text-text-secondary">
           Pasos de creación

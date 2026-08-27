@@ -7,15 +7,29 @@ import { Input } from "@/components/ui/input";
 import { SheetFooter } from "@/components/ui/sheet";
 import { DrawerShell } from "@/components/overlays/DrawerShell";
 import { DEMOGRAPHIC_TYPES } from "@/components/survey-builder/demographics";
-import { createLibraryDemographic } from "@/components/survey-builder/demographicsLibrary";
+import {
+  createLibraryDemographic,
+  updateLibraryDemographic,
+} from "@/components/survey-builder/demographicsLibrary";
 import type { DemographicType } from "@/components/survey-builder/surveyBuilderTypes";
 
-interface CreateDemographicDrawerProps {
+/** The entry being edited — enough to prefill the form and save back over it. */
+export interface EditingDemographic {
+  key: string;
+  label: string;
+  type: DemographicType;
+  optionLabels: readonly string[];
+}
+
+interface DemographicFormDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Fires after a demographic is stored, with its wording. */
-  onCreated: (label: string) => void;
-  /** Names already taken across both catalogs, to refuse a duplicate early. */
+  mode: "create" | "edit";
+  /** Required when `mode` is "edit". */
+  editing?: EditingDemographic | null;
+  /** Fires after the demographic is stored, with its final wording. */
+  onSaved: (label: string) => void;
+  /** Names already taken across both catalogs — excluding the entry being edited. */
   takenNames: readonly string[];
 }
 
@@ -33,34 +47,46 @@ const TYPE_HINTS: Readonly<Record<DemographicType, string>> = {
 };
 
 /**
- * Creating a demographic: one form, in one drawer.
+ * Creating or editing a demographic: one form, in one drawer.
  *
  * Not a stepped wizard — a demographic is a name, a way of answering and a
  * short list of values. Three fields do not need three screens, and splitting
  * them would hide the options from the name while you word them, which is
- * exactly when you want both in view.
+ * exactly when you want both in view. Editing reuses the same shape: nothing
+ * about wording a demographic changes once it already has answers attached.
  */
-export function CreateDemographicDrawer({
+export function DemographicFormDrawer({
   open,
   onOpenChange,
-  onCreated,
+  mode,
+  editing = null,
+  onSaved,
   takenNames,
-}: CreateDemographicDrawerProps) {
+}: DemographicFormDrawerProps) {
   const [label, setLabel] = React.useState("");
   const [type, setType] = React.useState<DemographicType>("single");
   const [options, setOptions] = React.useState<readonly string[]>(["", ""]);
   /** Errors stay quiet until a submit is attempted, so an empty form is calm. */
   const [attempted, setAttempted] = React.useState(false);
 
+  const isEdit = mode === "edit";
+
   // A fresh drawer every time it opens: a half-written demographic surviving a
   // close would reappear as somebody else's draft with no way to tell why.
+  // Editing starts from the entry's own wording instead of a blank form.
   React.useEffect(() => {
     if (!open) return;
-    setLabel("");
-    setType("single");
-    setOptions(["", ""]);
+    if (isEdit && editing) {
+      setLabel(editing.label);
+      setType(editing.type);
+      setOptions(editing.optionLabels.length > 0 ? editing.optionLabels : ["", ""]);
+    } else {
+      setLabel("");
+      setType("single");
+      setOptions(["", ""]);
+    }
     setAttempted(false);
-  }, [open]);
+  }, [open, isEdit, editing]);
 
   const trimmedLabel = label.trim();
   const duplicate =
@@ -70,11 +96,31 @@ export function CreateDemographicDrawer({
 
   const missingLabel = trimmedLabel === "";
   const notEnoughOptions = filledOptions.length < MIN_OPTIONS;
-  const canCreate = !missingLabel && !duplicate && !notEnoughOptions && !duplicateOption;
+  const canSave = !missingLabel && !duplicate && !notEnoughOptions && !duplicateOption;
 
-  const handleCreate = () => {
+  const handleSave = () => {
     setAttempted(true);
-    if (!canCreate) return;
+    if (!canSave) return;
+
+    if (isEdit && editing) {
+      const updated = updateLibraryDemographic(editing.key, {
+        label: trimmedLabel,
+        type,
+        optionLabels: filledOptions,
+      });
+      if (!updated) {
+        toast.error("No se pudo guardar el demográfico", {
+          description: "Revisa que el nombre no esté repetido.",
+        });
+        return;
+      }
+      toast.success("Demográfico actualizado", {
+        description: `“${updated.label}” se actualizó correctamente.`,
+      });
+      onSaved(updated.label);
+      onOpenChange(false);
+      return;
+    }
 
     const created = createLibraryDemographic({
       label: trimmedLabel,
@@ -90,7 +136,7 @@ export function CreateDemographicDrawer({
     toast.success("Demográfico creado", {
       description: `“${created.label}” ya está disponible para segmentar.`,
     });
-    onCreated(created.label);
+    onSaved(created.label);
     onOpenChange(false);
   };
 
@@ -103,12 +149,15 @@ export function CreateDemographicDrawer({
     <DrawerShell
       open={open}
       onOpenChange={onOpenChange}
-      title="Crear dato demográfico"
-      description="Quedará disponible para segmentar los resultados de cualquier encuesta"
+      title={isEdit ? "Editar dato demográfico" : "Crear dato demográfico"}
+      description={
+        isEdit
+          ? "Los cambios se reflejarán en los filtros de resultados que ya lo usan."
+          : "Quedará disponible para segmentar los resultados de cualquier encuesta"
+      }
       size="xl"
-      // `size` only sets a max-width, and the sheet's own
-      // `data-[side=right]:sm:max-w-sm` outranks it by specificity — so the
-      // width has to be forced here. Capped at 92vw for a small screen.
+      // `size` solo fija un max-width; este drawer necesita además un ancho
+      // exacto, así que se fuerza aquí. Tope de 92vw para pantallas pequeñas.
       className="!w-[min(620px,92vw)] !max-w-[min(620px,92vw)]"
       disablePadding
       footer={
@@ -117,9 +166,9 @@ export function CreateDemographicDrawer({
             <Button variant="ghost" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button className="gap-2" onClick={handleCreate}>
+            <Button className="gap-2" onClick={handleSave}>
               <Check className="h-4 w-4" />
-              Crear demográfico
+              {isEdit ? "Guardar cambios" : "Crear demográfico"}
             </Button>
           </div>
         </SheetFooter>
@@ -148,7 +197,7 @@ export function CreateDemographicDrawer({
             </span>
           ) : attempted && missingLabel ? (
             <span className="text-[12px] font-medium text-status-negative">
-              Ponle un nombre para poder crearlo.
+              Ponle un nombre para poder {isEdit ? "guardarlo" : "crearlo"}.
             </span>
           ) : (
             <span className="text-[12px] text-muted-foreground">

@@ -38,7 +38,7 @@ import {
   type SurveyListFilters,
 } from "./surveyListFilters";
 import { dateValue, parseSurveyDate, startOfToday } from "./surveyListDates";
-import { SurveyCloseDateCell, type CloseDateEditMode } from "./SurveyCloseDateCell";
+import { SurveyDateCell, type DateEditMode } from "./SurveyDateCell";
 
 /** One row of the list. Shaped by the mocks, so the fields stay loose. */
 export interface SurveyListRow {
@@ -69,7 +69,8 @@ interface SurveyListTableProps {
    * The row whose closing date is being changed right now, if any. Owned by the
    * screen because the rail starts the edit and the table finishes it.
    */
-  dateEdit?: { surveyId: string; mode: CloseDateEditMode } | null;
+  dateEdit?: { surveyId: string; mode: DateEditMode } | null;
+  onDateEditStart?: (surveyId: string, mode: DateEditMode) => void;
   onDateEditSave?: (surveyId: string, date: Date) => void;
   onDateEditCancel?: () => void;
 }
@@ -99,8 +100,9 @@ function participantsValue(raw: string | number): number {
 /** Default table order: drafts need attention first, then what's running, then what's done. */
 const STATUS_ORDER: Readonly<Record<string, number>> = {
   Borrador: 0,
-  "En curso": 1,
-  Finalizado: 2,
+  "Por iniciar": 1,
+  "En curso": 2,
+  Finalizado: 3,
 };
 
 function statusOrder(status: string): number {
@@ -132,6 +134,10 @@ function statusVariant(survey: SurveyListRow): "info" | "positive" | "warning" |
  * newest start date first within each group — until the person sorts by a
  * column themselves, which replaces the grouping with a plain column sort.
  */
+// Module-level cache to track seen surveys reliably across unmounts and Strict Mode
+const seenSurveyIds = new Set<string>();
+let isFirstTableMount = true;
+
 export function SurveyListTable({
   surveys,
   selectedIds,
@@ -140,6 +146,7 @@ export function SurveyListTable({
   filters,
   onFiltersChange,
   dateEdit = null,
+  onDateEditStart,
   onDateEditSave,
   onDateEditCancel,
 }: SurveyListTableProps) {
@@ -149,14 +156,37 @@ export function SurveyListTable({
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState<number>(PAGE_SIZES[0]);
   const [onlySelected, setOnlySelected] = React.useState(false);
-  // No key selected yet: rows group by status (Borrador, En curso, Finalizado)
-  // rather than any single column. Clicking a header commits to that column
-  // and drops the grouping.
+  
+  // Find strictly new IDs
+  const newSurveyIds = React.useMemo<ReadonlySet<string>>(() => {
+    const newIds = new Set<string>();
+    
+    // If it's the very first time the table mounts in the app session,
+    // everything is "new" to the app, but we don't want to flash the whole table.
+    // We just register them.
+    if (isFirstTableMount) {
+      surveys.forEach(s => seenSurveyIds.add(s.id));
+      isFirstTableMount = false;
+      return newIds;
+    }
+
+    // On subsequent mounts (like returning from the builder), find IDs we haven't seen
+    surveys.forEach(s => {
+      if (!seenSurveyIds.has(s.id)) {
+        newIds.add(s.id);
+        seenSurveyIds.add(s.id); // Mark it seen so it doesn't flash again if we re-render
+      }
+    });
+
+    console.log("Found new IDs to animate:", Array.from(newIds));
+    return newIds;
+  }, [surveys]);
+
   const [sort, setSort] = React.useState<{ key: SortKey | null; ascending: boolean }>({
     key: null,
     ascending: false,
   });
-  // Resolved once per render so every date bucket in this pass agrees on "hoy".
+  
   const today = React.useMemo(() => new Date(), []);
 
   const toggleColumn = (column: keyof SurveyListFilters, value: string) => {
@@ -545,6 +575,7 @@ export function SurveyListTable({
                   <SurveyRow
                     key={survey.id}
                     survey={survey}
+                    isNew={newSurveyIds.has(survey.id)}
                     isSelected={selectedIds.has(survey.id)}
                     onToggle={() => toggleOne(survey.id)}
                     onOpen={() => onOpenSurvey(survey.id)}
@@ -553,6 +584,7 @@ export function SurveyListTable({
                     // the date being chosen stays legible against its own
                     // row instead of a wall of twenty others.
                     dimmed={editingId != null && editingId !== survey.id}
+                    onDateStart={(mode) => onDateEditStart?.(survey.id, mode)}
                     onDateSave={(date) => onDateEditSave?.(survey.id, date)}
                     onDateCancel={() => onDateEditCancel?.()}
                   />
@@ -618,22 +650,26 @@ export function SurveyListTable({
 
 function SurveyRow({
   survey,
+  isNew,
   isSelected,
   onToggle,
   onOpen,
   editMode,
   dimmed,
+  onDateStart,
   onDateSave,
   onDateCancel,
 }: {
   survey: SurveyListRow;
+  isNew?: boolean;
   isSelected: boolean;
   onToggle: () => void;
   onOpen: () => void;
   /** Set while this row's closing date is being changed. */
-  editMode: CloseDateEditMode | null;
+  editMode: DateEditMode | null;
   /** Another row is being edited, so this one steps out of the way. */
   dimmed: boolean;
+  onDateStart: (mode: DateEditMode) => void;
   onDateSave: (date: Date) => void;
   onDateCancel: () => void;
 }) {
@@ -659,11 +695,12 @@ function SurveyRow({
       data-state={isSelected ? "selected" : undefined}
       onClick={isEditing ? undefined : onToggle}
       className={cn(
-        "group border-border/60 transition-all",
+        "group border-border/60",
         isEditing
           ? "bg-primary/[0.04] shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
           : "cursor-pointer hover:bg-muted/30",
-        dimmed && "pointer-events-none opacity-35"
+        dimmed && "pointer-events-none opacity-35",
+        (isNew || survey.id === "survey-forced") && "animate-highlight-row transition-none"
       )}
     >
       <TableCell className="pl-7 pr-5">
@@ -700,11 +737,28 @@ function SurveyRow({
         <Badge variant={statusVariant(survey)}>{survey.status}</Badge>
       </TableCell>
       <TableCell className="px-2 py-3 text-[13px] tabular-nums text-muted-foreground">
-        {survey.startDate}
+        {isEditing && editMode === "editStartDate" ? (
+          <SurveyDateCell
+            value={survey.startDate}
+            mode={editMode}
+            minDate={new Date(0)}
+            onSave={onDateSave}
+            onCancel={onDateCancel}
+          />
+        ) : (
+          <button
+            type="button"
+            className="w-full text-left outline-none hover:text-primary transition-colors focus-visible:ring-1 focus-visible:ring-primary rounded disabled:pointer-events-none"
+            onClick={(e) => { e.stopPropagation(); onDateStart("editStartDate"); }}
+            disabled={isEditing}
+          >
+            {survey.startDate}
+          </button>
+        )}
       </TableCell>
       <TableCell className="px-2 py-3 text-[13px] tabular-nums text-muted-foreground">
-        {isEditing ? (
-          <SurveyCloseDateCell
+        {isEditing && (editMode === "editEndDate" || editMode === "reopen" || editMode === "editDates") ? (
+          <SurveyDateCell
             value={survey.endDate}
             mode={editMode}
             minDate={closeDateFloor}
@@ -712,7 +766,14 @@ function SurveyRow({
             onCancel={onDateCancel}
           />
         ) : (
-          survey.endDate
+          <button
+            type="button"
+            className="w-full text-left outline-none hover:text-primary transition-colors focus-visible:ring-1 focus-visible:ring-primary rounded disabled:pointer-events-none"
+            onClick={(e) => { e.stopPropagation(); onDateStart("editEndDate"); }}
+            disabled={isEditing}
+          >
+            {survey.endDate}
+          </button>
         )}
       </TableCell>
       <TableCell className="px-2 py-3 text-right text-[13px] font-semibold tabular-nums text-text-primary">

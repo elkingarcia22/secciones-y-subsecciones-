@@ -83,7 +83,7 @@ interface SurveyBuilderProps {
 type ToggleableBlockId = "welcome" | "closing";
 
 const buildEmptySection = (title: string): SurveySection => ({
-  id: `section-${crypto.randomUUID()}`,
+  id: `section-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
   title,
   description: "",
   questions: [],
@@ -160,11 +160,14 @@ export function SurveyBuilder({
    * growing into an endless column.
    */
   const [expandedCardIds, setExpandedCardIds] = React.useState<ReadonlySet<string>>(() => {
-    // Open down to the first subsection only: enough to show what a section
-    // holds, short enough to fit without scrolling.
+    // Open the first root section always, and down to its first subsection
+    // when it has one: enough to show what a section holds, short enough to
+    // fit without scrolling. A root with no subsections (questions sitting
+    // directly on it) must still open, or its questions render hidden.
     const root = _initialDraft.sections[0];
-    const firstChild = root?.children[0];
-    return new Set(firstChild ? [root.id, firstChild.id] : []);
+    if (!root) return new Set();
+    const firstChild = root.children[0];
+    return new Set(firstChild ? [root.id, firstChild.id] : [root.id]);
   });
   // At most one question form is open across the whole survey, matching the
   // one-open-row rule the section outline follows. The form edits the survey
@@ -355,14 +358,26 @@ export function SurveyBuilder({
       return;
     }
     if (blockingStep === "demographics") {
-      toast.error(
-        "Si usas datos demográficos, activa o crea al menos un dato demográfico para continuar."
-      );
+      const isNom035 = draft.name.toLowerCase().includes("nom 035");
+      if (isNom035) {
+        toast.error(
+          "Para la encuesta NOM 035, debes mantener activado al menos un dato demográfico."
+        );
+      } else {
+        toast.error(
+          "Abre la pestaña de Datos demográficos para revisar o configurar los filtros."
+        );
+      }
       return;
     }
     if (blockingStep === "sections") {
       setSectionsValidationTouched(true);
-      if (hasSectionWithQuestion && !allSectionsHaveQuestions) {
+      const sectionsHasIncompleteQuestion =
+        hasSectionWithQuestion && focusFirstIncompleteQuestion();
+
+      if (sectionsHasIncompleteQuestion) {
+        toast.error("Completa los campos obligatorios de la pregunta señalada para continuar.");
+      } else if (hasSectionWithQuestion && !allSectionsHaveQuestions) {
         toast.error("Todas las secciones deben tener al menos una pregunta para continuar.");
       } else {
         toast.error("Añade al menos una sección con preguntas para continuar.");
@@ -1005,7 +1020,7 @@ export function SurveyBuilder({
     if (failing.length === 0) {
       setFinalizeErrorSteps(new Set());
       toast.success("Encuesta guardada");
-      onExit(draft);
+      onExit({ ...draft, status: "scheduled" });
       return;
     }
 
@@ -1027,10 +1042,14 @@ export function SurveyBuilder({
       handleSelectStep(failing[0]);
     }
 
+    const isNom035 = draft.name.toLowerCase().includes("nom 035");
+
     const label: Record<StepperStepId, string> = {
       general: "Completa el nombre, el tipo y las fechas de la encuesta",
       participants: "Selecciona al menos un participante para finalizar",
-      demographics: "Activa al menos un dato demográfico o desactívala",
+      demographics: isNom035
+        ? "Mantén activado al menos un dato demográfico"
+        : "Revisa la pestaña de Datos demográficos",
       sections: sectionsHasIncompleteQuestion
         ? "Completa los campos obligatorios de la pregunta señalada"
         : "Añade al menos una sección con preguntas",

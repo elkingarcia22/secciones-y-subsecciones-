@@ -52,6 +52,64 @@ function writeSaved(entries: readonly LibraryDemographic[]): void {
   }
 }
 
+/**
+ * Built-in seeds (`LIBRARY_DEMOGRAPHICS`) live in code, not storage, so an
+ * edit or delete on one can't mutate the seed itself. Instead it's layered on
+ * top: an override replaces the seed's wording, a deletion hides it — both
+ * kept in their own storage keys, separate from genuinely author-created
+ * entries in `STORAGE_KEY`.
+ */
+const OVERRIDES_KEY = "ubits.demographics.library.overrides.v1";
+const DELETED_KEY = "ubits.demographics.library.deleted.v1";
+
+function readOverrides(): Readonly<Record<string, LibraryDemographic>> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(OVERRIDES_KEY);
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return {};
+    const entries = Object.entries(parsed as Record<string, unknown>).filter(([, value]) =>
+      isEntry(value)
+    );
+    return Object.fromEntries(entries) as Record<string, LibraryDemographic>;
+  } catch {
+    return {};
+  }
+}
+
+function writeOverrides(overrides: Readonly<Record<string, LibraryDemographic>>): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
+  } catch {
+    // Storage full or blocked — the session still works, just without persistence.
+  }
+}
+
+function readDeletedKeys(): ReadonlySet<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(DELETED_KEY);
+    if (!raw) return new Set();
+    const parsed: unknown = JSON.parse(raw);
+    return new Set(
+      Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : []
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function writeDeletedKeys(keys: ReadonlySet<string>): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(DELETED_KEY, JSON.stringify([...keys]));
+  } catch {
+    // Storage full or blocked — the session still works, just without persistence.
+  }
+}
+
 /** Accent-free lowercase dash form: "Tipo de contrato" → "tipo-de-contrato". */
 function slug(value: string): string {
   return value
@@ -69,11 +127,19 @@ function slug(value: string): string {
  */
 export function getLibraryDemographics(): readonly LibraryDemographic[] {
   const saved = readSaved();
+  const overrides = readOverrides();
+  const deleted = readDeletedKeys();
   // Against the *built-in* keys, not the saved ones: a set built from `saved`
   // matches every entry in `saved`, so the filter dropped the whole stored
   // library and nothing an author saved ever came back.
   const builtInKeys = new Set(LIBRARY_DEMOGRAPHICS.map((entry) => entry.key));
-  return [...LIBRARY_DEMOGRAPHICS, ...saved.filter((entry) => !builtInKeys.has(entry.key))];
+
+  const builtIns = LIBRARY_DEMOGRAPHICS.filter((entry) => !deleted.has(entry.key)).map(
+    (entry) => overrides[entry.key] ?? entry
+  );
+  const extra = saved.filter((entry) => !builtInKeys.has(entry.key) && !deleted.has(entry.key));
+
+  return [...builtIns, ...extra];
 }
 
 export const findLibraryDemographic = (key: string): LibraryDemographic | null =>
@@ -85,7 +151,7 @@ export function buildLibraryDemographic(key: string): DemographicField | null {
   if (!entry) return null;
 
   return {
-    id: `dem-${crypto.randomUUID()}`,
+    id: `dem-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
     label: entry.label,
     source: "library",
     catalogKey: entry.key,
@@ -186,6 +252,85 @@ export function createLibraryDemographic(input: {
   writeSaved([...readSaved(), entry]);
   notifyLibraryChanged();
   return entry;
+}
+
+/**
+ * Updates an existing library entry by key — a built-in seed or an author's
+ * own. Returns null when the key is unknown, the wording is blank, there are
+ * no options, or the new wording collides with another entry (including a
+ * system demographic's).
+ */
+export function updateLibraryDemographic(
+  key: string,
+  input: { label: string; type: DemographicType; optionLabels: readonly string[] }
+): LibraryDemographic | null {
+  const existing = findLibraryDemographic(key);
+  if (!existing) return null;
+
+  const label = input.label.trim();
+  const optionLabels = input.optionLabels.map((option) => option.trim()).filter((option) => option !== "");
+  if (label === "" || optionLabels.length === 0) return null;
+  if (SYSTEM_DEMOGRAPHICS.some((entry) => labelKey(entry.label) === labelKey(label))) return null;
+  const collidesWithAnother = getLibraryDemographics().some(
+    (entry) => entry.key !== key && labelKey(entry.label) === labelKey(label)
+  );
+  if (collidesWithAnother) return null;
+
+  const updated: LibraryDemographic = { ...existing, label, type: input.type, optionLabels };
+
+  const builtInKeys = new Set(LIBRARY_DEMOGRAPHICS.map((entry) => entry.key));
+  if (builtInKeys.has(key)) {
+    writeOverrides({ ...readOverrides(), [key]: updated });
+  } else {
+    writeSaved(readSaved().map((entry) => (entry.key === key ? updated : entry)));
+  }
+
+  notifyLibraryChanged();
+  return updated;
+}
+
+/** Removes a library entry by key, built-in seed or author-saved alike. */
+export function deleteLibraryDemographic(key: string): boolean {
+  const existing = findLibraryDemographic(key);
+  if (!existing) return false;
+
+  const builtInKeys = new Set(LIBRARY_DEMOGRAPHICS.map((entry) => entry.key));
+  if (builtInKeys.has(key)) {
+    writeDeletedKeys(new Set([...readDeletedKeys(), key]));
+    const overrides = readOverrides();
+    if (key in overrides) {
+      writeOverrides(Object.fromEntries(Object.entries(overrides).filter(([entryKey]) => entryKey !== key)));
+    }
+  } else {
+    writeSaved(readSaved().filter((entry) => entry.key !== key));
+  }
+
+  notifyLibraryChanged();
+  return true;
+}
+
+/**
+ * Copies a demographic's shape into a new library entry, wording padded with
+ * "(copia)" until it's unique. Works from a system demographic too — nothing
+ * about copying its shape needs to touch the system catalog, it just becomes
+ * a fresh author-owned entry.
+ */
+export function duplicateAsLibraryDemographic(input: {
+  label: string;
+  type: DemographicType;
+  optionLabels: readonly string[];
+}): LibraryDemographic | null {
+  const base = `${input.label} (copia)`;
+  let label = base;
+  let n = 2;
+  while (
+    isInLibrary(label) ||
+    SYSTEM_DEMOGRAPHICS.some((entry) => labelKey(entry.label) === labelKey(label))
+  ) {
+    label = `${base} ${n}`;
+    n += 1;
+  }
+  return createLibraryDemographic({ label, type: input.type, optionLabels: input.optionLabels });
 }
 
 const libraryListeners = new Set<() => void>();

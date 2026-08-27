@@ -114,6 +114,99 @@ export default {
         body: ["var(--font-body)"],
         heading: ["var(--font-heading)"],
       },
+      /*
+       * `data-open:` / `data-closed:` — los componentes de overlay (sheet,
+       * dialog, popover, dropdown, tooltip…) vienen escritos con la sintaxis
+       * de Tailwind v4. En v3 esos modificadores no existen salvo que se
+       * declaren aquí, así que TODAS sus clases de animación no generaban
+       * ninguna regla: los drawers aparecían y desaparecían de golpe.
+       */
+      data: {
+        open: 'state="open"',
+        closed: 'state="closed"',
+      },
+      keyframes: {
+        "highlight-row": {
+          "0%": { backgroundColor: "rgba(56, 101, 245, 0.8)" },
+          "100%": { backgroundColor: "transparent" }
+        },
+        /* Overlay: solo opacidad, para no competir con el panel. */
+        "overlay-in": { from: { opacity: "0" }, to: { opacity: "1" } },
+        "overlay-out": { from: { opacity: "1" }, to: { opacity: "0" } },
+        /*
+         * Drawer: desplazamiento completo desde su borde. El plugin
+         * `tailwindcss-animate` haría lo mismo, pero su keyframe genérico
+         * escribe `transform` entero, así que cualquier panel con transform
+         * propio (los diálogos centrados) se rompe. Declararlos aquí deja
+         * cada movimiento explícito y con su propia curva.
+         */
+        "drawer-in-right": {
+          from: { transform: "translate3d(100%, 0, 0)" },
+          to: { transform: "translate3d(0, 0, 0)" },
+        },
+        /* La salida suma una atenuación de opacidad al desplazamiento: solo
+           trasladar se lee como un corte seco justo en el borde de la
+           pantalla, mientras que desvanecerse a la vez que se mueve se lee
+           como que el panel se disuelve en el camino — más transitorio. */
+        "drawer-out-right": {
+          from: { transform: "translate3d(0, 0, 0)", opacity: "1" },
+          to: { transform: "translate3d(100%, 0, 0)", opacity: "0.3" },
+        },
+        "drawer-in-left": {
+          from: { transform: "translate3d(-100%, 0, 0)" },
+          to: { transform: "translate3d(0, 0, 0)" },
+        },
+        "drawer-out-left": {
+          from: { transform: "translate3d(0, 0, 0)", opacity: "1" },
+          to: { transform: "translate3d(-100%, 0, 0)", opacity: "0.3" },
+        },
+        "drawer-in-top": {
+          from: { transform: "translate3d(0, -100%, 0)" },
+          to: { transform: "translate3d(0, 0, 0)" },
+        },
+        "drawer-out-top": {
+          from: { transform: "translate3d(0, 0, 0)", opacity: "1" },
+          to: { transform: "translate3d(0, -100%, 0)", opacity: "0.3" },
+        },
+        "drawer-in-bottom": {
+          from: { transform: "translate3d(0, 100%, 0)" },
+          to: { transform: "translate3d(0, 0, 0)" },
+        },
+        "drawer-out-bottom": {
+          from: { transform: "translate3d(0, 0, 0)", opacity: "1" },
+          to: { transform: "translate3d(0, 100%, 0)", opacity: "0.3" },
+        },
+        /* Diálogo centrado: el translate de centrado viaja dentro del
+           keyframe, así que la escala no lo pisa a mitad de animación. */
+        "dialog-in": {
+          from: { opacity: "0", transform: "translate3d(-50%, -50%, 0) scale(0.96)" },
+          to: { opacity: "1", transform: "translate3d(-50%, -50%, 0) scale(1)" },
+        },
+        "dialog-out": {
+          from: { opacity: "1", transform: "translate3d(-50%, -50%, 0) scale(1)" },
+          to: { opacity: "0", transform: "translate3d(-50%, -50%, 0) scale(0.96)" },
+        },
+      },
+      animation: {
+        "highlight-row": "highlight-row 3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        /* La salida es incluso más larga que la entrada: quitarse de en medio
+           rápido se leía como un corte, no como una transición. Una curva
+           ease-in-out sobre una duración generosa deja que el ojo siga el
+           recorrido completo en vez de percibir un salto entre "abierto" y
+           "cerrado". */
+        "overlay-in": "overlay-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both",
+        "overlay-out": "overlay-out 380ms cubic-bezier(0.4, 0, 0.2, 1) both",
+        "drawer-in-right": "drawer-in-right 340ms cubic-bezier(0.16, 1, 0.3, 1) both",
+        "drawer-out-right": "drawer-out-right 420ms cubic-bezier(0.4, 0, 0.2, 1) both",
+        "drawer-in-left": "drawer-in-left 340ms cubic-bezier(0.16, 1, 0.3, 1) both",
+        "drawer-out-left": "drawer-out-left 420ms cubic-bezier(0.4, 0, 0.2, 1) both",
+        "drawer-in-top": "drawer-in-top 340ms cubic-bezier(0.16, 1, 0.3, 1) both",
+        "drawer-out-top": "drawer-out-top 420ms cubic-bezier(0.4, 0, 0.2, 1) both",
+        "drawer-in-bottom": "drawer-in-bottom 340ms cubic-bezier(0.16, 1, 0.3, 1) both",
+        "drawer-out-bottom": "drawer-out-bottom 420ms cubic-bezier(0.4, 0, 0.2, 1) both",
+        "dialog-in": "dialog-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both",
+        "dialog-out": "dialog-out 160ms cubic-bezier(0.4, 0, 1, 1) both",
+      }
     },
   },
   darkMode: "class",

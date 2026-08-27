@@ -251,14 +251,6 @@ export function DemographicsEditor({
       <div className="flex flex-col gap-3 px-6 py-6">
         {enabled ? (
           <>
-            {enabled && fields.length === 0 && (
-              <p className="flex items-center gap-1.5 text-[12px] font-medium text-destructive">
-                <TriangleAlert className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-                Si usas datos demográficos en la encuesta, activa o crea al menos un dato demográfico
-                para poder continuar.
-              </p>
-            )}
-
             <p className="text-[13px] leading-relaxed text-text-secondary">
               Estos son los datos con los que después vas a poder filtrar los resultados. Puedes
               combinarlos a la vez: activa los que ya tenemos en la plataforma, los que detectamos
@@ -301,6 +293,16 @@ export function DemographicsEditor({
               countLabel={`${library.filter((entry) => findFieldByCatalogKey(fields, entry.key)).length}/${library.length} agregados`}
               isOpen={openSections.has("library")}
               onToggle={() => toggleSection("library")}
+              isModuleActive={library.length > 0 && library.some((entry) => findFieldByCatalogKey(fields, entry.key))}
+              onToggleModule={(active) => {
+                if (active) {
+                  activateAllLibrary();
+                  if (!openSections.has("library")) toggleSection("library");
+                } else {
+                  deactivateAllLibrary();
+                  if (openSections.has("library")) toggleSection("library");
+                }
+              }}
             >
               <LibraryAccordionContent
                 library={library}
@@ -325,6 +327,16 @@ export function DemographicsEditor({
                 countLabel={`${importedDemographics.filter((entry) => importedIsActive(entry.key)).length}/${importedDemographics.length} activos`}
                 isOpen={openSections.has("import")}
                 onToggle={() => toggleSection("import")}
+                isModuleActive={importedDemographics.length > 0 && importedDemographics.some((entry) => importedIsActive(entry.key))}
+                onToggleModule={(active) => {
+                  if (active) {
+                    activateAllImported();
+                    if (!openSections.has("import")) toggleSection("import");
+                  } else {
+                    deactivateAllImported();
+                    if (openSections.has("import")) toggleSection("import");
+                  }
+                }}
               >
                 <ImportedAccordionContent
                   entries={importedDemographics}
@@ -352,6 +364,16 @@ export function DemographicsEditor({
               countLabel={`${SYSTEM_DEMOGRAPHICS.filter((entry) => findFieldByCatalogKey(fields, entry.key)).length}/${SYSTEM_DEMOGRAPHICS.length} activos`}
               isOpen={openSections.has("system")}
               onToggle={() => toggleSection("system")}
+              isModuleActive={SYSTEM_DEMOGRAPHICS.some((entry) => findFieldByCatalogKey(fields, entry.key))}
+              onToggleModule={(active) => {
+                if (active) {
+                  activateAllSystem();
+                  if (!openSections.has("system")) toggleSection("system");
+                } else {
+                  deactivateAllSystem();
+                  if (openSections.has("system")) toggleSection("system");
+                }
+              }}
             >
               <SystemAccordionContent
                 fields={fields}
@@ -399,6 +421,8 @@ function AccordionSection({
   onToggle,
   children,
   isDefaultAnchor = false,
+  isModuleActive,
+  onToggleModule,
 }: {
   icon: LucideIcon;
   title: string;
@@ -410,6 +434,9 @@ function AccordionSection({
   /** Where the rail parks when no field anywhere is being edited. At most one
    * accordion should set this. */
   isDefaultAnchor?: boolean;
+  /** Toggle state for the whole module */
+  isModuleActive?: boolean;
+  onToggleModule?: (active: boolean) => void;
 }) {
   return (
     <div
@@ -441,6 +468,17 @@ function AccordionSection({
           <span className="shrink-0 rounded-full bg-muted/60 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-text-secondary">
             {countLabel}
           </span>
+        )}
+
+        {onToggleModule && (
+          <div className="shrink-0 pl-2 pr-1" onClick={(e) => e.stopPropagation()}>
+            <Switch
+              checked={isModuleActive}
+              onCheckedChange={onToggleModule}
+              aria-label={`Activar todo en ${title}`}
+              className="data-[state=checked]:bg-status-positive"
+            />
+          </div>
         )}
 
         <ChevronRight
@@ -607,21 +645,8 @@ function SystemAccordionContent({
         </p>
 
         <GroupActionsBar>
-          <TextToggleButton
-            label={`Activar todos (${SYSTEM_DEMOGRAPHICS.length})`}
-            disabled={activeCount === SYSTEM_DEMOGRAPHICS.length}
-            onSelect={onActivateAll}
-          />
-          <TextToggleButton
-            label="Quitar todos"
-            disabled={activeCount === 0}
-            onSelect={onDeactivateAll}
-          />
           {activeCount > 0 && (
-            <>
-              <GroupActionDivider />
-              <VisibilityBulkRow bulk={bulk} onVisibleChange={onBulkVisible} />
-            </>
+            <VisibilityBulkRow bulk={bulk} onVisibleChange={onBulkVisible} />
           )}
         </GroupActionsBar>
       </div>
@@ -708,18 +733,6 @@ function LibraryAccordionContent({
           encuesta. Los que guardes en otras encuestas también aparecen aquí.
         </p>
 
-        <GroupActionsBar>
-          <TextToggleButton
-            label={`Activar todos (${library.length})`}
-            disabled={activeCount === library.length}
-            onSelect={onActivateAll}
-          />
-          <TextToggleButton
-            label="Quitar todos"
-            disabled={activeCount === 0}
-            onSelect={onDeactivateAll}
-          />
-        </GroupActionsBar>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -856,17 +869,6 @@ function ImportedAccordionContent({
             label="Guardar todas para reutilizar"
             disabled={savableCount === 0}
             onSelect={onSaveAllToModule}
-          />
-          <GroupActionDivider />
-          <TextToggleButton
-            label={`Activar todas (${entries.length})`}
-            disabled={activeCount === entries.length}
-            onSelect={onActivateAll}
-          />
-          <TextToggleButton
-            label="Quitar todas"
-            disabled={activeCount === 0}
-            onSelect={onDeactivateAll}
           />
           {activeCount > 0 && (
             <>

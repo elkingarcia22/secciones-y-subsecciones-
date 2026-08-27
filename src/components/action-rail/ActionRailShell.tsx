@@ -3,6 +3,7 @@ import { Minimize2, Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRailAutoHide } from "./railAutoHide";
+import { motion } from "framer-motion";
 
 interface ActionRailShellProps {
   /**
@@ -64,9 +65,12 @@ export function ActionRailShell({
         }}
         onMouseLeave={startCollapseTimer}
       >
-        <div
+        <motion.div
+          layout
+          initial={false}
+          transition={{ type: "spring", bounce: 0.35, duration: 0.7 }}
           className={cn(
-            "relative flex items-center justify-center overflow-hidden rounded-3xl transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+            "relative flex items-center justify-center overflow-hidden rounded-3xl",
             isExpanded
               ? "h-14 max-w-[800px] border border-white/10 bg-surface-nav px-3 shadow-rail"
               // Collapsed: a full pill rather than a half-rounded hump, so the
@@ -74,10 +78,12 @@ export function ActionRailShell({
               : "h-1.5 w-[64px] max-w-[64px] translate-y-[2px] rounded-full border-transparent bg-border-strong shadow-card"
           )}
         >
-          <div
+          <motion.div
+            layout="position"
+            transition={{ type: "spring", bounce: 0.35, duration: 0.7 }}
             className={cn(
-              "flex w-max items-center gap-2 transition-all duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
-              isExpanded ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
+              "flex w-max items-center gap-2",
+              isExpanded ? "scale-100 opacity-100 transition-opacity duration-300" : "pointer-events-none scale-95 opacity-0 transition-opacity duration-150"
             )}
           >
             {contextual && (
@@ -110,8 +116,8 @@ export function ActionRailShell({
             </Tooltip>
 
             {persistent}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );

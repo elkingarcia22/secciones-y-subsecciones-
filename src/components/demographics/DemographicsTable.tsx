@@ -37,6 +37,8 @@ interface DemographicsTableProps {
   rows: readonly DemographicRow[];
   selectedIds: ReadonlySet<string>;
   onSelectionChange: (ids: ReadonlySet<string>) => void;
+  /** Fires when a row's name is clicked, to open its read-only detail. */
+  onViewRow: (id: string) => void;
 }
 
 /** Matches the pager everywhere else in the app. */
@@ -61,6 +63,7 @@ export function DemographicsTable({
   rows,
   selectedIds,
   onSelectionChange,
+  onViewRow,
 }: DemographicsTableProps) {
   const [query, setQuery] = React.useState("");
   const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
@@ -322,6 +325,7 @@ export function DemographicsTable({
                     row={row}
                     isSelected={selectedIds.has(row.id)}
                     onToggle={() => toggleOne(row.id)}
+                    onView={() => onViewRow(row.id)}
                   />
                 ))}
               </TableBody>
@@ -387,10 +391,12 @@ function DemographicTableRow({
   row,
   isSelected,
   onToggle,
+  onView,
 }: {
   row: DemographicRow;
   isSelected: boolean;
   onToggle: () => void;
+  onView: () => void;
 }) {
   return (
     <TableRow
@@ -409,9 +415,17 @@ function DemographicTableRow({
         </div>
       </TableCell>
       <TableCell className="py-3">
-        <span className="block truncate text-[13px] font-semibold text-text-primary" title={row.name}>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onView();
+          }}
+          className="block max-w-full truncate text-left text-[13px] font-semibold text-text-primary transition-colors hover:text-primary hover:underline"
+          title={row.name}
+        >
           {row.name}
-        </span>
+        </button>
       </TableCell>
       <TableCell className="py-3 text-[13px] text-text-secondary">{row.typeLabel}</TableCell>
       <TableCell className="py-3">

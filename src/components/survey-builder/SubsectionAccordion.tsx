@@ -172,8 +172,7 @@ export function SubsectionAccordion({ entry, readOnly, ...handlers }: Subsection
 
               {!readOnly && (
                 <MoveToPopover
-                  id={section.id}
-                  sections={handlers.sections}
+                  subjectLabel={section.title || `${depthLabel(entry.depth)} ${entry.numbering}`}
                   destinations={moveDestinationsForSection(handlers.sections, entry)}
                   onMove={onMoveSection}
                 />

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface RailOverflowItem {
@@ -26,16 +26,23 @@ export interface RailOverflowItem {
 export function RailOverflowMenu({
   items,
   label = "Más acciones",
+  onOpenChange,
 }: {
   items: readonly RailOverflowItem[];
   label?: string;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = React.useState(false);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    onOpenChange?.(newOpen);
+  };
 
   if (items.length === 0) return null;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <Tooltip>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
@@ -60,9 +67,7 @@ export function RailOverflowMenu({
         sideOffset={16}
         className="w-[248px] rounded-2xl border-white/10 bg-surface-nav p-2 text-white/60 shadow-rail"
       >
-        <PopoverTitle className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white/45">
-          {label}
-        </PopoverTitle>
+
         {items.map((item) => {
           const disabled = item.blockedReason != null;
           return (
@@ -73,7 +78,7 @@ export function RailOverflowMenu({
               aria-label={item.label}
               title={item.blockedReason ?? undefined}
               onClick={() => {
-                setOpen(false);
+                handleOpenChange(false);
                 item.onClick();
               }}
               className={cn(

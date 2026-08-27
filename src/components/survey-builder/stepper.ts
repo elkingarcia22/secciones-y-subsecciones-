@@ -96,11 +96,17 @@ export function isStepComplete(
     // decision rather than a default nobody looked at. Switching the block off
     // is a valid answer; leaving it on with nothing in it is not — that is a
     // survey whose results can't be segmented, which nobody asked for.
-    case "demographics":
-      return (
-        visitedSteps.has("demographics") &&
-        (!draft.demographics.enabled || draft.demographics.fields.length > 0)
-      );
+    case "demographics": {
+      const isNom035 = draft.name.toLowerCase().includes("nom 035");
+      if (isNom035) {
+        return (
+          visitedSteps.has("demographics") &&
+          draft.demographics.enabled &&
+          draft.demographics.fields.length > 0
+        );
+      }
+      return visitedSteps.has("demographics");
+    }
     case "sections":
       return hasSectionWithQuestion && allSectionsHaveQuestions && allQuestionsComplete;
     // Participants has content of its own now, so it is judged on that content
@@ -146,10 +152,14 @@ export function getStepState(
 ): StepState {
   if (step === activeStep) return "active";
   if (!isStepReachable(step, input)) return "locked";
+  
+  // A step shouldn't look complete if the author hasn't even seen it yet,
+  // even if its default content happens to be valid.
+  if (!input.visitedSteps.has(step)) {
+    return isOptionalStep(step) ? "locked" : "available";
+  }
+
   if (isStepComplete(step, input)) return "complete";
-  // Unvisited optional steps show as locked visually for consistent appearance
-  // even though they remain always reachable functionally
-  if (isOptionalStep(step) && !input.visitedSteps.has(step)) return "locked";
   return "available";
 }
 

@@ -54,6 +54,7 @@ export const SURVEY_ACTIONS: Readonly<Record<SurveyActionId, SurveyActionSpec>> 
  */
 export const SURVEY_ACTIONS_BY_STATUS: Readonly<Record<string, readonly SurveyActionId[]>> = {
   Borrador: ["edit", "preview", "delete"],
+  "Por iniciar": ["edit", "preview", "duplicate", "delete"],
   "En curso": [
     "results",
     "preview",

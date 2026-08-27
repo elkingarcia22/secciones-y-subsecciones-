@@ -136,7 +136,7 @@ export const evaluacionIA: SurveyDraft = {
   description: "Cuestionario para conocer el nivel de adopción, uso y percepción de las herramientas de inteligencia artificial.",
   startDate: "",
   endDate: "",
-  kind: "otros",
+  kind: "ia",
   visibility: "anonymous",
   anonymityThreshold: 5,
   participants: { mode: "company", selectedIds: [], importedFileName: null, importedUsers: [], importedCount: 0, importedNewCount: 0, importedDemographics: [], importedFailed: false },
@@ -212,9 +212,9 @@ export const nom035Acontecimientos: SurveyDraft = {
 
 export const nom035Menos50: SurveyDraft = {
   isReadOnly: true,
-  name: "NOM 035 - Riesgo psicosocial (- 50 trabajadores)",
+  name: "NOM 035 - Riesgo psicosocial (- 50 colaboradores)",
   status: "draft",
-  description: "Guía de Referencia II. Cuestionario para identificar los factores de riesgo psicosocial en los centros de trabajo (hasta 50 trabajadores).",
+  description: "Guía de Referencia II. Cuestionario para identificar los factores de riesgo psicosocial en los centros de trabajo (hasta 50 colaboradores).",
   startDate: "",
   endDate: "",
   kind: "otros",
@@ -292,9 +292,9 @@ export const nom035Menos50: SurveyDraft = {
 
 export const nom035Mas50: SurveyDraft = {
   isReadOnly: true,
-  name: "NOM 035 - Riesgo psicosocial (+ 50 trabajadores)",
+  name: "NOM 035 - Riesgo psicosocial (+ 50 colaboradores)",
   status: "draft",
-  description: "Guía de Referencia III. Cuestionario para identificar y analizar los factores de riesgo psicosocial y evaluar el entorno organizacional (más de 50 trabajadores).",
+  description: "Guía de Referencia III. Cuestionario para identificar y analizar los factores de riesgo psicosocial y evaluar el entorno organizacional (más de 50 colaboradores).",
   startDate: "",
   endDate: "",
   kind: "otros",

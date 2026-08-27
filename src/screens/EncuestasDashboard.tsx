@@ -35,7 +35,7 @@ import { SurveyListActionRail } from "@/components/survey-list/SurveyListActionR
 import { SurveyListTable, type SurveyListRow } from "@/components/survey-list/SurveyListTable";
 import type { SurveyListFilters } from "@/components/survey-list/surveyListFilters";
 import type { SurveyActionId } from "@/components/survey-list/surveyListActions";
-import type { CloseDateEditMode } from "@/components/survey-list/SurveyCloseDateCell";
+import type { DateEditMode } from "@/components/survey-list/SurveyDateCell";
 import { formatSurveyDate } from "@/components/survey-list/surveyListDates";
 import { ConfirmDialog, DrawerShell } from "@/components/overlays";
 import { Button } from "@/components/ui/button";
@@ -243,6 +243,8 @@ interface EncuestasDashboardProps {
  onReopen?: (id: string, endDate: Date) => void;
  /** Moves a running survey's closing date. */
  onChangeEndDate?: (id: string, endDate: Date) => void;
+ /** Moves a running survey's start date. */
+ onChangeStartDate?: (id: string, startDate: Date) => void;
  /** Column filters, owned above so the home metric cards can set them. */
  listFilters: SurveyListFilters;
  onListFiltersChange: (filters: SurveyListFilters) => void;
@@ -266,6 +268,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
  onFinish,
  onReopen,
  onChangeEndDate,
+ onChangeStartDate,
  listFilters,
  onListFiltersChange
 }) => {
@@ -327,7 +330,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
   // saving it means — so they share one piece of state.
   const [dateEdit, setDateEdit] = React.useState<{
     surveyId: string;
-    mode: CloseDateEditMode;
+    mode: DateEditMode;
   } | null>(null);
 
   // Finishing asks first, in a modal — it is irreversible, unlike the
@@ -483,15 +486,23 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
     filters={listFilters}
     onFiltersChange={onListFiltersChange}
     dateEdit={dateEdit}
+    onDateEditStart={(surveyId, mode) => setDateEdit({ surveyId, mode })}
     onDateEditCancel={() => setDateEdit(null)}
     onDateEditSave={(id, date) => {
-      if (dateEdit?.mode === "reopen") onReopen?.(id, date);
-      else onChangeEndDate?.(id, date);
+      if (dateEdit?.mode === "reopen") {
+        onReopen?.(id, date);
+      } else if (dateEdit?.mode === "editStartDate") {
+        onChangeStartDate?.(id, date);
+      } else {
+        onChangeEndDate?.(id, date);
+      }
       setDateEdit(null);
       toast.success(
         dateEdit?.mode === "reopen"
           ? `${nameOf(id)} vuelve a estar en curso hasta el ${formatSurveyDate(date)}`
-          : `${nameOf(id)} ahora cierra el ${formatSurveyDate(date)}`
+          : dateEdit?.mode === "editStartDate"
+            ? `${nameOf(id)} ahora inicia el ${formatSurveyDate(date)}`
+            : `${nameOf(id)} ahora cierra el ${formatSurveyDate(date)}`
       );
     }}
   />
@@ -568,34 +579,23 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
             
             return (
               <div key={idx} className="flex flex-col items-center relative z-10">
-                {/* Circle Indicator */}
-                <div className={cn(
-                  "h-7 w-7 rounded-full flex items-center justify-center transition-all duration-500 border-[1.5px] font-bold text-[11px] relative z-10",
-                  isCompleted 
-                    ? "bg-surface border-status-positive text-status-positive shadow-card" 
-                    : isActive 
-                      ? "bg-primary border-primary text-text-inverse shadow-card" 
-                      : "bg-surface-muted border-border-strong/30 text-text-secondary"
-                )}>
-                  {/* Tint overlay for completed */}
-                  {isCompleted && (
-                    <div className="absolute inset-0 bg-status-positive/5 rounded-full" />
-                  )}
-                  
-                  {/* Pulse effect for active */}
-                  {isActive && (
-                    <div className="absolute inset-[-3px] rounded-full border border-primary/20 animate-pulse" />
-                  )}
-                  
-                  <div className="relative z-10 flex items-center justify-center">
-                    {isCompleted ? (
-                      <Check className="h-3 w-3" strokeWidth={2.5} />
-                    ) : isLocked ? (
-                      <Lock className="h-3 w-3 opacity-30" />
-                    ) : (
-                      <span>{stepNum}</span>
+                <div className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface">
+                  <span
+                    className={cn(
+                      "absolute inset-0 flex items-center justify-center rounded-full text-[11px] font-bold tabular-nums transition-colors duration-500",
+                      isActive && "bg-primary text-primary-foreground",
+                      isCompleted && "bg-status-positive/15 text-status-positive",
+                      isLocked && "bg-border/40 text-muted-foreground/60"
                     )}
-                  </div>
+                  >
+                    <div className="relative z-10 flex items-center justify-center">
+                      {isCompleted ? (
+                        <Check className="h-3.5 w-3.5" strokeWidth={3.5} />
+                      ) : (
+                        <span>{stepNum}</span>
+                      )}
+                    </div>
+                  </span>
                 </div>
 
                 {/* Label Below */}

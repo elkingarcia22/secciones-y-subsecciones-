@@ -62,7 +62,7 @@ export function DownloadsWidget({
                 : "Reportes descargados"}
           </span>
           <span className="text-[12px] text-muted-foreground">
-            {isBusy ? "Puedes seguir navegando" : "Descarga completada"}
+            {isBusy ? `${preparing.length} en progreso` : "Descarga completada"}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-0.5 text-muted-foreground">
@@ -83,7 +83,7 @@ export function DownloadsWidget({
 
       {!collapsed && (
         <div className="border-t border-border/70 px-4 pb-3.5 pt-3">
-          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          <span className="text-[11px] font-semibold text-text-secondary">
             Descargas activas
           </span>
           <div className="mt-2 flex flex-col gap-3">
