@@ -24,6 +24,7 @@ import {
 } from "./stepper";
 
 interface SectionsPanelProps {
+  readOnly?: boolean;
   sections: readonly SurveySection[];
   selection: BuilderSelection;
   /** Shared with the main panel: one open branch, the same one on both sides. */
@@ -77,7 +78,7 @@ function StepMarker({ step, state, hasError }: { step: StepperStepId; state: Ste
         )}
       >
         {state === "complete" ? (
-          <Check className="h-3.5 w-3.5" strokeWidth={3} />
+          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
         ) : number !== null ? (
           number
         ) : (
@@ -191,6 +192,7 @@ function RailStep({
  * active, and steps out of the way otherwise.
  */
 export function SectionsPanel({
+  readOnly,
   sections,
   selection,
   expandedIds,
@@ -234,7 +236,7 @@ export function SectionsPanel({
 
   if (isCollapsed) {
     return (
-      <aside className="flex w-[52px] shrink-0 flex-col items-center gap-3 self-start overflow-y-auto rounded-2xl border border-border/50 bg-surface p-2 py-3 shadow-card max-h-full">
+      <aside className="flex w-[52px] shrink-0 flex-col items-center gap-3 self-start overflow-y-auto rounded-2xl border border-border/60 bg-surface p-2 py-3 shadow-card max-h-full">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -243,7 +245,7 @@ export function SectionsPanel({
               aria-label="Expandir menú"
               className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground/70 transition-all hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95"
             >
-              <PanelLeftOpen className="h-[18px] w-[18px]" strokeWidth={2.3} />
+              <PanelLeftOpen className="h-[18px] w-[18px]" strokeWidth={2} />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">Expandir menú</TooltipContent>
@@ -266,9 +268,9 @@ export function SectionsPanel({
   }
 
   return (
-    <aside className="flex w-[288px] shrink-0 flex-col self-start overflow-y-auto rounded-2xl border border-border/50 bg-surface p-2 shadow-card max-h-full">
+    <aside className="flex w-[288px] shrink-0 flex-col self-start overflow-y-auto rounded-2xl border border-border/60 bg-surface p-2 shadow-card max-h-full">
       <div className="mb-2 flex items-center justify-between pl-3 pr-1 pt-1.5">
-        <h2 className="text-[12.5px] font-semibold text-text-secondary">
+        <h2 className="text-[13px] font-semibold text-text-secondary">
           Pasos de creación
         </h2>
         <button
@@ -277,7 +279,7 @@ export function SectionsPanel({
           aria-label="Contraer menú"
           className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground/70 transition-all hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95"
         >
-          <PanelLeftClose className="h-[18px] w-[18px]" strokeWidth={2.3} />
+          <PanelLeftClose className="h-[18px] w-[18px]" strokeWidth={2} />
         </button>
       </div>
 
@@ -304,6 +306,7 @@ export function SectionsPanel({
                       <SectionTreeItem
                         key={id}
                         entry={entry}
+                        readOnly={readOnly}
                         isActive={selection.kind === "section" && selection.id === id}
                         isCollapsed={!expandedIds.has(id)}
                         isDragging={draggingId === id}

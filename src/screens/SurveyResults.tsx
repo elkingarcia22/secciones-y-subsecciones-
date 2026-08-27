@@ -95,7 +95,7 @@ return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-background">
       {/* The measurement's name, status and way back all live in the app shell's
           header now, so this screen starts straight at its tabs. */}
-      <div className="flex shrink-0 flex-col bg-background px-6 pt-4 lg:px-10">
+      <div className="flex shrink-0 flex-col bg-background px-1 pt-4">
         <UbitsTabs
           tabs={[...TABS]}
           activeTabId={activeTab}
@@ -107,20 +107,20 @@ return (
             if (id !== "participation") setSelectedGroupIds(new Set());
           }}
           className="mb-0"
-          variant="results"
+          variant="page"
         />
       </div>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 lg:px-10">
+      <main className="min-h-0 flex-1 overflow-y-auto px-1 pb-6">
         {/*
           A persistent breathing room below the nav tabs, present no matter which
           tab is active or how far its content has scrolled. Every tab's own
           sticky controls (the heatmap's filters, the favorability scale toggle)
           stick right below this spacer rather than flush against the tabs —
-          "top-4" on those matches this spacer's own height, so the two sit
+          "top-3" on those matches this spacer's own height, so the two sit
           back-to-back with no overlap and no uncovered sliver between them.
         */}
-        <div aria-hidden className="sticky top-0 z-40 h-4 bg-background" />
+        <div aria-hidden className="sticky top-0 z-40 h-3 bg-background" />
         {activeTab === "participation" &&
           (segment ? (
             <ParticipationTab

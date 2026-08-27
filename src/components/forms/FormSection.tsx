@@ -18,7 +18,7 @@ export function FormSection({
   ...props
 }: FormSectionProps) {
   return (
-    <Card className={cn("border-border bg-card shadow-card", className)} {...props}>
+    <Card className={cn("border-border bg-surface shadow-card", className)} {...props}>
       {(title || description || actions) && (
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
           <div className="space-y-1">

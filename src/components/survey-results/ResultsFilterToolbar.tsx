@@ -144,9 +144,9 @@ export function ResultsFilterControls({
     <div className="flex shrink-0 items-center gap-2">
       {showViewBy && (
         <>
-          <span className="text-[12.5px] font-medium text-muted-foreground">Ver por:</span>
+          <span className="text-[13px] font-medium text-muted-foreground">Ver por:</span>
           <Select value={activeSegment.key} onValueChange={onSegmentChange}>
-            <SelectTrigger className="h-9 w-[160px] rounded-lg border-border bg-surface px-3 text-[12.5px] transition-colors hover:bg-border/30 focus:ring-2 focus:ring-primary/20">
+            <SelectTrigger className="h-9 w-[160px] rounded-lg border-border bg-surface px-3 text-[13px] transition-colors hover:bg-border/30 focus:ring-2 focus:ring-primary/20">
               <SelectValue className="truncate text-text-primary" />
             </SelectTrigger>
             <SelectContent position="popper">
@@ -166,12 +166,12 @@ export function ResultsFilterControls({
             <Button
               variant="outline"
               size="sm"
-              className="h-9 justify-start gap-2 rounded-lg border-border bg-surface px-3 text-[12.5px] text-text-primary transition-colors hover:bg-border/30"
+              className="h-9 justify-start gap-2 rounded-lg border-border bg-surface px-3 text-[13px] text-text-primary transition-colors hover:bg-border/30"
             >
-              <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.2} />
+              <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
               Filtros
               {filters.length > 0 && (
-                <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[10.5px]">
+                <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[11px]">
                   {filters.length}
                 </Badge>
               )}
@@ -196,27 +196,27 @@ export function ResultsFilterControls({
                   return (
                     <div
                       key={candidate.key}
-                      className="flex items-center gap-2.5 border-t border-border/30 pt-3"
+                      className="flex items-center gap-2.5 border-t border-border/60 pt-3"
                     >
-                      <span className="w-[85px] shrink-0 truncate text-[12.5px] font-medium text-text-secondary">
+                      <span className="w-[85px] shrink-0 truncate text-[13px] font-medium text-text-secondary">
                         {candidate.label}
                       </span>
                       <Select
                         value={activeFilter?.optionId ?? ""}
                         onValueChange={(val) => onApplyFilter(candidate.key, val)}
                       >
-                        <SelectTrigger className="h-8 flex-1 rounded-md border-transparent bg-muted/40 px-2.5 text-[12.5px] hover:bg-muted/60 focus:ring-1 focus:ring-primary/20">
+                        <SelectTrigger className="h-8 flex-1 rounded-md border-transparent bg-muted/40 px-2.5 text-[13px] hover:bg-muted/60 focus:ring-1 focus:ring-primary/20">
                           {/* Un trigger vacío no dice si el demográfico está sin
                               tocar o si algo se rompió. Mismo texto que el
                               Resumen y el roster: "Sin filtrar". */}
                           <SelectValue placeholder="Sin filtrar" className="text-muted-foreground" />
                         </SelectTrigger>
                         <SelectContent position="popper">
-                          <SelectItem value="" className="text-[12.5px]">
+                          <SelectItem value="" className="text-[13px]">
                             Sin filtrar
                           </SelectItem>
                           {candidate.options.map((option) => (
-                            <SelectItem key={option.id} value={option.id} className="text-[12.5px]">
+                            <SelectItem key={option.id} value={option.id} className="text-[13px]">
                               {option.label}
                             </SelectItem>
                           ))}
@@ -231,7 +231,7 @@ export function ResultsFilterControls({
                   variant="ghost"
                   size="sm"
                   onClick={onClearFilters}
-                  className="justify-start border-t border-border/30 rounded-none px-0 pt-3 pb-1 text-[12px] text-primary hover:bg-transparent hover:underline"
+                  className="justify-start border-t border-border/60 rounded-none px-0 pt-3 pb-1 text-[12px] text-primary hover:bg-transparent hover:underline"
                 >
                   Quitar filtros
                 </Button>
@@ -247,12 +247,12 @@ export function ResultsFilterControls({
           <Button
             variant="outline"
             size="sm"
-            className="h-9 justify-start gap-2 rounded-lg border-border bg-surface px-3 text-[12.5px] text-text-primary transition-colors hover:bg-border/30"
+            className="h-9 justify-start gap-2 rounded-lg border-border bg-surface px-3 text-[13px] text-text-primary transition-colors hover:bg-border/30"
           >
-            <Settings2 className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.2} />
+            <Settings2 className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
             Personalizar
             {activeAdjustments > 0 && (
-              <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[10.5px]">
+              <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[11px]">
                 {activeAdjustments}
               </Badge>
             )}
@@ -265,7 +265,7 @@ export function ResultsFilterControls({
           {availableLevels.length > 0 && (
             <div className="flex flex-col gap-0.5 p-2.5">
               <PopoverTitle className="flex items-center gap-1.5 px-2 pt-0.5 text-[13px]">
-                <ListTree className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.2} />
+                <ListTree className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
                 Niveles a mostrar
               </PopoverTitle>
               <PopoverDescription className="px-2 pb-1 text-[12px] leading-relaxed">
@@ -286,7 +286,7 @@ export function ResultsFilterControls({
                 <button
                   type="button"
                   onClick={onResetLevels}
-                  className="flex w-full items-center justify-start gap-1.5 border-t border-border/30 px-2 pt-2 pb-0.5 text-[12px] font-medium text-primary transition-colors hover:underline"
+                  className="flex w-full items-center justify-start gap-1.5 border-t border-border/60 px-2 pt-2 pb-0.5 text-[12px] font-medium text-primary transition-colors hover:underline"
                 >
                   Restablecer niveles
                 </button>
@@ -295,9 +295,9 @@ export function ResultsFilterControls({
           )}
 
           {showHighlight && (
-          <div className={`flex flex-col gap-0.5 p-2.5 ${availableLevels.length > 0 ? "border-t border-border/30" : ""}`}>
+          <div className={`flex flex-col gap-0.5 p-2.5 ${availableLevels.length > 0 ? "border-t border-border/60" : ""}`}>
             <PopoverTitle className="flex items-center gap-1.5 px-2 pt-0.5 text-[13px]">
-              <ListFilter className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.2} />
+              <ListFilter className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
               {highlightScale.title}
             </PopoverTitle>
             <PopoverDescription className="px-2 pb-1 text-[12px] leading-relaxed">
@@ -317,7 +317,7 @@ export function ResultsFilterControls({
               <button
                 type="button"
                 onClick={onResetBands}
-                className="flex w-full items-center justify-start gap-1.5 border-t border-border/30 px-2 pt-2 pb-0.5 text-[12px] font-medium text-primary transition-colors hover:underline"
+                className="flex w-full items-center justify-start gap-1.5 border-t border-border/60 px-2 pt-2 pb-0.5 text-[12px] font-medium text-primary transition-colors hover:underline"
               >
                 Restablecer resaltado
               </button>
@@ -353,7 +353,7 @@ export function ResultsFilterChips({
         const candidate = segments.find((seg) => seg.key === filter.key);
         const option = candidate?.options.find((opt) => opt.id === filter.optionId);
         return (
-          <Badge key={filter.key} variant="neutral" className="gap-1.5 pr-1 text-[11.5px] font-medium">
+          <Badge key={filter.key} variant="neutral" className="gap-1.5 pr-1 text-[12px] font-medium">
             {candidate?.label}: {option?.label}
             <button
               type="button"
@@ -361,7 +361,7 @@ export function ResultsFilterChips({
               aria-label={`Quitar filtro ${candidate?.label}`}
               className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-border/40 hover:text-text-primary"
             >
-              <X className="h-3 w-3" strokeWidth={2.4} />
+              <X className="h-3 w-3" strokeWidth={2} />
             </button>
           </Badge>
         );
@@ -369,7 +369,7 @@ export function ResultsFilterChips({
       <button
         type="button"
         onClick={onClearFilters}
-        className="text-[11.5px] font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-text-primary hover:underline"
+        className="text-[12px] font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-text-primary hover:underline"
       >
         Quitar todo
       </button>

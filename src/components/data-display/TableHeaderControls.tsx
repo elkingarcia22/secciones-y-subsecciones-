@@ -29,11 +29,11 @@ export function HeaderSelectionMark({ state }: { state: boolean | "indeterminate
     <span
       aria-hidden
       className={cn(
-        "flex size-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors",
+        "flex size-4 shrink-0 items-center justify-center rounded-xs border transition-colors",
         state === false ? "border-input" : "border-primary bg-primary text-primary-foreground"
       )}
     >
-      {state === "indeterminate" && <MinusIcon className="size-3.5" strokeWidth={3} />}
+      {state === "indeterminate" && <MinusIcon className="size-3.5" strokeWidth={2.5} />}
       {state === true && <CheckIcon className="size-3.5" />}
     </span>
   );
@@ -170,7 +170,7 @@ export function FilterSortHeader({
         {label}
         <ArrowUpDown
           className={`h-3 w-3 ${sortActive ? "text-primary" : "opacity-30"}`}
-          strokeWidth={2.4}
+          strokeWidth={2}
         />
       </button>
 
@@ -241,7 +241,7 @@ export function SortOnlyHeader({
         {label}
         <ArrowUpDown
           className={`h-3 w-3 ${sortActive ? "text-primary" : "opacity-30"}`}
-          strokeWidth={2.4}
+          strokeWidth={2}
         />
       </button>
     </div>

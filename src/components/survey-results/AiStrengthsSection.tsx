@@ -41,7 +41,7 @@ export function AiStrengthsSection({
       }
     >
       {strengths.length === 0 ? (
-        <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+        <p className="text-[13px] leading-relaxed text-muted-foreground">
           Ningún bloque de la medición alcanza todavía el rango de fortaleza.
         </p>
       ) : (
@@ -71,7 +71,7 @@ export function AiStrengthsSection({
                   </div>
                 </td>
 
-                <td className="hidden py-3 text-right text-[11.5px] tabular-nums text-text-secondary sm:table-cell">
+                <td className="hidden py-3 text-right text-[12px] tabular-nums text-text-secondary sm:table-cell">
                   {formatCount(finding.n)}
                 </td>
 

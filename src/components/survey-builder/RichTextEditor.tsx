@@ -218,7 +218,7 @@ function ToolbarButton({
             active && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
           )}
         >
-          <Icon className="h-3.5 w-3.5" strokeWidth={2.3} />
+          <Icon className="h-3.5 w-3.5" strokeWidth={2} />
         </button>
       </TooltipTrigger>
       <TooltipContent side="bottom">{label}</TooltipContent>

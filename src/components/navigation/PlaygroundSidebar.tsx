@@ -51,7 +51,7 @@ export const PlaygroundSidebar: React.FC<SidebarProps> = ({
             className={cn(
               "relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 group outline-none",
               isActive 
-                ? "bg-primary text-primary-foreground shadow-lg shadow-brand/20 scale-110" 
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110" 
                 : "text-nav-foreground/40 hover:bg-white/10 hover:text-nav-foreground"
             )}
           >
@@ -80,7 +80,7 @@ export const PlaygroundSidebar: React.FC<SidebarProps> = ({
     <TooltipProvider>
       <aside
         className={cn(
-          "fixed left-6 top-4 bottom-4 w-20 ubits-premium-sidebar-rail flex flex-col items-center py-6 rounded-[32px] shadow-2xl z-50 border border-white/5",
+          "fixed left-6 top-4 bottom-4 w-20 ubits-premium-sidebar-rail flex flex-col items-center py-6 rounded-[32px] shadow-drawer z-50 border border-white/5",
           className
         )}
       >

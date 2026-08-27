@@ -125,8 +125,10 @@ export const AdminShell: React.FC<AdminShellProps> = ({
                 <div className="min-h-0 flex-1 overflow-y-auto">
                   {/* Full available width, on the same gutters the app-like
                       screens use — the sidebar already narrows the column, so a
-                      max-width on top of it reads as an extra pair of margins. */}
-                  <div className="w-full px-6 pb-6 pt-1 lg:px-10">{children}</div>
+                      max-width on top of it reads as an extra pair of margins.
+                      Padding matches the header's own px-1 so the content
+                      column lines up with the sidebar toggle above it. */}
+                  <div className="w-full px-1 pb-6 pt-1">{children}</div>
                 </div>
               ) : (
                 <div className="min-h-0 flex-1 overflow-hidden">{children}</div>

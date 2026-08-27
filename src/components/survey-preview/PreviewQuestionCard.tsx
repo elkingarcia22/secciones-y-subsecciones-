@@ -65,7 +65,7 @@ export function PreviewQuestionCard({
     <article
       className={cn(
         "group relative rounded-2xl border bg-surface p-5 shadow-card transition-colors duration-200 sm:p-6",
-        isAnswered ? "border-primary/30" : "border-border/50"
+        isAnswered ? "border-primary/30" : "border-border/60"
       )}
     >
       {/* Answered rail: a quiet mark down the left edge, so scanning a long
@@ -89,7 +89,7 @@ export function PreviewQuestionCard({
         </span>
 
         <div className="min-w-0 flex-1">
-          <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-text-primary">
+          <h3 className="text-[14px] font-semibold leading-snug tracking-tight text-text-primary">
             {question.statement.trim() || (
               <span className="italic text-text-muted">Pregunta sin enunciado</span>
             )}
@@ -97,7 +97,7 @@ export function PreviewQuestionCard({
           {/* Most questions are required, so the quiet exception is what is
               worth naming — a badge on every card would be noise. */}
           {!question.required && (
-            <p className="mt-1 text-[11.5px] font-medium text-text-muted">Opcional</p>
+            <p className="mt-1 text-[12px] font-medium text-text-muted">Opcional</p>
           )}
         </div>
       </header>
@@ -107,7 +107,7 @@ export function PreviewQuestionCard({
       {prompt && (
         <div className="mt-4 rounded-xl border border-primary/20 bg-primary/[0.04] p-4 animate-in fade-in slide-in-from-top-1 duration-200">
           <label className="flex flex-col gap-2">
-            <span className="text-[12.5px] font-semibold text-text-primary">{prompt}</span>
+            <span className="text-[13px] font-semibold text-text-primary">{prompt}</span>
             <textarea
               value={followUp}
               onChange={(event) => onFollowUpChange(event.target.value)}

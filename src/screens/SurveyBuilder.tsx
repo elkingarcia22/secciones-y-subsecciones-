@@ -68,6 +68,7 @@ interface SurveyBuilderProps {
    * making the person walk there.
    */
   initialStep?: FixedBlockId;
+  initialSelection?: BuilderSelection;
   onExit: (draft?: SurveyDraft) => void;
   /**
    * Publishes the draft as it changes. Leaving the builder is the shell
@@ -98,6 +99,7 @@ const buildEmptySection = (title: string): SurveySection => ({
 export function SurveyBuilder({
   initialDraft,
   initialStep = "general",
+  initialSelection,
   onExit,
   onDraftChange,
 }: SurveyBuilderProps) {
@@ -107,10 +109,12 @@ export function SurveyBuilder({
   React.useEffect(() => {
     onDraftChange?.(draft);
   }, [draft, onDraftChange]);
-  const [selection, setSelection] = React.useState<BuilderSelection>({
-    kind: "fixed",
-    id: initialStep,
-  });
+  const [selection, setSelection] = React.useState<BuilderSelection>(
+    initialSelection || {
+      kind: "fixed",
+      id: initialStep,
+    }
+  );
   const [isSectionsPanelCollapsed, setIsSectionsPanelCollapsed] = React.useState(false);
 
   React.useEffect(() => {
@@ -917,6 +921,7 @@ export function SurveyBuilder({
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         {draft.sections.map((rootSection, index) => (
           <SectionEditor
+            readOnly={draft.isReadOnly}
             key={rootSection.id}
             entry={{
               section: rootSection,
@@ -1059,6 +1064,7 @@ export function SurveyBuilder({
           margin as everyone else's. */}
       <div className="flex min-h-0 flex-1 items-start gap-3 p-3">
         <SectionsPanel
+          readOnly={draft.isReadOnly}
           sections={draft.sections}
           selection={selection}
           expandedIds={expandedCardIds}
@@ -1095,6 +1101,7 @@ export function SurveyBuilder({
           {/* The bottom action bar provides navigation and save actions on all steps,
               and contextual creation actions on specific steps. */}
           <BuilderSideRail
+            readOnly={draft.isReadOnly}
             ref={railRef}
             offset={0}
             isScrolling={false}

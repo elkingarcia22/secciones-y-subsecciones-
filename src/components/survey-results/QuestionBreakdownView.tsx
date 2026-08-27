@@ -128,7 +128,7 @@ function AnswerCountBadge({ answers, questions }: { answers: number; questions: 
       <TooltipTrigger asChild>
         <span className="inline-flex cursor-default items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 text-[12px] font-semibold tabular-nums text-text-primary">
           {formatCount(answers)}
-          <span className="text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             resp.
           </span>
         </span>
@@ -183,8 +183,8 @@ function QuestionTable({
 
   return (
     <table className="w-full border-collapse text-left">
-      <thead className="bg-muted/10">
-        <tr className="border-b border-border/30 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+      <thead className="bg-muted/30">
+        <tr className="border-b border-border/60 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80">
           <th className="w-10 px-4 py-2.5 text-center">#</th>
           <th className="py-2.5">
             <ResultsSortHeader
@@ -273,19 +273,19 @@ function QuestionRows({
           {index}
         </td>
 
-        <td className="py-3 pr-4 text-[12.5px] font-semibold leading-snug text-text-primary">
+        <td className="py-3 pr-4 text-[13px] font-semibold leading-snug text-text-primary">
           {question.statement || "Pregunta sin enunciado"}
           {/* The format follows the statement below the fold, where the column
               is gone — it is what the row means, not decoration. */}
           <span className="mt-1 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground lg:hidden">
-            <Icon className="h-3 w-3" strokeWidth={2.3} />
+            <Icon className="h-3 w-3" strokeWidth={2} />
             {breakdown?.formatLabel ?? "Escala"}
           </span>
         </td>
 
         <td className="hidden py-3 pr-4 lg:table-cell">
-          <span className="inline-flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground">
-            <Icon className="h-3 w-3 shrink-0" strokeWidth={2.3} />
+          <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
+            <Icon className="h-3 w-3 shrink-0" strokeWidth={2} />
             <span className="truncate">{breakdown?.formatLabel ?? "Escala"}</span>
           </span>
         </td>
@@ -315,13 +315,13 @@ function QuestionRows({
               "ml-auto h-4 w-4 text-muted-foreground/60 transition-transform duration-200 group-hover:text-text-primary",
               open && "rotate-90"
             )}
-            strokeWidth={2.4}
+            strokeWidth={2}
           />
         </td>
       </tr>
 
       {open && (
-        <tr className="bg-muted/10">
+        <tr className="bg-muted/30">
           <td colSpan={6} className="px-4 py-4">
             <div className="animate-in fade-in slide-in-from-top-1 duration-200">
               {isOpenText ? (
@@ -383,11 +383,11 @@ function AnswerTotal({
         <span className="inline-flex cursor-default items-center gap-1.5">
           {isNps && (
             <Badge variant="info" className="gap-1 whitespace-nowrap px-1.5 text-[10px]">
-              <Gauge className="h-2.5 w-2.5" strokeWidth={2.4} />
+              <Gauge className="h-2.5 w-2.5" strokeWidth={2} />
               NPS
             </Badge>
           )}
-          <span className="text-[12.5px] font-bold tabular-nums text-text-primary">
+          <span className="text-[13px] font-bold tabular-nums text-text-primary">
             {formatCount(total)}
           </span>
         </span>
@@ -406,8 +406,8 @@ function WrittenAnswersBadge({ count }: { count: number }) {
     <Tooltip>
       <TooltipTrigger asChild>
         <span className="inline-flex cursor-default items-center gap-1.5">
-          <MessageSquareQuote className="h-3 w-3 text-muted-foreground" strokeWidth={2.4} />
-          <span className="text-[12.5px] font-bold tabular-nums text-text-primary">
+          <MessageSquareQuote className="h-3 w-3 text-muted-foreground" strokeWidth={2} />
+          <span className="text-[13px] font-bold tabular-nums text-text-primary">
             {formatCount(count)}
           </span>
         </span>
@@ -428,7 +428,7 @@ function OpenQuestionPanel({
   onOpenComments: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/50 bg-surface px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-surface px-4 py-3">
       <p className="text-[12px] font-medium leading-relaxed text-text-secondary">
         {formatCount(count)} personas escribieron una respuesta. El sentimiento de cada una lo
         detecta la IA y se puede corregir.
@@ -436,9 +436,9 @@ function OpenQuestionPanel({
       <button
         type="button"
         onClick={onOpenComments}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary/30 bg-surface px-2.5 py-1.5 text-[11.5px] font-semibold text-primary transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary/30 bg-surface px-2.5 py-1.5 text-[12px] font-semibold text-primary transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
-        <MessageSquareQuote className="h-3.5 w-3.5" strokeWidth={2.4} />
+        <MessageSquareQuote className="h-3.5 w-3.5" strokeWidth={2} />
         Ver comentarios
       </button>
     </div>

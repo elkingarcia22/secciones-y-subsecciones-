@@ -47,11 +47,11 @@ export function SelectableCard({
       role={mode === 'single' ? 'radio' : 'checkbox'}
     >
       <Card className={cn(
-        'flex flex-col w-full h-full p-5 border-2 transition-all duration-200',
+        'flex flex-col w-full h-full p-5 border transition-all duration-200',
         selected 
-          ? 'border-primary bg-primary/[0.02] ring-1 ring-primary/20' 
-          : 'border-border/50 bg-card hover:border-primary/30',
-        isDisabled && 'opacity-50 grayscale-[0.5] hover:border-border/50'
+          ? 'border-primary bg-primary/[0.02] ring-2 ring-primary/25' 
+          : 'border-border/60 bg-surface hover:border-primary/30',
+        isDisabled && 'opacity-50 grayscale-[0.5] hover:border-border/60'
       )}>
         {/* Header: Icon + Badge */}
         <div className="flex items-start justify-between gap-3 mb-4">
@@ -59,12 +59,12 @@ export function SelectableCard({
             'p-2.5 rounded-xl border transition-colors',
             selected 
               ? 'bg-primary text-primary-foreground border-primary' 
-              : 'bg-muted/50 text-muted-foreground border-border/50 group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20'
+              : 'bg-muted/40 text-muted-foreground border-border/60 group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20'
           )}>
             {Icon ? <Icon className="h-5 w-5" /> : <CheckCircle2 className={cn('h-5 w-5', selected ? 'opacity-100' : 'opacity-20')} />}
           </div>
           {option.badge && (
-            <Badge variant={selected ? "default" : "outline"} className="font-bold   text-[9px]">
+            <Badge variant={selected ? "default" : "outline"} className="font-bold   text-[10px]">
               {option.badge}
             </Badge>
           )}
@@ -89,8 +89,8 @@ export function SelectableCard({
 
         {/* Indicator */}
         <div className={cn(
-          "absolute top-2 right-2 flex items-center justify-center h-5 w-5 rounded-full shadow-sm transition-all duration-200",
-          selected ? "bg-primary text-primary-foreground scale-100" : "bg-muted border border-border/50 text-transparent scale-90 opacity-0 group-hover:opacity-100"
+          "absolute top-2 right-2 flex items-center justify-center h-5 w-5 rounded-full shadow-card transition-all duration-200",
+          selected ? "bg-primary text-primary-foreground scale-100" : "bg-muted border border-border/60 text-transparent scale-90 opacity-0 group-hover:opacity-100"
         )}>
           {mode === 'single' ? (
             <CheckCircle2 className="h-3 w-3" />

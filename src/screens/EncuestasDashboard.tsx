@@ -26,6 +26,8 @@ import {
   X,
   Pencil,
 } from "lucide-react";
+import { TemplatesDrawer } from "@/components/survey-list/TemplatesDrawer";
+import type { SurveyDraft } from "@/components/survey-builder/surveyBuilderTypes";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { ShellRailSlot } from "@/components/app-shell";
@@ -95,10 +97,10 @@ const TypeCard: React.FC<{
  <div 
  onClick={() => onSelect(title)}
  className={cn(
- "flex items-center gap-3 p-2.5 rounded-xl border-2 transition-all duration-400 cursor-pointer mb-2 relative overflow-hidden",
+ "flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-400 cursor-pointer mb-2 relative overflow-hidden",
  selected 
- ? "border-primary bg-surface shadow-primary/5" 
- : "border-border/40 bg-surface"
+ ? "border-primary bg-surface ring-2 ring-primary/20" 
+ : "border-border/60 bg-surface"
  )}
  >
  {selected && (
@@ -107,7 +109,7 @@ const TypeCard: React.FC<{
 
  <div className={cn(
  "h-9 w-9 rounded-lg flex items-center justify-center transition-all duration-500 shrink-0 relative z-10",
- selected ? "bg-primary text-text-inverse shadow-md shadow-primary/20" : "bg-surface-muted text-text-secondary/40"
+ selected ? "bg-primary text-text-inverse shadow-md shadow-primary/20" : "bg-surface-muted text-text-muted"
  )}>
  <Icon className="h-4 w-4" strokeWidth={2.5} />
  </div>
@@ -117,7 +119,7 @@ const TypeCard: React.FC<{
  "text-[13px] font-bold transition-colors mb-0.5 tracking-tight",
  selected ? "text-primary" : "text-text-primary"
  )}>{title}</h4>
- <p className="text-[10px] text-text-secondary/60 font-medium leading-tight line-clamp-2">
+ <p className="text-[10px] text-text-muted font-medium leading-tight line-clamp-2">
  {description}
  </p>
  </div>
@@ -143,10 +145,10 @@ const SurveySelectionItem: React.FC<{
  <div 
  onClick={() => onSelect(survey.id)}
  className={cn(
- "flex items-center gap-3 p-2.5 rounded-xl border-2 transition-all duration-400 cursor-pointer bg-surface mb-2 relative overflow-hidden",
+ "flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-400 cursor-pointer bg-surface mb-2 relative overflow-hidden",
  selected 
- ? "border-primary shadow-primary/5" 
- : "border-border/40"
+ ? "border-primary ring-2 ring-primary/20" 
+ : "border-border/60"
  )}
  >
  {selected && (
@@ -155,7 +157,7 @@ const SurveySelectionItem: React.FC<{
 
  <div className={cn(
  "h-9 w-9 rounded-lg flex items-center justify-center transition-all duration-500 shrink-0 relative z-10",
- selected ? "bg-primary text-text-inverse shadow-md shadow-primary/20" : "bg-surface-muted text-text-secondary/40"
+ selected ? "bg-primary text-text-inverse shadow-md shadow-primary/20" : "bg-surface-muted text-text-muted"
  )}>
  <Calendar className="h-4 w-4" strokeWidth={2} />
  </div>
@@ -171,18 +173,18 @@ const SurveySelectionItem: React.FC<{
     </TooltipTrigger>
     <TooltipContent side="top" className="tooltip-premium">
       <div className="flex flex-col gap-0.5">
-        <span className="text-[9px] opacity-60 font-medium">Nombre de la encuesta</span>
+        <span className="text-[10px] opacity-60 font-medium">Nombre de la encuesta</span>
         <span>{survey.name}</span>
       </div>
     </TooltipContent>
   </Tooltip>
  {survey.status === 'Finalizado' && (
- <Badge className="bg-status-positive-bg text-status-positive border-none text-[8px] font-bold px-2 py-0 rounded-full shrink-0 pointer-events-none">
+ <Badge className="bg-status-positive-bg text-status-positive border-none text-[10px] font-bold px-2 py-0 rounded-full shrink-0 pointer-events-none">
  Finalizado
  </Badge>
  )}
  </div>
- <div className="flex items-center gap-3 text-[10px] text-text-secondary/50 font-medium tracking-tight">
+ <div className="flex items-center gap-3 text-[10px] text-text-muted font-medium tracking-tight">
  <span className="flex items-center gap-1.5">
  <RotateCw className="h-2 w-2" />
  {survey.startDate}
@@ -208,7 +210,7 @@ const SurveySelectionItem: React.FC<{
  selected ? "bg-primary border-primary shadow-sm shadow-primary/10" : "border-border-strong/40 bg-surface-muted"
  )}>
  {selected && (
- <div className="h-1.5 w-1.5 rounded-full bg-white shadow-sm" />
+ <div className="h-1.5 w-1.5 rounded-full bg-white shadow-card" />
  )}
  </div>
  )}
@@ -222,6 +224,7 @@ interface EncuestasDashboardProps {
  onGenerateComparative?: (baseId: string, comparativeIds: string[], type: string) => void;
  /** Opens the survey builder from "Crear encuesta > Crear en blanco". */
  onCreateBlank?: () => void;
+ onCreateFromTemplate?: (template: SurveyDraft) => void;
  initialIsDrawerOpen?: boolean;
  initialBaseId?: string | null;
  initialComparativeIds?: string[];
@@ -248,6 +251,7 @@ interface EncuestasDashboardProps {
 export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
  onGenerateComparative,
  onCreateBlank,
+ onCreateFromTemplate,
  initialIsDrawerOpen = false,
  initialBaseId = null,
  initialComparativeIds = [],
@@ -266,6 +270,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
  onListFiltersChange
 }) => {
  const [isDrawerOpen, setIsDrawerOpen] = React.useState(initialIsDrawerOpen);
+ const [isTemplateDrawerOpen, setIsTemplateDrawerOpen] = React.useState(false);
  
  // Selection State
  const [selectedType, setSelectedType] = React.useState<string | null>(initialType);
@@ -502,7 +507,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
       selectedCount={checkedIds.size}
       selectedSurvey={soleCheckedSurvey}
       onCreateBlank={() => onCreateBlank?.()}
-      onCreateFromTemplate={() => toast.info("Las plantillas llegan en el siguiente paso.")}
+      onCreateFromTemplate={() => setIsTemplateDrawerOpen(true)}
       onCompare={() => setIsDrawerOpen(true)}
       onAction={runSurveyAction}
       onClearSelection={() => setCheckedIds(new Set())}
@@ -538,7 +543,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
     <div className="flex flex-col h-full overflow-hidden bg-surface-subtle">
       <TooltipProvider delayDuration={400}>
         {/* Stepper Header */}
-        <div className="px-6 py-6 bg-surface border-b border-border/40 shrink-0 relative z-20">
+        <div className="px-6 py-6 bg-surface border-b border-border/60 shrink-0 relative z-20">
         <div className="flex items-center justify-between relative max-w-[320px] mx-auto">
           
           {/* Animated Progress Line (Green) */}
@@ -567,9 +572,9 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
                 <div className={cn(
                   "h-7 w-7 rounded-full flex items-center justify-center transition-all duration-500 border-[1.5px] font-bold text-[11px] relative z-10",
                   isCompleted 
-                    ? "bg-surface border-status-positive text-status-positive shadow-sm" 
+                    ? "bg-surface border-status-positive text-status-positive shadow-card" 
                     : isActive 
-                      ? "bg-primary border-primary text-text-inverse shadow-sm" 
+                      ? "bg-primary border-primary text-text-inverse shadow-card" 
                       : "bg-surface-muted border-border-strong/30 text-text-secondary"
                 )}>
                   {/* Tint overlay for completed */}
@@ -584,7 +589,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
                   
                   <div className="relative z-10 flex items-center justify-center">
                     {isCompleted ? (
-                      <Check className="h-3 w-3" strokeWidth={4} />
+                      <Check className="h-3 w-3" strokeWidth={2.5} />
                     ) : isLocked ? (
                       <Lock className="h-3 w-3 opacity-30" />
                     ) : (
@@ -597,7 +602,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
                 <div className="absolute top-8 flex flex-col items-center w-24">
                   <span className={cn(
                     "text-[10px] font-bold tracking-tight text-center transition-colors duration-500",
-                    isActive ? "text-primary" : isCompleted ? "text-status-positive" : "text-text-secondary/40"
+                    isActive ? "text-primary" : isCompleted ? "text-status-positive" : "text-text-muted"
                   )}>
                     {item.label}
                   </span>
@@ -615,7 +620,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
           <div className="flex flex-col flex-1 min-h-0 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
             <div className="p-5 pb-3 text-center space-y-1">
               <h3 className="text-base font-bold text-text-primary tracking-tight leading-tight">Tipo de encuesta</h3>
-              <p className="text-[11px] text-text-secondary/60 font-medium px-10 leading-relaxed">
+              <p className="text-[11px] text-text-muted font-medium px-10 leading-relaxed">
                 Selecciona el tipo de encuestas que deseas comparar.
               </p>
             </div>
@@ -636,11 +641,11 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
             </ScrollArea>
 
             {/* Footer for Step 1 */}
-            <div className="px-5 py-4 bg-surface border-t border-border/40 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] shrink-0 z-20">
+            <div className="px-5 py-4 bg-surface border-t border-border/60 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] shrink-0 z-20">
               <Button 
                 onClick={() => setActiveStep(2)}
                 disabled={!selectedType}
-                className="w-full gap-3 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-30 disabled:grayscale group/btn h-11 text-xs font-bold tracking-tight shadow-lg shadow-primary/20 rounded-xl"
+                className="w-full gap-3 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-30 disabled:grayscale group/btn h-10 text-xs font-bold tracking-tight shadow-lg shadow-primary/20 rounded-xl"
               >
                 <span>Siguiente</span>
                 <ChevronRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
@@ -673,7 +678,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
 
               <div className="text-center space-y-1">
                 <h3 className="text-base font-bold text-text-primary tracking-tight leading-tight">Encuestas para comparar</h3>
-                <p className="text-[11px] text-text-secondary/60 font-medium px-10 leading-relaxed">
+                <p className="text-[11px] text-text-muted font-medium px-10 leading-relaxed">
                   Elige hasta 5 encuestas para comparar resultados y analizar tendencias.
                 </p>
               </div>
@@ -682,42 +687,42 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
               
               <div className="flex gap-2">
                 <div className="relative group flex-1">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-secondary/30 group-focus-within:text-primary transition-all duration-300 z-10" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted group-focus-within:text-primary transition-all duration-300 z-10" />
                   <Input
                     type="text"
                     placeholder="Filtrar encuestas..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 h-10 text-[11px] font-bold bg-surface border-border/40"
+                    className="pl-10 h-10 text-[11px] font-bold bg-surface border-border/60"
                   />
                 </div>
                 
-                <div className="flex items-center p-1 bg-surface-subtle rounded-xl border border-border/20">
+                <div className="flex items-center p-1 bg-surface-subtle rounded-xl border border-border/60">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        className="h-8 px-3 gap-2 text-[10px] font-bold tracking-tight rounded-lg transition-all bg-surface border-border/10 text-text-secondary hover:bg-surface-muted shrink-0"
+                        className="h-8 px-3 gap-2 text-[10px] font-bold tracking-tight rounded-lg transition-all bg-surface border-border/60 text-text-secondary hover:bg-surface-muted shrink-0"
                       >
                         <ArrowUpDown className="h-3 w-3" />
                         <span>{sortOrder === 'recent' ? 'Recientes' : sortOrder === 'oldest' ? 'Antiguas' : 'Nombre'}</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40 bg-surface border border-border/40 shadow-drawer rounded-lg p-1.5">
-                      <DropdownMenuLabel className="text-[10px] font-bold tracking-tight text-text-secondary/40 px-2 py-1.5">Ordenar por</DropdownMenuLabel>
+                    <DropdownMenuContent align="end" className="w-40 bg-surface border border-border/60 shadow-drawer rounded-lg p-1.5">
+                      <DropdownMenuLabel className="text-[10px] font-bold tracking-tight text-text-muted px-2 py-1.5">Ordenar por</DropdownMenuLabel>
                       <DropdownMenuSeparator className="bg-border/10" />
                         <DropdownMenuRadioGroup value={sortOrder} onValueChange={(val) => setSortOrder(val as any)}>
-                          <DropdownMenuRadioItem value="recent" className="text-[11px] font-bold tracking-tight p-2.5 rounded-md focus:bg-brand/5 focus:text-brand cursor-pointer">
+                          <DropdownMenuRadioItem value="recent" className="text-[11px] font-bold tracking-tight p-2.5 rounded-md focus:bg-primary/5 focus:text-primary cursor-pointer">
                             Más recientes
                           </DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="oldest" className="text-[11px] font-bold tracking-tight p-2.5 rounded-md focus:bg-brand/5 focus:text-brand cursor-pointer">
+                          <DropdownMenuRadioItem value="oldest" className="text-[11px] font-bold tracking-tight p-2.5 rounded-md focus:bg-primary/5 focus:text-primary cursor-pointer">
                             Más antiguas
                           </DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="name" className="text-[11px] font-bold tracking-tight p-2.5 rounded-md focus:bg-brand/5 focus:text-brand cursor-pointer">
+                          <DropdownMenuRadioItem value="name" className="text-[11px] font-bold tracking-tight p-2.5 rounded-md focus:bg-primary/5 focus:text-primary cursor-pointer">
                             Nombre (A-Z)
                           </DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="name-desc" className="text-[11px] font-bold tracking-tight p-2.5 rounded-md focus:bg-brand/5 focus:text-brand cursor-pointer">
+                          <DropdownMenuRadioItem value="name-desc" className="text-[11px] font-bold tracking-tight p-2.5 rounded-md focus:bg-primary/5 focus:text-primary cursor-pointer">
                             Nombre (Z-A)
                           </DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
@@ -751,7 +756,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
             </ScrollArea>
 
             {/* Footer for Step 2 */}
-            <div className="px-5 py-4 bg-surface border-t border-border/40 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] shrink-0 z-20">
+            <div className="px-5 py-4 bg-surface border-t border-border/60 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] shrink-0 z-20">
               <Button 
                 onClick={() => {
                   const selectedOnes = surveys.filter(s => selectedComparativeIds.includes(s.id));
@@ -782,7 +787,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
                   setActiveStep(3);
                 }}
                 disabled={selectedComparativeIds.length === 0}
-                className="w-full gap-3 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-30 disabled:grayscale group/btn h-11 text-xs font-bold tracking-tight shadow-lg shadow-primary/20 rounded-xl"
+                className="w-full gap-3 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-30 disabled:grayscale group/btn h-10 text-xs font-bold tracking-tight shadow-lg shadow-primary/20 rounded-xl"
               >
                 <span>Siguiente</span>
                 <ChevronRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
@@ -810,7 +815,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
 
               <div className="text-center space-y-1">
                 <h3 className="text-base font-bold text-text-primary tracking-tight leading-tight">Encuesta base</h3>
-                <p className="text-[11px] text-text-secondary/60 font-medium px-10 leading-relaxed">
+                <p className="text-[11px] text-text-muted font-medium px-10 leading-relaxed">
                   De tu selección anterior, elige cuál será la encuesta base para comparar contra las demás.
                 </p>
               </div>
@@ -833,11 +838,11 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
             </ScrollArea>
 
             {/* Footer for Step 3 */}
-            <div className="px-5 py-4 bg-surface border-t border-border/40 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] shrink-0 z-20">
+            <div className="px-5 py-4 bg-surface border-t border-border/60 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] shrink-0 z-20">
               <Button 
                 onClick={handleCreate}
                 disabled={!selectedBaseId}
-                className="w-full gap-3 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-30 disabled:grayscale group/btn h-11 text-xs font-bold tracking-tight shadow-lg shadow-primary/20 rounded-xl"
+                className="w-full gap-3 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-30 disabled:grayscale group/btn h-10 text-xs font-bold tracking-tight shadow-lg shadow-primary/20 rounded-xl"
               >
                 <BarChart3 className="h-4.5 w-4.5 transition-transform group-hover/btn:scale-110" />
                 <span>Generar comparativo</span>
@@ -849,6 +854,15 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
     </TooltipProvider>
   </div>
 </DrawerShell>
+
+<TemplatesDrawer
+  open={isTemplateDrawerOpen}
+  onOpenChange={setIsTemplateDrawerOpen}
+  onSelectTemplate={(template) => {
+    setIsTemplateDrawerOpen(false);
+    onCreateFromTemplate?.(template);
+  }}
+/>
 
 {/* Preview of a published survey. Mounted only while one is selected so the
     drawer starts from its first page on every open. */}

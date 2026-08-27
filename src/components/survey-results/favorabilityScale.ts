@@ -46,38 +46,47 @@ export interface FavorabilityBand {
  * Pale gradients, one hue per band, diverging around the yellow middle. Deep
  * text and a firmer border carry the reading: the fill alone would be too
  * faint a divider between two adjacent columns.
+ *
+ * `*_BG` / `*_BORDER` / `*_TEXT` resolve through the `--fav-*` CSS custom
+ * properties (defined in globals.css) rather than literal HSL, so every
+ * on-screen consumer — badges, heatmap cells, legend chips — re-tunes itself
+ * for `.dark` for free. The mid-tone `*` constants (dots, bars) stay literal:
+ * already saturated enough to read on both surfaces. The results PDF is the
+ * one exception — it prints from an isolated iframe that never sees this
+ * stylesheet, so `downloads/pdf/pdfPalette.ts` keeps its own literal copy of
+ * the light values below instead of importing these.
  */
-export const NEGATIVE_BG = "hsl(354 80% 87%)";
-export const NEGATIVE_BORDER = "hsl(354 78% 54%)";
+export const NEGATIVE_BG = "hsl(var(--fav-negative-bg))";
+export const NEGATIVE_BORDER = "hsl(var(--fav-negative-border))";
 export const NEGATIVE = "hsl(354 76% 48%)";
-export const NEGATIVE_TEXT = "hsl(354 76% 42%)"; // Lighter text
+export const NEGATIVE_TEXT = "hsl(var(--fav-negative-fg))"; // Lighter text
 
-export const SOFTER_NEGATIVE_BG = "hsl(1 84% 96%)";
-export const SOFTER_NEGATIVE_BORDER = "hsl(357 82% 76%)";
+export const SOFTER_NEGATIVE_BG = "hsl(var(--fav-softer-negative-bg))";
+export const SOFTER_NEGATIVE_BORDER = "hsl(var(--fav-softer-negative-border))";
 export const SOFTER_NEGATIVE = "hsl(357 80% 66%)";
-export const SOFTER_NEGATIVE_TEXT = "hsl(357 80% 56%)"; // Lighter text
+export const SOFTER_NEGATIVE_TEXT = "hsl(var(--fav-softer-negative-fg))"; // Lighter text
 
-export const YELLOW_BG = "hsl(48 96% 92%)";
-export const YELLOW_BORDER = "hsl(48 92% 64%)";
+export const YELLOW_BG = "hsl(var(--fav-yellow-bg))";
+export const YELLOW_BORDER = "hsl(var(--fav-yellow-border))";
 export const YELLOW = "hsl(48 92% 50%)";
-export const YELLOW_TEXT = "hsl(46 90% 42%)"; // Lighter text
+export const YELLOW_TEXT = "hsl(var(--fav-yellow-fg))"; // Lighter text
 
-export const POSITIVE_BG = "hsl(116 52% 94%)";
-export const POSITIVE_BORDER = "hsl(116 50% 72%)";
+export const POSITIVE_BG = "hsl(var(--fav-positive-bg))";
+export const POSITIVE_BORDER = "hsl(var(--fav-positive-border))";
 export const POSITIVE = "hsl(116 48% 48%)";
-export const POSITIVE_TEXT = "hsl(116 48% 42%)"; // Lighter text
+export const POSITIVE_TEXT = "hsl(var(--fav-positive-fg))"; // Lighter text
 
 /** "5" earns a visibly richer green than the "4" band: pale mint vs deep forest. */
-export const DEEP_POSITIVE_BG = "hsl(122 55% 82%)";
-export const DEEP_POSITIVE_BORDER = "hsl(120 48% 40%)";
+export const DEEP_POSITIVE_BG = "hsl(var(--fav-deep-positive-bg))";
+export const DEEP_POSITIVE_BORDER = "hsl(var(--fav-deep-positive-border))";
 export const DEEP_POSITIVE = "hsl(120 46% 36%)";
-export const DEEP_POSITIVE_TEXT = "hsl(120 46% 30%)"; // Lighter text
+export const DEEP_POSITIVE_TEXT = "hsl(var(--fav-deep-positive-fg))"; // Lighter text
 
 /** "No sabe / No responde" — the sixth option, outside the 1–5 scale. */
-export const NSNR_BG = "hsl(218 14% 93%)";
-export const NSNR_BORDER = "hsl(218 10% 66%)";
+export const NSNR_BG = "hsl(var(--fav-nsnr-bg))";
+export const NSNR_BORDER = "hsl(var(--fav-nsnr-border))";
 export const NSNR = "hsl(218 12% 61%)";
-export const NSNR_TEXT = "hsl(218 14% 38%)";
+export const NSNR_TEXT = "hsl(var(--fav-nsnr-fg))";
 
 /** A chip the scale legend can render: a band or the NS/NR sixth option. */
 export interface ScaleLegendItem {
@@ -224,15 +233,15 @@ export const FAVORABILITY_TIER_IDS: readonly string[] = THREE_TIER_FAVORABILITY_
 );
 
 export const NPS_SCALE_LEGEND: readonly ScaleLegendItem[] = [
-  { id: "promotores", label: "Promotores", range: "9-10", color: null, background: "#dcfce7", border: "#bbf7d0", foreground: "#15803d" },
-  { id: "neutros", label: "Neutros", range: "7-8", color: null, background: "#fef9c3", border: "#fef08a", foreground: "#a16207" },
-  { id: "detractores", label: "Detractores", range: "0-6", color: null, background: "#fee2e2", border: "#fecaca", foreground: "#b91c1c" },
+  { id: "promotores", label: "Promotores", range: "9-10", color: null, background: POSITIVE_BG, border: POSITIVE_BORDER, foreground: POSITIVE_TEXT },
+  { id: "neutros", label: "Neutros", range: "7-8", color: null, background: YELLOW_BG, border: YELLOW_BORDER, foreground: YELLOW_TEXT },
+  { id: "detractores", label: "Detractores", range: "0-6", color: null, background: SOFTER_NEGATIVE_BG, border: SOFTER_NEGATIVE_BORDER, foreground: SOFTER_NEGATIVE_TEXT },
 ];
 
 export const NPS_SCORE_LEGEND: readonly ScaleLegendItem[] = [
-  { id: "promotores-score", label: "Promotores", range: "20 a 100", color: null, background: "#dcfce7", border: "#bbf7d0", foreground: "#15803d" },
-  { id: "neutros-score", label: "Neutros", range: "0 a 19", color: null, background: "#fef9c3", border: "#fef08a", foreground: "#a16207" },
-  { id: "detractores-score", label: "Detractores", range: "-100 a -1", color: null, background: "#fee2e2", border: "#fecaca", foreground: "#b91c1c" },
+  { id: "promotores-score", label: "Promotores", range: "20 a 100", color: null, background: POSITIVE_BG, border: POSITIVE_BORDER, foreground: POSITIVE_TEXT },
+  { id: "neutros-score", label: "Neutros", range: "0 a 19", color: null, background: YELLOW_BG, border: YELLOW_BORDER, foreground: YELLOW_TEXT },
+  { id: "detractores-score", label: "Detractores", range: "-100 a -1", color: null, background: SOFTER_NEGATIVE_BG, border: SOFTER_NEGATIVE_BORDER, foreground: SOFTER_NEGATIVE_TEXT },
 ];
 
 /**
@@ -258,9 +267,9 @@ export interface NpsScoreBand {
 }
 
 export const NPS_SCORE_BANDS: readonly NpsScoreBand[] = [
-  { id: "promotores", label: "Promotores", range: "20 o más", min: 20, color: "#22c55e", background: "#dcfce7", border: "#bbf7d0", foreground: "#15803d" },
-  { id: "neutros", label: "Neutros", range: "0 a 19", min: 0, color: "#facc15", background: "#fef9c3", border: "#fef08a", foreground: "#a16207" },
-  { id: "detractores", label: "Detractores", range: "bajo 0", min: -Infinity, color: "#ef4444", background: "#fee2e2", border: "#fecaca", foreground: "#b91c1c" },
+  { id: "promotores", label: "Promotores", range: "20 o más", min: 20, color: "#22c55e", background: POSITIVE_BG, border: POSITIVE_BORDER, foreground: POSITIVE_TEXT },
+  { id: "neutros", label: "Neutros", range: "0 a 19", min: 0, color: "#facc15", background: YELLOW_BG, border: YELLOW_BORDER, foreground: YELLOW_TEXT },
+  { id: "detractores", label: "Detractores", range: "bajo 0", min: -Infinity, color: "#ef4444", background: SOFTER_NEGATIVE_BG, border: SOFTER_NEGATIVE_BORDER, foreground: SOFTER_NEGATIVE_TEXT },
 ];
 
 /** The band an eNPS score falls into. */

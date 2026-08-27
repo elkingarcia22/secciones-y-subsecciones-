@@ -52,7 +52,7 @@ export function MoveToPopover({
         triggerClassName
       )}
     >
-      <Move className="h-3.5 w-3.5" strokeWidth={2.2} />
+      <Move className="h-3.5 w-3.5" strokeWidth={2} />
     </button>
   );
 

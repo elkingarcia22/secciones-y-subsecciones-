@@ -16,22 +16,22 @@ export function PagesEditor({
   onClosingChange,
 }: PagesEditorProps) {
   return (
-    <section className="flex min-w-0 flex-1 flex-col self-stretch rounded-2xl border border-border/50 bg-surface shadow-card">
+    <section className="flex min-w-0 flex-1 flex-col self-stretch rounded-2xl border border-border/60 bg-surface shadow-card">
       <div className="flex flex-col gap-4 p-5">
         <Tabs defaultValue="welcome" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="welcome" className="gap-2 text-[13px] data-[state=active]:bg-brand data-[state=active]:text-white">
+          <TabsList variant="page" className="grid w-full grid-cols-2">
+            <TabsTrigger value="welcome">
               <Home className="h-4 w-4" />
               Mensaje de bienvenida
             </TabsTrigger>
-            <TabsTrigger value="closing" className="gap-2 text-[13px] data-[state=active]:bg-brand data-[state=active]:text-white">
+            <TabsTrigger value="closing">
               <Flag className="h-4 w-4" />
               Mensaje de cierre
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6 flex flex-col gap-4 outline-none">
-            <p className="max-w-2xl text-[12.5px] leading-relaxed text-text-secondary">
+            <p className="max-w-2xl text-[13px] leading-relaxed text-text-secondary">
               Primera pantalla que ve el participante. Explica el propósito de la encuesta, el tiempo estimado y el tratamiento de la información. Si lo dejas en blanco, no se mostrará.
             </p>
             <div className="relative">
@@ -45,7 +45,7 @@ export function PagesEditor({
           </TabsContent>
 
           <TabsContent value="closing" className="mt-6 flex flex-col gap-4 outline-none">
-            <p className="max-w-2xl text-[12.5px] leading-relaxed text-text-secondary">
+            <p className="max-w-2xl text-[13px] leading-relaxed text-text-secondary">
               Mensaje final que se muestra al enviar las respuestas. Úsalo para agradecer la participación y contar los siguientes pasos. Si lo dejas en blanco, no se mostrará.
             </p>
             <div className="relative">

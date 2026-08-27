@@ -96,7 +96,7 @@ export function FilterMenu({
             strokeWidth={2.5}
           />
           {activeCount > 0 && (
-            <span className="rounded-full bg-primary/15 px-1.5 py-px text-[9px] font-bold tabular-nums text-primary">
+            <span className="rounded-full bg-primary/15 px-1.5 py-px text-[10px] font-bold tabular-nums text-primary">
               {activeCount}
             </span>
           )}
@@ -120,7 +120,7 @@ export function FilterMenu({
               event.preventDefault();
               onToggle(option);
             }}
-            className="text-[12.5px]"
+            className="text-[13px]"
           >
             {option}
           </DropdownMenuCheckboxItem>
@@ -128,7 +128,7 @@ export function FilterMenu({
         {activeCount > 0 && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={onClear} className="text-[12.5px] font-semibold">
+            <DropdownMenuItem onSelect={onClear} className="text-[13px] font-semibold">
               Limpiar filtro
             </DropdownMenuItem>
           </>
@@ -184,13 +184,13 @@ export function CollaboratorRow({ person }: { person: Collaborator }) {
           </span>
           <div className="min-w-0">
             <p className="truncate text-[13px] font-semibold text-text-primary">{person.name}</p>
-            <p className="truncate text-[11.5px] text-muted-foreground">{person.username}</p>
+            <p className="truncate text-[12px] text-muted-foreground">{person.username}</p>
           </div>
         </div>
       </TableCell>
-      <TableCell className="text-[12.5px] text-text-secondary">{person.email}</TableCell>
-      <TableCell className="text-[12.5px] text-text-secondary">{person.area}</TableCell>
-      <TableCell className="pr-4 text-[12.5px] text-text-secondary">{person.leader ?? "—"}</TableCell>
+      <TableCell className="text-[13px] text-text-secondary">{person.email}</TableCell>
+      <TableCell className="text-[13px] text-text-secondary">{person.area}</TableCell>
+      <TableCell className="pr-4 text-[13px] text-text-secondary">{person.leader ?? "—"}</TableCell>
     </>
   );
 }

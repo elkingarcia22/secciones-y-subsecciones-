@@ -132,7 +132,7 @@ export function ParticipationKpis({ results }: ParticipationKpisProps) {
       {/* Favorabilidad */}
       <div className="flex flex-col gap-3 bg-surface p-5 rounded-2xl border border-border/60">
         <div className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
-          <BarChart3 className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />
+          <BarChart3 className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
           <span className="truncate">Favorabilidad</span>
           <TooltipProvider>
             <Tooltip>
@@ -141,7 +141,7 @@ export function ParticipationKpis({ results }: ParticipationKpisProps) {
                   <Info className="h-3 w-3" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="max-w-[400px] p-4 bg-slate-900 text-slate-100 shadow-xl border-none">
+              <TooltipContent className="max-w-[400px] p-4 bg-surface-nav text-white shadow-drawer border-none">
                 <div className="flex flex-col gap-3 items-start leading-relaxed">
                   <p className="text-[12px]"><strong>Favorabilidad:</strong><br/>La favorabilidad es el porcentaje de respuestas favorables en una escala de 1 a 5, donde se consideran "favorables" las respuestas de 4 y 5.</p>
                   <FormulaBlock
@@ -170,7 +170,7 @@ export function ParticipationKpis({ results }: ParticipationKpisProps) {
       {/* Participación */}
       <div className="flex flex-col gap-3 bg-surface p-5 rounded-2xl border border-border/60">
         <div className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
-          <Users className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />
+          <Users className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
           <span className="truncate">Participación</span>
           <TooltipProvider>
             <Tooltip>
@@ -179,7 +179,7 @@ export function ParticipationKpis({ results }: ParticipationKpisProps) {
                   <Info className="h-3 w-3" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="max-w-[400px] p-4 bg-slate-900 text-slate-100 shadow-xl border-none">
+              <TooltipContent className="max-w-[400px] p-4 bg-surface-nav text-white shadow-drawer border-none">
                 <div className="flex flex-col gap-3 items-start leading-relaxed">
                   <p className="text-[12px]"><strong>Participación:</strong><br/>La participación representa el porcentaje de personas que respondieron en relación con el total de participantes invitados.</p>
                   <FormulaBlock
@@ -213,7 +213,7 @@ export function ParticipationKpis({ results }: ParticipationKpisProps) {
       {/* NPS */}
       <div className="flex flex-col gap-3 bg-surface p-5 rounded-2xl border border-border/60">
         <div className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
-          <Gauge className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />
+          <Gauge className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
           <span className="truncate">NPS</span>
           <TooltipProvider>
             <Tooltip>
@@ -222,7 +222,7 @@ export function ParticipationKpis({ results }: ParticipationKpisProps) {
                   <Info className="h-3 w-3" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="max-w-[400px] p-4 bg-slate-900 text-slate-100 shadow-xl border-none">
+              <TooltipContent className="max-w-[400px] p-4 bg-surface-nav text-white shadow-drawer border-none">
                 <div className="flex flex-col gap-3 items-start leading-relaxed">
                   <p className="text-[12px]"><strong>NPS (Net Promote Score):</strong><br/>Este puntaje mide la lealtad del cliente, evaluando la probabilidad de recomendación en una escala de 0 a 10. Así podrás identificar el nivel de satisfacción y la disposición de los participantes.</p>
                   <p className="text-[12px]"><strong>Fórmula:</strong><br/>((Número de promotores) - (Número de detractores) / (Número de respuestas)) * 100 = Puntaje NPS</p>

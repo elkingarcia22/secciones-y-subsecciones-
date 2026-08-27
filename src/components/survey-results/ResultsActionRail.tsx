@@ -136,12 +136,12 @@ export function ResultsActionRail({
       >
         <div
           className={cn(
-            "relative flex items-center justify-center overflow-hidden rounded-[24px] transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+            "relative flex items-center justify-center overflow-hidden rounded-3xl transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
             isExpanded
-              ? "h-14 max-w-[800px] bg-zinc-900 px-3 shadow-[0_8px_30px_rgb(0,0,0,0.24)] border border-zinc-800/80"
+              ? "h-14 max-w-[800px] bg-surface-nav px-3 shadow-rail border border-white/10"
               // Collapsed: a full pill rather than a half-rounded hump, so the
               // handle reads as one continuous rounded line from any angle.
-              : "h-1.5 max-w-[64px] w-[64px] bg-zinc-400 shadow-sm border-transparent rounded-full translate-y-[2px]"
+              : "h-1.5 max-w-[64px] w-[64px] bg-border-strong shadow-card border-transparent rounded-full translate-y-[2px]"
           )}
         >
           {/* Content that fades/slides in */}
@@ -155,7 +155,7 @@ export function ResultsActionRail({
               <>
                 <div
                   key={`shimmer-results-${stepChangeKey}`}
-                  className="pointer-events-none absolute inset-0 rounded-[24px]"
+                  className="pointer-events-none absolute inset-0 rounded-3xl"
                   style={{
                     animation: "railGroupShimmer 1200ms ease-out both",
                     animationDelay: "200ms",
@@ -165,7 +165,7 @@ export function ResultsActionRail({
                   <RailSelectionChip count={selectedCount} onClear={onClearSelection} gender="m" />
                 </AnimatedActionItem>
                 <AnimatedActionItem animKey={stepChangeKey} staggerIndex={1} skipColorFlash>
-                  <div className="self-stretch bg-zinc-700/60 mx-1 my-2 w-px" />
+                  <div className="self-stretch bg-white/10 mx-1 my-2 w-px" />
                 </AnimatedActionItem>
               </>
             )}
@@ -174,17 +174,17 @@ export function ResultsActionRail({
                 own faltantes, so a reminder never has to wait on a selection. */}
             <AnimatedActionItem animKey={stepChangeKey} staggerIndex={2}>
               <RailButton
-                icon={<Bell className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                icon={<Bell className="h-[20px] w-[20px]" strokeWidth={2} />}
                 label={reminderLabel(segment, selectedCount, reminderParticipants)}
                 onClick={onSendReminders}
               />
             </AnimatedActionItem>
             <AnimatedActionItem animKey={stepChangeKey} staggerIndex={3} skipColorFlash>
-              <div className="self-stretch bg-zinc-700/60 my-2 w-px" />
+              <div className="self-stretch bg-white/10 my-2 w-px" />
             </AnimatedActionItem>
 
             <RailButton
-              icon={<Download className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+              icon={<Download className="h-[20px] w-[20px]" strokeWidth={2} />}
               label="Descargar información"
               onClick={onDownload}
             />
@@ -194,9 +194,9 @@ export function ResultsActionRail({
                 <button
                   type="button"
                   aria-label="Información de la encuesta"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
                 >
-                  <Info className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                  <Info className="h-[20px] w-[20px]" strokeWidth={2} />
                 </button>
               </HoverCardTrigger>
               <HoverCardContent
@@ -206,10 +206,10 @@ export function ResultsActionRail({
                 align="center"
                 side="top"
                 sideOffset={16}
-                className="w-[280px] rounded-xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border-zinc-800/80 bg-zinc-900 text-zinc-400"
+                className="w-[280px] rounded-xl p-4 shadow-rail border-white/10 bg-surface-nav text-white/60"
               >
-                <p className="text-[13px] font-semibold text-zinc-100">Información</p>
-                <div className="my-3 h-px bg-zinc-700/60" />
+                <p className="text-[13px] font-semibold text-white">Información</p>
+                <div className="my-3 h-px bg-white/10" />
                 <dl className="flex flex-col gap-3">
                   {draft.kind && (
                     <InfoRow icon={Tag} label="Tipo" value={SURVEY_KIND_LABELS[draft.kind]} />
@@ -231,12 +231,12 @@ export function ResultsActionRail({
                   type="button"
                   onClick={() => setAutoHide(!autoHide)}
                   aria-label={autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
                 >
                   {!autoHide ? (
-                    <Minimize2 className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                    <Minimize2 className="h-[20px] w-[20px]" strokeWidth={2} />
                   ) : (
-                    <Pin className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                    <Pin className="h-[20px] w-[20px]" strokeWidth={2} />
                   )}
                 </button>
               </TooltipTrigger>
@@ -267,7 +267,7 @@ function RailButton({
           type="button"
           onClick={onClick}
           aria-label={label}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
         >
           {icon}
         </button>
@@ -288,11 +288,11 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="flex items-center gap-2 text-[12.5px] text-zinc-400">
-        <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />
+      <dt className="flex items-center gap-2 text-[13px] text-white/60">
+        <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
         {label}
       </dt>
-      <dd className="text-[13px] font-semibold tabular-nums text-zinc-100">{value}</dd>
+      <dd className="text-[13px] font-semibold tabular-nums text-white">{value}</dd>
     </div>
   );
 }

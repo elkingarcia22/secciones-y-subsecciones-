@@ -124,7 +124,7 @@ export function FavorabilityDistributionCard({
         </div>
 
         {!hasData ? (
-          <div className="flex flex-col items-center justify-center min-h-[120px] text-center border-2 border-dashed border-border/50 rounded-xl bg-muted/5 p-4">
+          <div className="flex flex-col items-center justify-center min-h-[120px] text-center border-2 border-dashed border-border/60 rounded-xl bg-muted/30 p-4">
             <span className="text-sm text-muted-foreground italic font-medium">
               No hay datos de distribución disponibles
             </span>
@@ -151,7 +151,7 @@ export function FavorabilityDistributionCard({
       </CardContent>
 
       {footer && (
-        <CardFooter className="bg-muted/5 border-t border-border/5 text-[11px] text-muted-foreground py-3">
+        <CardFooter className="bg-muted/30 border-t border-border/60 text-[11px] text-muted-foreground py-3">
           {footer}
         </CardFooter>
       )}

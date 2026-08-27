@@ -55,12 +55,12 @@ function Calendar({
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          "h-7 w-7 p-0 select-none aria-disabled:opacity-50 hover:bg-muted/80 rounded-md transition-colors pointer-events-auto",
+          "h-7 w-7 p-0 select-none aria-disabled:opacity-50 hover:bg-muted/60 rounded-md transition-colors pointer-events-auto",
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          "h-7 w-7 p-0 select-none aria-disabled:opacity-50 hover:bg-muted/80 rounded-md transition-colors pointer-events-auto",
+          "h-7 w-7 p-0 select-none aria-disabled:opacity-50 hover:bg-muted/60 rounded-md transition-colors pointer-events-auto",
           defaultClassNames.button_next
         ),
         month_caption: cn(

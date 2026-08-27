@@ -121,7 +121,7 @@ export function DrawerShell({
         aria-describedby={undefined}
       >
         {(title || description) && (
-          <SheetHeader className="border-b bg-muted/20">
+          <SheetHeader className="border-b bg-muted/30">
             {title && <SheetTitle>{title}</SheetTitle>}
             {description && <SheetDescription>{description}</SheetDescription>}
           </SheetHeader>
@@ -144,7 +144,7 @@ export function DrawerShell({
         {footer ? (
           footer
         ) : actions ? (
-          <SheetFooter className="border-t bg-muted/20">
+          <SheetFooter className="border-t bg-muted/30">
             {actions}
           </SheetFooter>
         ) : null}

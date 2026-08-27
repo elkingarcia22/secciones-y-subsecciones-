@@ -211,23 +211,23 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
       {/* The same KPI row every other tab opens with. What the analysis is made
           of, so the reader knows the size of the reading before entering it. */}
       <div className="grid shrink-0 grid-cols-2 gap-3 pt-6 sm:grid-cols-4 sm:pt-8">
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={Search}
           label="Hallazgos"
           value={<AnimatedNumber value={counts.finding} format={formatCount} />}
         />
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={AlertTriangle}
           label="Riesgos"
           value={<AnimatedNumber value={counts.risk} format={formatCount} />}
           tone={counts.risk > 0 ? "negative" : "neutral"}
         />
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={Lightbulb}
           label="Acciones sugeridas"
           value={<AnimatedNumber value={counts.recommendation} format={formatCount} />}
         />
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={ShieldCheck}
           label="Confiabilidad alta"
           value={
@@ -241,9 +241,9 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
 
       {/* pb-20: the screen's floating action rail hovers over the last ~80px. */}
       <div className="min-h-0 flex-1 pb-20 pt-6">
-        <div className="flex flex-col gap-6 rounded-2xl border border-border/50 bg-surface p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
           {/* Same sticky toolbar the Preguntas and Favorabilidad views use. */}
-          <div className="sticky top-4 z-30 -mt-6 bg-surface pb-2 pt-6 sm:-mt-8 sm:pt-8">
+          <div className="sticky top-3 z-30 -mt-6 bg-surface pb-2 pt-6 sm:-mt-8 sm:pt-8">
             <div className="flex flex-wrap items-center gap-4 pb-2">
               <div className="flex items-center gap-2">
                 <h3 className="text-[13px] font-bold text-text-primary">Lectura de la IA</h3>
@@ -335,9 +335,9 @@ function AnalysisSummary({
   isAnalyzing: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border/50 bg-muted/20 px-6 py-5">
-      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] font-semibold leading-none text-text-secondary">
-        <Sparkles className="h-3.5 w-3.5 text-primary" strokeWidth={2.4} />
+    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-muted/30 px-6 py-5">
+      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-semibold leading-none text-text-secondary">
+        <Sparkles className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
         Resumen general
         <span className="ml-auto text-[11px] font-medium text-muted-foreground">
           Generado a partir de los resultados de esta medición
@@ -358,7 +358,7 @@ function AnalysisSummary({
 
 function AnalyzingLoader({ progress, text }: { progress: number; text: string }) {
   return (
-    <div className="relative flex flex-col min-h-[300px] p-[2px] rounded-xl bg-ai-gradient shimmer-mirror shadow-sm animate-in fade-in duration-300 select-none">
+    <div className="relative flex flex-col min-h-[300px] p-[2px] rounded-xl bg-ai-gradient shimmer-mirror shadow-card animate-in fade-in duration-300 select-none">
       <div className="relative z-10 flex-1 w-full bg-ai-mesh-card rounded-[calc(var(--radius-xl)-2px)] flex flex-col items-center justify-center p-6 gap-6">
         
         {/* Pulsing UBITS AI Icon */}
@@ -402,7 +402,7 @@ function AnalyzingLoader({ progress, text }: { progress: number; text: string })
         </div>
 
         <div className="w-full max-w-sm flex flex-col gap-2">
-          <div className="flex justify-between items-end text-[11.5px] font-bold">
+          <div className="flex justify-between items-end text-[12px] font-bold">
             <span className="text-text-secondary">Procesando respuestas</span>
             <span className="text-ai-gradient">
               {progress}%

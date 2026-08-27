@@ -76,11 +76,11 @@ export function CardSelection({
               role="radio"
             >
               <Card className={cn(
-                'flex flex-col w-full h-full p-5 border-2 transition-all duration-200',
+                'flex flex-col w-full h-full p-5 border transition-all duration-200',
                 isSelected 
                   ? 'border-primary bg-primary/[0.02] ring-1 ring-primary/20' 
-                  : 'border-border/50 bg-card hover:border-primary/30',
-                isDisabled && 'opacity-50 grayscale-[0.5] hover:border-border/50'
+                  : 'border-border/60 bg-surface hover:border-primary/30',
+                isDisabled && 'opacity-50 grayscale-[0.5] hover:border-border/60'
               )}>
                 {/* Header: Icon + Badge */}
                 <div className="flex items-start justify-between gap-3 mb-4">
@@ -88,12 +88,12 @@ export function CardSelection({
                     'p-2.5 rounded-xl border transition-colors',
                     isSelected 
                       ? 'bg-primary text-primary-foreground border-primary' 
-                      : 'bg-muted/50 text-muted-foreground border-border/50 group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20'
+                      : 'bg-muted/40 text-muted-foreground border-border/60 group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20'
                   )}>
                     {Icon ? <Icon className="h-5 w-5" /> : <CheckCircle2 className={cn('h-5 w-5', isSelected ? 'opacity-100' : 'opacity-20')} />}
                   </div>
                   {option.badge && (
-                    <Badge variant={isSelected ? "default" : "outline"} className="font-bold   text-[9px]">
+                    <Badge variant={isSelected ? "default" : "outline"} className="font-bold   text-[10px]">
                       {option.badge}
                     </Badge>
                   )}
@@ -118,7 +118,7 @@ export function CardSelection({
 
                 {/* Selected Indicator (Sutil) */}
                 {isSelected && (
-                  <div className="absolute top-2 right-2 flex items-center justify-center h-5 w-5 bg-primary rounded-full text-primary-foreground shadow-sm">
+                  <div className="absolute top-2 right-2 flex items-center justify-center h-5 w-5 bg-primary rounded-full text-primary-foreground shadow-card">
                     <CheckCircle2 className="h-3 w-3" />
                   </div>
                 )}

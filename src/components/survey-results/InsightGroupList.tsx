@@ -188,22 +188,22 @@ function InsightRows({
               "ml-auto h-4 w-4 text-muted-foreground/60 transition-transform duration-200 group-hover:text-text-primary",
               open && "rotate-90"
             )}
-            strokeWidth={2.4}
+            strokeWidth={2}
           />
         </td>
       </tr>
 
       {open && (
-        <tr className="bg-muted/10">
+        <tr className="bg-muted/30">
           <td colSpan={4} className="px-4 py-4">
             <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
-              <p className="max-w-4xl text-[12.5px] leading-relaxed text-text-primary">
+              <p className="max-w-4xl text-[13px] leading-relaxed text-text-primary">
                 {insight.body}
               </p>
               {/* The figure the claim rests on, quoted so the reader can go and
                   check it in the tab it came from. */}
               <p className="flex items-start gap-2 text-[11px] leading-relaxed text-text-secondary">
-                <Quote className="mt-px h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={2.4} />
+                <Quote className="mt-px h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={2} />
                 <span>
                   <span className="font-semibold uppercase tracking-wide text-muted-foreground">
                     Evidencia

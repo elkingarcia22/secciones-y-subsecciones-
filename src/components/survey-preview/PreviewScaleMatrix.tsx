@@ -37,12 +37,12 @@ export function PreviewScaleMatrix({
   };
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/50 bg-surface shadow-card">
+    <section className="overflow-hidden rounded-2xl border border-border/60 bg-surface shadow-card">
       <div className="overflow-x-auto">
         <div className="min-w-[680px]">
           <div
             style={columns}
-            className="grid items-end gap-x-1 border-b border-border/60 bg-surface-muted/70 px-5 py-3"
+            className="grid items-end gap-x-1 border-b border-border/60 bg-surface-muted px-5 py-3"
           >
             <span className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">
               Enunciado
@@ -50,7 +50,7 @@ export function PreviewScaleMatrix({
             {steps.map((step) => (
               <span
                 key={step}
-                className="px-1 text-center text-[11.5px] font-semibold leading-tight text-text-secondary"
+                className="px-1 text-center text-[12px] font-semibold leading-tight text-text-secondary"
               >
                 {step}
               </span>
@@ -67,8 +67,8 @@ export function PreviewScaleMatrix({
                 style={columns}
                 className={cn(
                   "group/row grid items-center gap-x-1 px-5 py-3.5 transition-colors",
-                  index > 0 && "border-t border-border/40",
-                  selected ? "bg-primary/[0.035]" : "hover:bg-surface-muted/50"
+                  index > 0 && "border-t border-border/60",
+                  selected ? "bg-primary/[0.035]" : "hover:bg-surface-muted"
                 )}
               >
                 <div className="flex min-w-0 items-start gap-2.5 pr-6">
@@ -80,12 +80,12 @@ export function PreviewScaleMatrix({
                   >
                     {startIndex + index}
                   </span>
-                  <p className="min-w-0 text-[13.5px] font-medium leading-snug text-text-primary">
+                  <p className="min-w-0 text-[14px] font-medium leading-snug text-text-primary">
                     {question.statement.trim() || (
                       <span className="italic text-text-muted">Pregunta sin enunciado</span>
                     )}
                     {!question.required && (
-                      <span className="ml-1.5 text-[11.5px] font-normal text-text-muted">
+                      <span className="ml-1.5 text-[12px] font-normal text-text-muted">
                         (opcional)
                       </span>
                     )}

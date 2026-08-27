@@ -36,6 +36,7 @@ export interface SubsectionAccordionHandlers extends QuestionListHandlers {
 }
 
 interface SubsectionAccordionProps extends SubsectionAccordionHandlers {
+  readOnly?: boolean;
   entry: SectionTreeEntry;
 }
 
@@ -50,7 +51,7 @@ interface SubsectionAccordionProps extends SubsectionAccordionHandlers {
  * Only one row per level stays open, so the card never grows into a column the
  * author has to scroll through to find their place.
  */
-export function SubsectionAccordion({ entry, ...handlers }: SubsectionAccordionProps) {
+export function SubsectionAccordion({ entry, readOnly, ...handlers }: SubsectionAccordionProps) {
   const {
     expandedIds,
     selectedId,
@@ -105,27 +106,29 @@ export function SubsectionAccordion({ entry, ...handlers }: SubsectionAccordionP
             <button
               type="button"
               onClick={(event) => {
-                // The toggle selects on its own; letting it bubble would run
-                // both `onToggleExpanded` and `onSelect` for the same click.
                 event.stopPropagation();
                 onToggleExpanded(section.id);
               }}
               aria-expanded={isExpanded}
-              aria-label={isExpanded ? `Contraer ${section.title}` : `Expandir ${section.title}`}
-              className="mt-1 shrink-0 rounded-md p-0.5 text-muted-foreground transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              aria-label={
+                isExpanded ? `Contraer ${depthLabel(depth)} ${numbering}` : `Expandir ${depthLabel(depth)} ${numbering}`
+              }
+              className={cn(
+                "mt-0.5 flex shrink-0 items-center justify-center rounded-lg p-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                isExpanded ? "bg-primary/10 text-primary" : "text-muted-foreground/60 hover:bg-surface-muted",
+                theme.chevronSize
+              )}
             >
               <ChevronRight
-                className={cn("h-3.5 w-3.5 transition-transform duration-200", isExpanded && "rotate-90")}
-                strokeWidth={2.5}
+                className={cn("transition-transform duration-200", isExpanded && "rotate-90", theme.chevronIcon)}
+                strokeWidth={isExpanded ? 3 : 2.5}
               />
             </button>
 
-            <div className="min-w-0 flex-1">
-              {/* Level chip: names the level outright so nothing rests on the
-                  reader inferring depth from indentation alone. */}
+            <div className="min-w-0 flex-1 pl-0.5 pt-1">
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-bold tracking-tight transition-all",
+                  "inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[10px] uppercase tracking-wider",
                   theme.chip,
                   isSelected && CHIP_SELECTED_RING
                 )}
@@ -136,22 +139,24 @@ export function SubsectionAccordion({ entry, ...handlers }: SubsectionAccordionP
 
               <input
                 value={section.title}
+                readOnly={readOnly}
                 onChange={(event) => onTitleChange(section.id, event.target.value)}
                 onFocus={() => onSelect(section.id)}
                 placeholder={`${depthLabel(depth)} ${numbering}`}
                 aria-label={`Título de ${depthLabel(depth)} ${numbering}`}
                 className={cn(
-                  "-ml-1 mt-1 w-full cursor-text rounded-md bg-transparent px-1 py-0.5 font-bold tracking-tight text-text-primary outline-none transition-colors hover:bg-border/30 focus:bg-border/40 placeholder:font-semibold placeholder:text-muted-foreground/70",
+                  "-ml-1 mt-1 w-full cursor-text rounded-md bg-transparent px-1 py-0.5 font-bold tracking-tight text-text-primary outline-none transition-colors hover:bg-border/30 focus:bg-border/40 placeholder:font-semibold placeholder:text-muted-foreground/70 disabled:opacity-70 disabled:cursor-default",
                   theme.title
                 )}
               />
 
               <input
                 value={section.description}
+                readOnly={readOnly}
                 onChange={(event) => onDescriptionChange(section.id, event.target.value)}
                 placeholder="Añade una descripción."
                 aria-label={`Descripción de ${depthLabel(depth)} ${numbering}`}
-                className="-ml-1 w-full cursor-text rounded-md bg-transparent px-1 py-0.5 text-[11.5px] text-text-secondary outline-none transition-colors hover:bg-border/30 focus:bg-border/40 placeholder:text-muted-foreground/70"
+                className="-ml-1 w-full cursor-text rounded-md bg-transparent px-1 py-0.5 text-[12px] text-text-secondary outline-none transition-colors hover:bg-border/30 focus:bg-border/40 placeholder:text-muted-foreground/70 disabled:opacity-70 disabled:cursor-default"
               />
             </div>
 
@@ -165,23 +170,25 @@ export function SubsectionAccordion({ entry, ...handlers }: SubsectionAccordionP
                 </span>
               )}
 
-              {/* "Mover a…": the popover lists every other section/subsección
-                  this one can become a child of, across the whole tree. */}
-              <MoveToPopover
-                subjectLabel={`${depthLabel(depth)} ${numbering}`}
-                destinations={moveDestinations}
-                onMove={(targetId) => onMoveSection(section.id, targetId)}
-              />
+              {!readOnly && (
+                <MoveToPopover
+                  id={section.id}
+                  sections={handlers.sections}
+                  destinations={moveDestinationsForSection(handlers.sections, entry)}
+                  onMove={onMoveSection}
+                />
+              )}
 
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     type="button"
+                    disabled={readOnly}
                     onClick={() => onDelete(section.id)}
                     aria-label={`Eliminar ${depthLabel(depth)} ${numbering}`}
-                    className="rounded-lg p-1.5 text-muted-foreground/60 transition-all hover:bg-status-negative/10 hover:text-status-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30"
+                    className="rounded-lg p-1.5 text-muted-foreground/60 transition-all hover:bg-status-negative/10 hover:text-status-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2.2} />
+                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">Eliminar {depthLabel(depth).toLowerCase()}</TooltipContent>
@@ -191,7 +198,6 @@ export function SubsectionAccordion({ entry, ...handlers }: SubsectionAccordionP
         )}
       </div>
 
-      {/* Content, hanging off a rail that starts under the chevron. */}
       {isExpanded && (
         <div
           className={cn(
@@ -203,6 +209,7 @@ export function SubsectionAccordion({ entry, ...handlers }: SubsectionAccordionP
         >
           {canHaveQuestions(depth) && (
             <SectionQuestions
+              readOnly={readOnly}
               sectionId={section.id}
               questions={section.questions}
               editingQuestionId={handlers.editingQuestionId}
@@ -222,7 +229,7 @@ export function SubsectionAccordion({ entry, ...handlers }: SubsectionAccordionP
           {children.length > 0 && (
             <ul className={cn("flex flex-col", SIBLING_DIVIDER)}>
               {children.map((child) => (
-                <SubsectionAccordion key={child.section.id} entry={child} {...handlers} />
+                <SubsectionAccordion key={child.section.id} entry={child} readOnly={readOnly} {...handlers} />
               ))}
             </ul>
           )}

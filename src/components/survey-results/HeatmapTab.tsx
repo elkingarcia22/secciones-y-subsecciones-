@@ -196,8 +196,8 @@ export function HeatmapTab({
   const scoredTotals = displayTotals.filter((total): total is number => total !== null);
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-border/50 bg-surface p-6 shadow-sm sm:p-8">
-      <div className="sticky top-4 z-30 -mt-6 pt-6 sm:-mt-8 sm:pt-8 bg-surface">
+    <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
+      <div className="sticky top-3 z-30 -mt-6 pt-6 sm:-mt-8 sm:pt-8 bg-surface">
         <div className="flex flex-wrap items-center gap-4 pb-2">
           <div className="flex items-center gap-2">
             <h3 className="text-[13px] font-bold text-text-primary">
@@ -267,7 +267,7 @@ export function HeatmapTab({
                           title="Restablecer vista"
                           className="ml-auto flex h-6 w-6 items-center justify-center rounded-md border border-border/60 text-muted-foreground transition-colors hover:border-border hover:bg-border/40 hover:text-text-primary"
                         >
-                          <RotateCcw className="h-3.5 w-3.5" strokeWidth={2.4} />
+                          <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
                         </button>
                       )}
                     </div>
@@ -277,12 +277,12 @@ export function HeatmapTab({
                       <TooltipTrigger asChild>
                         <span className="inline-flex cursor-help items-center gap-1 justify-end">
                           Total
-                          <HelpCircle className="h-3 w-3" strokeWidth={2.2} />
+                          <HelpCircle className="h-3 w-3" strokeWidth={2} />
                         </span>
                       </TooltipTrigger>
                       <TooltipContent
                         side="top"
-                        className="max-w-[360px] flex-col items-start gap-2 text-[11.5px] leading-relaxed"
+                        className="max-w-[360px] flex-col items-start gap-2 text-[12px] leading-relaxed"
                       >
                         <p>
                           Promedio de favorabilidad de la sección en la escala de 1 a 5, sin dividir
@@ -318,7 +318,7 @@ export function HeatmapTab({
                         <TooltipTrigger asChild>
                           <span className="block truncate">{heatmap.columns[index].label}</span>
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="text-[11.5px]">
+                        <TooltipContent side="top" className="text-[12px]">
                           {heatmap.columns[index].label}
                           {displayTotals[index] !== null && (
                             <span className="font-semibold">
@@ -369,9 +369,9 @@ function InlineMetric({
 }) {
   return (
     <div className="flex items-center gap-1.5">
-      <Icon className={cn("h-3.5 w-3.5", className)} strokeWidth={2.2} />
-      <span className="text-[12.5px] font-semibold tabular-nums text-text-primary">{value}</span>
-      <span className="text-[12.5px] text-muted-foreground">{label}</span>
+      <Icon className={cn("h-3.5 w-3.5", className)} strokeWidth={2} />
+      <span className="text-[13px] font-semibold tabular-nums text-text-primary">{value}</span>
+      <span className="text-[13px] text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -466,7 +466,7 @@ function GridRow({
   const hierarchySize = isRoot
     ? undefined
     : isQuestion || row.depth >= 3
-      ? "text-[10.5px]"
+      ? "text-[11px]"
       : "text-[11px]";
   const hierarchyBox = isRoot ? "h-10" : isQuestion || row.depth >= 3 ? "h-8" : "h-9";
   const padding =
@@ -480,7 +480,7 @@ function GridRow({
       <th
         scope="row"
         className={cn(
-          "sticky left-0 z-10 min-w-[260px] border-r border-border/40 py-3.5 pl-7 pr-4 text-left align-middle",
+          "sticky left-0 z-10 min-w-[260px] border-r border-border/60 py-3.5 pl-7 pr-4 text-left align-middle",
           stickyBackground,
           padding
         )}
@@ -495,16 +495,16 @@ function GridRow({
                 "flex min-w-0 flex-1 items-center gap-1.5 text-left transition-colors hover:text-primary",
                 isRoot
                   ? "text-[13px] font-bold text-text-primary"
-                  : "text-[12px] font-semibold text-text-primary/80"
+                  : "text-[12px] font-semibold text-text-primary"
               )}
             >
               {isOpen ? (
-                <ChevronDown className="h-3.5 w-3.5 shrink-0" strokeWidth={2.6} />
+                <ChevronDown className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
               ) : (
-                <ChevronRight className="h-3.5 w-3.5 shrink-0" strokeWidth={2.6} />
+                <ChevronRight className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
               )}
               {isRoot ? (
-                <span className="flex h-5 min-w-[20px] px-1 shrink-0 items-center justify-center rounded-md bg-muted/60 border border-border/50 text-[10px] font-bold tabular-nums text-muted-foreground">
+                <span className="flex h-5 min-w-[20px] px-1 shrink-0 items-center justify-center rounded-md bg-muted/60 border border-border/60 text-[10px] font-bold tabular-nums text-muted-foreground">
                   {row.numbering}
                 </span>
               ) : (
@@ -519,14 +519,14 @@ function GridRow({
               className={cn(
                 "flex min-w-0 flex-1 items-center gap-1.5",
                 isQuestion
-                  ? "text-[11.5px] font-medium text-text-primary/70"
+                  ? "text-[12px] font-medium text-text-secondary"
                   : row.depth >= 3
-                    ? "text-[11.5px] font-medium text-text-primary/70"
-                    : "text-[12px] font-semibold text-text-primary/80"
+                    ? "text-[12px] font-medium text-text-secondary"
+                    : "text-[12px] font-semibold text-text-primary"
               )}
             >
               {isRoot && !isQuestion ? (
-                <span className="flex h-5 min-w-[20px] px-1 shrink-0 items-center justify-center rounded-md bg-muted/60 border border-border/50 text-[10px] font-bold tabular-nums text-muted-foreground">
+                <span className="flex h-5 min-w-[20px] px-1 shrink-0 items-center justify-center rounded-md bg-muted/60 border border-border/60 text-[10px] font-bold tabular-nums text-muted-foreground">
                   {row.numbering}
                 </span>
               ) : (
@@ -556,14 +556,14 @@ function GridRow({
                 : "border-border/60 text-muted-foreground opacity-0 group-hover:opacity-100 hover:border-border hover:bg-border/40 hover:text-text-primary"
             )}
           >
-            <Crosshair className="h-3.5 w-3.5" strokeWidth={2.4} />
+            <Crosshair className="h-3.5 w-3.5" strokeWidth={2} />
           </button>
         </div>
       </th>
 
       <td
         className={cn(
-          "border-b border-r border-border/40 px-4 py-3.5 text-right align-middle",
+          "border-b border-r border-border/60 px-4 py-3.5 text-right align-middle",
           rowDimmed && "opacity-45 grayscale",
           stickyBackground
         )}
@@ -579,7 +579,7 @@ function GridRow({
             </span>
           ) : unscored ? (
             <Badge variant="neutral" className="gap-1 whitespace-nowrap">
-              <MessageSquareText className="h-3 w-3" strokeWidth={2.4} />
+              <MessageSquareText className="h-3 w-3" strokeWidth={2} />
               Sin escala
             </Badge>
           ) : (
@@ -618,7 +618,7 @@ function GridRow({
                       hierarchyBox
                     )}
                   >
-                    <MessageSquareText className="h-3 w-3" strokeWidth={2.4} />
+                    <MessageSquareText className="h-3 w-3" strokeWidth={2} />
                   </div>
                 ) : cell.masked ? (
                   cell.n === 0 ? (
@@ -637,7 +637,7 @@ function GridRow({
                         hierarchyBox
                       )}
                     >
-                      <Lock className="h-3 w-3" strokeWidth={2.4} />
+                      <Lock className="h-3 w-3" strokeWidth={2} />
                     </div>
                   )
                 ) : (
@@ -660,11 +660,11 @@ function GridRow({
               </TooltipTrigger>
               <TooltipContent
                 side="top"
-                className="flex w-[240px] flex-col gap-2 text-[11.5px] leading-relaxed"
+                className="flex w-[240px] flex-col gap-2 text-[12px] leading-relaxed"
               >
                 {levelHidden ? (
                   <span className="flex items-center gap-1.5">
-                    <ListFilter className="h-3.5 w-3.5 shrink-0 text-background/70" strokeWidth={2.2} />
+                    <ListFilter className="h-3.5 w-3.5 shrink-0 text-background/70" strokeWidth={2} />
                     Resultados ocultos: marca este nivel en el filtro de Niveles.
                   </span>
                 ) : (
@@ -674,7 +674,7 @@ function GridRow({
                         <>
                           <MessageSquareText
                             className="h-3.5 w-3.5 shrink-0 text-background/70"
-                            strokeWidth={2.2}
+                            strokeWidth={2}
                           />
                           <span className="font-semibold">Sin escala</span>
                         </>
@@ -686,7 +686,7 @@ function GridRow({
                           </>
                         ) : (
                           <>
-                            <Lock className="h-3.5 w-3.5 shrink-0 text-background/70" strokeWidth={2.2} />
+                            <Lock className="h-3.5 w-3.5 shrink-0 text-background/70" strokeWidth={2} />
                             <span className="font-semibold">Reservado</span>
                           </>
                         )

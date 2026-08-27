@@ -52,7 +52,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     <header className="flex h-14 shrink-0 items-center gap-3 px-1">
       <button
         onClick={onToggleSidebar}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-border/70 bg-surface text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-surface text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
         title="Menú"
         aria-label="Menú"
       >
@@ -95,7 +95,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <div className="ml-auto flex shrink-0 items-center gap-3">
         <button
           onClick={onOpenNews}
-          className="rounded-[10px] border border-border/70 bg-surface px-4 py-1.5 text-[13px] font-semibold text-text-primary transition-colors hover:bg-surface-muted"
+          className="rounded-md border border-border/70 bg-surface px-4 py-1.5 text-[13px] font-semibold text-text-primary transition-colors hover:bg-surface-muted"
         >
           Novedades
         </button>

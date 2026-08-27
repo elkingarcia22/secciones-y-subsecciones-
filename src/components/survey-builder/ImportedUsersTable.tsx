@@ -105,11 +105,11 @@ function HeaderSelectionMark({ state }: { state: boolean | "indeterminate" }) {
     <span
       aria-hidden
       className={cn(
-        "flex size-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors",
+        "flex size-4 shrink-0 items-center justify-center rounded-xs border transition-colors",
         state === false ? "border-input" : "border-primary bg-primary text-primary-foreground"
       )}
     >
-      {state === "indeterminate" && <MinusIcon className="size-3.5" strokeWidth={3} />}
+      {state === "indeterminate" && <MinusIcon className="size-3.5" strokeWidth={2.5} />}
       {state === true && <CheckIcon className="size-3.5" />}
     </span>
   );
@@ -315,7 +315,7 @@ export function ImportedUsersTable({
     <div className="flex min-w-0 flex-col gap-3">
       {showTabs ? (
         <>
-          <p className="text-[12.5px] font-semibold text-text-primary">
+          <p className="text-[13px] font-semibold text-text-primary">
             Se cargarán{" "}
             <span className="font-bold text-text-primary">
               {formatCount(collaboratorCount)}{" "}
@@ -358,7 +358,7 @@ export function ImportedUsersTable({
                     (isSearchExpanded || query !== "") ? "text-primary" : "text-muted-foreground"
                   )}
                 >
-                  <Search className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]" strokeWidth={2.2} />
+                  <Search className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]" strokeWidth={2} />
                 </div>
                 
                 <input
@@ -405,16 +405,16 @@ export function ImportedUsersTable({
                     setPage(1);
                   }}
                   className={cn(
-                    "flex h-9 whitespace-nowrap shrink-0 items-center gap-2 rounded-lg border px-3 text-[12.5px] font-semibold transition-colors",
+                    "flex h-9 whitespace-nowrap shrink-0 items-center gap-2 rounded-lg border px-3 text-[13px] font-semibold transition-colors",
                     onlySelected
                       ? "border-primary/40 bg-primary/5 text-primary"
                       : "border-border text-text-secondary hover:border-primary/30 hover:text-primary"
                   )}
                 >
                   {onlySelected ? (
-                    <UserRoundX className="h-3.5 w-3.5" strokeWidth={2.3} />
+                    <UserRoundX className="h-3.5 w-3.5" strokeWidth={2} />
                   ) : (
-                    <BadgeCheck className="h-3.5 w-3.5" strokeWidth={2.3} />
+                    <BadgeCheck className="h-3.5 w-3.5" strokeWidth={2} />
                   )}
                   {onlySelected ? "Ver todos" : `Ver seleccionados (${formatCount(selected.size)})`}
                 </button>
@@ -451,7 +451,7 @@ export function ImportedUsersTable({
                   (isSearchExpanded || query !== "") ? "text-primary" : "text-muted-foreground"
                 )}
               >
-                <Search className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]" strokeWidth={2.2} />
+                <Search className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]" strokeWidth={2} />
               </div>
               
               <input
@@ -498,16 +498,16 @@ export function ImportedUsersTable({
                   setPage(1);
                 }}
                 className={cn(
-                  "flex h-9 whitespace-nowrap shrink-0 items-center gap-2 rounded-lg border px-3 text-[12.5px] font-semibold transition-colors",
+                  "flex h-9 whitespace-nowrap shrink-0 items-center gap-2 rounded-lg border px-3 text-[13px] font-semibold transition-colors",
                   onlySelected
                     ? "border-primary/40 bg-primary/5 text-primary"
                     : "border-border text-text-secondary hover:border-primary/30 hover:text-primary"
                 )}
               >
                 {onlySelected ? (
-                  <UserRoundX className="h-3.5 w-3.5" strokeWidth={2.3} />
+                  <UserRoundX className="h-3.5 w-3.5" strokeWidth={2} />
                 ) : (
-                  <BadgeCheck className="h-3.5 w-3.5" strokeWidth={2.3} />
+                  <BadgeCheck className="h-3.5 w-3.5" strokeWidth={2} />
                 )}
                 {onlySelected ? "Ver todos" : `Ver seleccionados (${formatCount(selected.size)})`}
               </button>
@@ -617,13 +617,13 @@ export function ImportedUsersTable({
 
           <TableBody>
             {visible.map((row) => (
-              <TableRow key={rowId(row)} className="border-border/50">
+              <TableRow key={rowId(row)} className="border-border/60">
                 <TableCell className="w-[50px] py-2.5 pl-4 pr-0">
                   <Checkbox
                     checked={selected.has(rowId(row))}
                     onCheckedChange={() => toggleOne(rowId(row))}
                     aria-label={`Seleccionar a ${displayName(row)}`}
-                    className="border-input/50 bg-surface/50 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                    className="border-input/50 bg-surface data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                   />
                 </TableCell>
                 {row.person ? (
@@ -638,7 +638,7 @@ export function ImportedUsersTable({
 
         {sorted.length === 0 && (
           <div className="flex flex-col items-center gap-1.5 px-4 py-10 text-center">
-            <UserRoundX className="h-6 w-6 text-muted-foreground/50" strokeWidth={1.8} />
+            <UserRoundX className="h-6 w-6 text-muted-foreground/50" strokeWidth={2} />
             <p className="text-[13px] font-semibold text-text-primary">Sin resultados</p>
             <p className="max-w-xs text-[12px] leading-relaxed text-muted-foreground">
               Ninguna persona del archivo coincide con el filtro actual.
@@ -684,7 +684,7 @@ export function ImportedUsersTable({
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={6}>
               {PAGE_SIZES.map((size) => (
-                <SelectItem key={size} value={String(size)} className="text-[12.5px]">
+                <SelectItem key={size} value={String(size)} className="text-[13px]">
                   {size} por página
                 </SelectItem>
               ))}
@@ -727,7 +727,7 @@ function ImportTabs({
   onChange: (tab: Tab) => void;
 }) {
   const base =
-    "flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-[12.5px] font-semibold transition-colors sm:flex-none";
+    "flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors sm:flex-none";
   const badge =
     "rounded-full px-1.5 py-px text-[10px] font-bold tabular-nums";
 
@@ -745,7 +745,7 @@ function ImportTabs({
         className={cn(
           base,
           active === "new"
-            ? "bg-surface text-text-primary shadow-sm sm:bg-surface"
+            ? "bg-surface text-text-primary shadow-card sm:bg-surface"
             : "text-muted-foreground hover:text-text-primary"
         )}
       >
@@ -767,7 +767,7 @@ function ImportTabs({
         className={cn(
           base,
           active === "existing"
-            ? "bg-surface text-text-primary shadow-sm sm:bg-surface"
+            ? "bg-surface text-text-primary shadow-card sm:bg-surface"
             : "text-muted-foreground hover:text-text-primary"
         )}
       >
@@ -793,9 +793,9 @@ function SingleGroupNotice({ tab, count, fileName }: { tab: Tab; count: number; 
   const from = fileName ?? "el archivo";
   if (tab === "new") {
     return (
-      <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/25 px-4 py-3">
-        <UserPlus className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.2} />
-        <p className="text-[12.5px] leading-relaxed text-text-secondary">
+      <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+        <UserPlus className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
+        <p className="text-[13px] leading-relaxed text-text-secondary">
           Se cargarán <span className="font-bold text-text-primary">{formatCount(count)}</span>{" "}
           {people} de {from}. Ninguna existe aún en la plataforma: solo se cargarán en esta
           encuesta y no se crean ni se modifican en el sistema.
@@ -804,9 +804,9 @@ function SingleGroupNotice({ tab, count, fileName }: { tab: Tab; count: number; 
     );
   }
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/25 px-4 py-3">
-      <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-status-positive" strokeWidth={2.2} />
-      <p className="text-[12.5px] leading-relaxed text-text-secondary">
+    <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+      <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-status-positive" strokeWidth={2} />
+      <p className="text-[13px] leading-relaxed text-text-secondary">
         Se cargarán <span className="font-bold text-text-primary">{formatCount(count)}</span>{" "}
         {people} de {from}. Todas ya son usuarios de Ubits: se identificaron por username o correo
         y recibirán la encuesta en su cuenta existente.
@@ -835,13 +835,13 @@ function NewUserRow({ user }: { user: ImportedUser }) {
           </span>
           <div className="min-w-0">
             <p className="truncate text-[13px] font-semibold text-text-primary">{label}</p>
-            <p className="truncate text-[11.5px] text-muted-foreground">{subtitle}</p>
+            <p className="truncate text-[12px] text-muted-foreground">{subtitle}</p>
           </div>
         </div>
       </TableCell>
-      <TableCell className="text-[12.5px] text-text-secondary">{email}</TableCell>
-      <TableCell className="text-[12.5px] text-text-secondary">{user.area || "—"}</TableCell>
-      <TableCell className="pr-4 text-[12.5px] text-text-secondary">{user.leader || "—"}</TableCell>
+      <TableCell className="text-[13px] text-text-secondary">{email}</TableCell>
+      <TableCell className="text-[13px] text-text-secondary">{user.area || "—"}</TableCell>
+      <TableCell className="pr-4 text-[13px] text-text-secondary">{user.leader || "—"}</TableCell>
     </>
   );
 }

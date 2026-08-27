@@ -120,7 +120,7 @@ function DepthSectionRoot({
   onToggle: () => void;
 }) {
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/50 bg-surface">
+    <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface">
       <div
         onClick={onToggle}
         role="button"
@@ -145,12 +145,12 @@ function DepthSectionRoot({
         </div>
         <span
           aria-hidden
-          className="mt-0.5 flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-md border border-border/50 bg-muted/60 px-1 text-[10px] font-bold tabular-nums text-muted-foreground"
+          className="mt-0.5 flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/60 px-1 text-[10px] font-bold tabular-nums text-muted-foreground"
         >
           {section.numbering}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="flex w-full flex-wrap items-baseline gap-x-2 gap-y-1 rounded-md px-1 py-0.5 text-[15px] font-bold tracking-tight text-text-primary">
+          <p className="flex w-full flex-wrap items-baseline gap-x-2 gap-y-1 rounded-md px-1 py-0.5 text-[14px] font-bold tracking-tight text-text-primary">
             {section.title}
             <span className="text-[12px] font-medium tracking-normal text-muted-foreground">
               {sectionCaption(section)}
@@ -282,10 +282,10 @@ function DepthQuestionBlock({ question }: { question: NpsDepthQuestion }) {
   return (
     <div className="flex flex-col gap-2">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-1">
-        <h4 className="text-[13.5px] font-bold leading-snug text-text-primary">
+        <h4 className="text-[14px] font-bold leading-snug text-text-primary">
           {question.statement}
         </h4>
-        <span className="text-[11.5px] font-medium text-muted-foreground">
+        <span className="text-[12px] font-medium text-muted-foreground">
           {question.formatLabel} · {formatCount(question.n)} respuestas a la escala
         </span>
         <Badge
@@ -300,8 +300,8 @@ function DepthQuestionBlock({ question }: { question: NpsDepthQuestion }) {
       {/* Columns, the same shape the Preguntas tab reads its own numbers in:
           a header row of right-aligned labels, then every band's figures
           lined up under them instead of running together as one sentence. */}
-      <div className="flex items-end gap-4 border-b border-border/40 px-1 pb-1.5">
-        <span className="flex-1 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="flex items-end gap-4 border-b border-border/60 px-1 pb-1.5">
+        <span className="flex-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Pregunta de profundidad
         </span>
         <span className="w-[76px] shrink-0 text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -359,11 +359,11 @@ function DepthBandRow({ band }: { band: NpsDepthBand }) {
       >
         <div className="min-w-0 flex-1">
           {wording.length > 0 ? (
-            <p className="text-[12.5px] font-semibold leading-snug text-text-primary">
+            <p className="text-[13px] font-semibold leading-snug text-text-primary">
               {wording}
             </p>
           ) : (
-            <p className="text-[12.5px] font-medium leading-snug text-muted-foreground">
+            <p className="text-[13px] font-medium leading-snug text-muted-foreground">
               Sin pregunta configurada para esta banda
             </p>
           )}
@@ -384,7 +384,7 @@ function DepthBandRow({ band }: { band: NpsDepthBand }) {
         <div className="flex w-[108px] shrink-0 items-center justify-end gap-2">
           <span
             aria-hidden
-            className="rounded-md px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide"
+            className="rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide"
             style={{ background: palette.background, color: palette.foreground }}
           >
             {NPS_BAND_LABELS[band.band]}
@@ -405,9 +405,9 @@ function DepthBandRow({ band }: { band: NpsDepthBand }) {
           {visible.map((answer) => (
             <li
               key={answer.id}
-              className="flex flex-col gap-1 rounded-lg bg-muted/25 px-3 py-2"
+              className="flex flex-col gap-1 rounded-lg bg-muted/30 px-3 py-2"
             >
-              <p className="text-[12.5px] leading-relaxed text-text-primary">“{answer.text}”</p>
+              <p className="text-[13px] leading-relaxed text-text-primary">“{answer.text}”</p>
               <span className="text-[11px] font-medium text-muted-foreground">
                 {answer.segment}
               </span>
@@ -416,7 +416,7 @@ function DepthBandRow({ band }: { band: NpsDepthBand }) {
           {remaining > 0 && (
             // Never a silent trim: the row says what it is not drawing and
             // where the rest of it lives.
-            <li className="px-1 pt-0.5 text-[11.5px] font-medium text-muted-foreground">
+            <li className="px-1 pt-0.5 text-[12px] font-medium text-muted-foreground">
               y {formatCount(remaining)} respuestas más — las {formatCount(band.answers.length)}{" "}
               completas viajan en el reporte descargable
             </li>

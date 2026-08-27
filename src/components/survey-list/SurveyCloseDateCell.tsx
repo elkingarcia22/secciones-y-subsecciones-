@@ -72,7 +72,7 @@ export function SurveyCloseDateCell({
           aria-label="Elegir la nueva fecha de cierre"
           className="flex h-8 w-full items-center gap-1.5 rounded-lg border border-primary bg-surface px-2 text-[12px] font-semibold tabular-nums text-text-primary ring-2 ring-primary/20 transition-colors hover:bg-primary/5 focus-visible:outline-none"
         >
-          <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={2.4} />
+          <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={2} />
           <span className={staged ? undefined : "text-muted-foreground font-medium"}>
             {staged ? formatSurveyDate(staged) : "Elegir"}
           </span>
@@ -92,7 +92,7 @@ export function SurveyCloseDateCell({
         onEscapeKeyDown={(event) => event.preventDefault()}
       >
         <div className="border-b border-border/60 px-3 py-2.5">
-          <p className="text-[12.5px] font-bold tracking-tight text-text-primary">
+          <p className="text-[13px] font-bold tracking-tight text-text-primary">
             {mode === "reopen" ? "Reabrir hasta" : "Nueva fecha de cierre"}
           </p>
           <p className="text-[11px] text-muted-foreground">
@@ -114,7 +114,7 @@ export function SurveyCloseDateCell({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 text-[12.5px]"
+            className="h-8 text-[13px]"
             onClick={() => {
               setOpen(false);
               onCancel();
@@ -124,7 +124,7 @@ export function SurveyCloseDateCell({
           </Button>
           <Button
             size="sm"
-            className="h-8 text-[12.5px]"
+            className="h-8 text-[13px]"
             disabled={!canSave}
             onClick={() => {
               if (!staged) return;

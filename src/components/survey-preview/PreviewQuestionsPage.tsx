@@ -42,7 +42,7 @@ export function PreviewQuestionsPage({
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-8 sm:px-8">
       {/* Cover. Same card language as the welcome page: the accent rule marks
           "this is the page talking", not a question. */}
-      <header className="relative overflow-hidden rounded-2xl border border-border/50 bg-surface p-6 shadow-md sm:p-7">
+      <header className="relative overflow-hidden rounded-2xl border border-border/60 bg-surface p-6 shadow-drawer sm:p-7">
         {/* Subtle top accent to mark it as a header without being intrusive */}
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/80 to-primary/40" />
         {/* Very faint background gradient to give it slight depth compared to questions */}
@@ -51,18 +51,18 @@ export function PreviewQuestionsPage({
         {page.kind === "section" ? (
           <SectionTrail page={page} />
         ) : (
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/8 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
-            <UsersRound className="h-3.5 w-3.5" strokeWidth={2.4} />
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
+            <UsersRound className="h-3.5 w-3.5" strokeWidth={2} />
             Sobre ti
           </span>
         )}
 
-        <h1 className="mt-3 text-[26px] font-bold leading-[1.15] tracking-tight text-text-primary">
+        <h1 className="mt-3 text-[28px] font-bold leading-[1.15] tracking-tight text-text-primary">
           {page.title}
         </h1>
 
         {page.description.trim() && (
-          <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-text-secondary">
+          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-text-secondary">
             {page.description}
           </p>
         )}
@@ -101,8 +101,8 @@ export function PreviewQuestionsPage({
 
 function Meta({ icon: Icon, label }: { icon: typeof ListChecks; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-muted px-2.5 py-1 text-[11.5px] font-semibold text-text-secondary">
-      <Icon className="h-3.5 w-3.5" strokeWidth={2.2} />
+    <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-muted px-2.5 py-1 text-[12px] font-semibold text-text-secondary">
+      <Icon className="h-3.5 w-3.5" strokeWidth={2} />
       {label}
     </span>
   );
@@ -121,11 +121,11 @@ function SectionTrail({ page }: { page: Extract<PreviewPage, { kind: "section" }
           <span className="text-[12px] font-semibold text-text-secondary">
             <span className="tabular-nums text-text-muted">{crumb.numbering}.</span> {crumb.title}
           </span>
-          <ChevronRight className="h-3.5 w-3.5 text-text-muted/70" strokeWidth={2.4} />
+          <ChevronRight className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
         </span>
       ))}
 
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/8 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
         {depthLabel(page.depth)} {page.numbering}
       </span>
     </nav>

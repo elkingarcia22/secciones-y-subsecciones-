@@ -148,7 +148,7 @@ export function CommentsSentimentView({
     <div className="flex flex-col gap-4">
       {focused && (
         <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/[0.06] px-3 py-2">
-          <p className="min-w-0 flex-1 text-[11.5px] font-semibold leading-snug text-primary">
+          <p className="min-w-0 flex-1 text-[12px] font-semibold leading-snug text-primary">
             Solo «{focused.questionStatement}»
           </p>
           <button
@@ -157,7 +157,7 @@ export function CommentsSentimentView({
             aria-label="Ver los comentarios de todas las preguntas"
             className="shrink-0 rounded-md p-0.5 text-primary/70 transition-colors hover:bg-primary/10 hover:text-primary"
           >
-            <X className="h-3.5 w-3.5" strokeWidth={2.6} />
+            <X className="h-3.5 w-3.5" strokeWidth={2.5} />
           </button>
         </div>
       )}
@@ -317,7 +317,7 @@ function SectionCommentMetric({
     <SentimentWithBreakdown groups={groups}>
       <span className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 text-[12px] font-semibold tabular-nums text-text-primary">
         {formatCount(groups.total)}
-        <span className="text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           coment.
         </span>
       </span>
@@ -355,8 +355,8 @@ function CommentedQuestionTable({
 }) {
   return (
     <table className="w-full border-collapse text-left">
-      <thead className="bg-muted/10">
-        <tr className="border-b border-border/30 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+      <thead className="bg-muted/30">
+        <tr className="border-b border-border/60 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80">
           <th className="w-10 px-4 py-2.5 text-center">#</th>
           <th className="py-2.5">Pregunta abierta</th>
           {/* One column per sentiment, the same shape Favorabilidad gives its
@@ -435,7 +435,7 @@ function QuestionCommentRows({
           {index}
         </td>
 
-        <td className="py-3 pr-4 text-[12.5px] font-semibold leading-snug text-text-primary">
+        <td className="py-3 pr-4 text-[13px] font-semibold leading-snug text-text-primary">
           {statement || "Pregunta abierta"}
           {/* Below the fold the three columns are gone, so the split follows
               the statement in its compact form instead of disappearing. */}
@@ -461,8 +461,8 @@ function QuestionCommentRows({
             <HiddenValue />
           ) : (
             <span className="inline-flex items-center gap-1.5">
-              <MessageSquareQuote className="h-3 w-3 text-muted-foreground" strokeWidth={2.4} />
-              <span className="text-[12.5px] font-bold tabular-nums text-text-primary">
+              <MessageSquareQuote className="h-3 w-3 text-muted-foreground" strokeWidth={2} />
+              <span className="text-[13px] font-bold tabular-nums text-text-primary">
                 {formatCount(comments.length)}
               </span>
             </span>
@@ -475,13 +475,13 @@ function QuestionCommentRows({
               "ml-auto h-4 w-4 text-muted-foreground/60 transition-transform duration-200 group-hover:text-text-primary",
               open && "rotate-90"
             )}
-            strokeWidth={2.4}
+            strokeWidth={2}
           />
         </td>
       </tr>
 
       {open && (
-        <tr className="bg-muted/10">
+        <tr className="bg-muted/30">
           <td colSpan={5} className="px-4 py-4">
             <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
               {/* Hairlines only, no box: the list already sits inside the open
@@ -504,7 +504,7 @@ function QuestionCommentRows({
                 <button
                   type="button"
                   onClick={() => setLimit((current) => current + PAGE_SIZE * 2)}
-                  className="mr-auto rounded-lg border border-border/60 bg-surface px-3 py-1.5 text-[11.5px] font-semibold text-text-secondary transition-colors hover:bg-muted/40"
+                  className="mr-auto rounded-lg border border-border/60 bg-surface px-3 py-1.5 text-[12px] font-semibold text-text-secondary transition-colors hover:bg-muted/40"
                 >
                   Ver {formatCount(comments.length - limit)} comentarios más
                 </button>
@@ -547,17 +547,17 @@ function CommentRow({
         "flex flex-wrap items-start justify-between gap-x-6 gap-y-2 px-1 py-3 transition-colors",
         // The row sits on the section's muted ground, so hover lifts to the
         // surface instead of darkening further.
-        "hover:bg-surface/70",
+        "hover:bg-surface",
         low && "bg-status-warning/[0.05]"
       )}
     >
       <div className="flex min-w-[280px] flex-1 flex-col gap-1.5">
         {/* The quote at reading weight, not display weight: the row is text to
             be read, and there are twenty more under it. */}
-        <p className="text-[12.5px] leading-relaxed text-text-primary">“{comment.text}”</p>
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] text-muted-foreground">
+        <p className="text-[13px] leading-relaxed text-text-primary">“{comment.text}”</p>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1">
-            {comment.anonymous && <ShieldCheck className="h-2.5 w-2.5" strokeWidth={2.2} />}
+            {comment.anonymous && <ShieldCheck className="h-2.5 w-2.5" strokeWidth={2} />}
             <span className="font-medium text-text-secondary">{comment.respondentName}</span>
           </span>
           {/* No área next to the quote on an anonymous survey: a written answer
@@ -570,7 +570,7 @@ function CommentRow({
           {low && <ConfidenceMeter value={comment.aiConfidence} low />}
           {corrected && (
             <span className="inline-flex items-center gap-1 font-medium text-primary">
-              <Sparkles className="h-2.5 w-2.5" strokeWidth={2.2} />
+              <Sparkles className="h-2.5 w-2.5" strokeWidth={2} />
               La IA leyó “{SENTIMENT_STYLES[comment.aiSentiment].label}”
             </span>
           )}

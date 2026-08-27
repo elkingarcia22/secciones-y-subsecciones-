@@ -107,13 +107,13 @@ export function DemographicEditor({
           </span>
           {field.preloadable && (
             <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
-              <Database className="h-2.5 w-2.5" strokeWidth={2.6} />
+              <Database className="h-2.5 w-2.5" strokeWidth={2.5} />
               Precargado
             </span>
           )}
           {isLibrary && (
             <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
-              <BookOpen className="h-2.5 w-2.5" strokeWidth={2.6} />
+              <BookOpen className="h-2.5 w-2.5" strokeWidth={2.5} />
               Del módulo de encuestas
             </span>
           )}
@@ -128,7 +128,7 @@ export function DemographicEditor({
                 aria-label={`Eliminar dato demográfico ${index + 1}`}
                 className="shrink-0 rounded-md border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-status-negative/30 hover:bg-status-negative/5 hover:text-status-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30"
               >
-                <Trash2 className="h-3.5 w-3.5" strokeWidth={2.2} />
+                <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
               </button>
             </TooltipTrigger>
             <TooltipContent side="left">Eliminar dato demográfico</TooltipContent>
@@ -153,11 +153,11 @@ export function DemographicEditor({
       {isSystem ? (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[11.5px] font-semibold text-text-secondary">
+            <span className="text-[12px] font-semibold text-text-secondary">
               Opciones de respuesta
             </span>
-            <span className="flex items-center gap-1.5 text-[10.5px] font-semibold text-muted-foreground">
-              <Lock className="h-3 w-3" strokeWidth={2.4} />
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+              <Lock className="h-3 w-3" strokeWidth={2} />
               Las define la plataforma
             </span>
           </div>
@@ -166,7 +166,7 @@ export function DemographicEditor({
             {field.options.map((option) => (
               <li
                 key={option.id}
-                className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[11.5px] font-medium text-text-secondary"
+                className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[12px] font-medium text-text-secondary"
               >
                 {option.label}
               </li>
@@ -174,7 +174,7 @@ export function DemographicEditor({
           </ul>
 
           {systemEntry && (
-            <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+            <p className="text-[12px] leading-relaxed text-muted-foreground">
               {systemEntry.origin} Se responde como {demographicTypeLabel(field.type).toLowerCase()}.
             </p>
           )}
@@ -262,7 +262,7 @@ function Field({
 }) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-[11.5px] font-semibold text-text-secondary">{label}</span>
+      <span className="text-[12px] font-semibold text-text-secondary">{label}</span>
       {children}
       {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
     </label>

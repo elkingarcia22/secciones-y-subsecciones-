@@ -163,7 +163,7 @@ export function CommentsSearchBox({
       >
         <Search
           className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]"
-          strokeWidth={2.2}
+          strokeWidth={2}
         />
       </div>
 
@@ -174,7 +174,7 @@ export function CommentsSearchBox({
         placeholder="Buscar en los comentarios"
         aria-label="Buscar en los comentarios"
         className={cn(
-          "h-full w-[260px] bg-transparent pl-9 pr-8 text-[12.5px] text-text-primary outline-none transition-all placeholder:text-muted-foreground/70",
+          "h-full w-[260px] bg-transparent pl-9 pr-8 text-[13px] text-text-primary outline-none transition-all placeholder:text-muted-foreground/70",
           open ? "opacity-100" : "pointer-events-none opacity-0"
         )}
       />
@@ -252,12 +252,12 @@ export function CommentsFiltersButton({
         <Button
           variant="outline"
           size="sm"
-          className="h-9 shrink-0 justify-start gap-2 rounded-lg border-border bg-surface px-3 text-[12.5px] text-text-primary transition-colors hover:bg-border/30"
+          className="h-9 shrink-0 justify-start gap-2 rounded-lg border-border bg-surface px-3 text-[13px] text-text-primary transition-colors hover:bg-border/30"
         >
-          <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.2} />
+          <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
           Filtros
           {activeCount > 0 && (
-            <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[10.5px]">
+            <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[11px]">
               {activeCount}
             </Badge>
           )}
@@ -275,23 +275,23 @@ export function CommentsFiltersButton({
             </PopoverDescription>
           </div>
 
-          <div className="flex items-center gap-2.5 border-t border-border/30 pt-3">
-            <span className="w-[85px] shrink-0 truncate text-[12.5px] font-medium text-text-secondary">
+          <div className="flex items-center gap-2.5 border-t border-border/60 pt-3">
+            <span className="w-[85px] shrink-0 truncate text-[13px] font-medium text-text-secondary">
               Tema
             </span>
             <Select value={filters.topic} onValueChange={filters.setTopic}>
               <SelectTrigger
                 aria-label="Filtrar los comentarios por tema"
-                className="h-8 flex-1 rounded-md border-transparent bg-muted/40 px-2.5 text-[12.5px] hover:bg-muted/60 focus:ring-1 focus:ring-primary/20"
+                className="h-8 flex-1 rounded-md border-transparent bg-muted/40 px-2.5 text-[13px] hover:bg-muted/60 focus:ring-1 focus:ring-primary/20"
               >
                 <SelectValue placeholder="Todos los temas" />
               </SelectTrigger>
               <SelectContent position="popper">
-                <SelectItem value="" className="text-[12.5px]">
+                <SelectItem value="" className="text-[13px]">
                   Todos los temas
                 </SelectItem>
                 {topics.map((topic) => (
-                  <SelectItem key={topic} value={topic} className="text-[12.5px]">
+                  <SelectItem key={topic} value={topic} className="text-[13px]">
                     {topic}
                   </SelectItem>
                 ))}
@@ -299,8 +299,8 @@ export function CommentsFiltersButton({
             </Select>
           </div>
 
-          <div className="flex flex-col gap-1.5 border-t border-border/30 pt-3">
-            <span className="text-[12.5px] font-medium text-text-secondary">Sentimiento</span>
+          <div className="flex flex-col gap-1.5 border-t border-border/60 pt-3">
+            <span className="text-[13px] font-medium text-text-secondary">Sentimiento</span>
             {SENTIMENT_ORDER.map((id) => {
               const style = SENTIMENT_STYLES[id];
               return (
@@ -328,7 +328,7 @@ export function CommentsFiltersButton({
 
           {/* One row, so no group label over it: "Corregidos" says what it
               keeps on its own. */}
-          <div className="flex flex-col border-t border-border/30 pt-3">
+          <div className="flex flex-col border-t border-border/60 pt-3">
             <ScaleToggle
               option={{
                 id: "corrected",
@@ -341,9 +341,9 @@ export function CommentsFiltersButton({
           </div>
 
           {segmentFilters && segmentFilters.segments.length > 0 && (
-            <div className="flex flex-col gap-3 border-t border-border/30 pt-3">
+            <div className="flex flex-col gap-3 border-t border-border/60 pt-3">
               <div className="flex flex-col gap-0.5">
-                <span className="text-[12.5px] font-semibold text-text-primary">
+                <span className="text-[13px] font-semibold text-text-primary">
                   Filtrar a fondo
                 </span>
                 <span className="text-[12px] leading-relaxed text-muted-foreground">
@@ -356,7 +356,7 @@ export function CommentsFiltersButton({
                 );
                 return (
                   <div key={candidate.key} className="flex items-center gap-2.5">
-                    <span className="w-[85px] shrink-0 truncate text-[12.5px] font-medium text-text-secondary">
+                    <span className="w-[85px] shrink-0 truncate text-[13px] font-medium text-text-secondary">
                       {candidate.label}
                     </span>
                     <Select
@@ -367,16 +367,16 @@ export function CommentsFiltersButton({
                     >
                       <SelectTrigger
                         aria-label={`Filtrar los comentarios por ${candidate.label}`}
-                        className="h-8 flex-1 rounded-md border-transparent bg-muted/40 px-2.5 text-[12.5px] hover:bg-muted/60 focus:ring-1 focus:ring-primary/20"
+                        className="h-8 flex-1 rounded-md border-transparent bg-muted/40 px-2.5 text-[13px] hover:bg-muted/60 focus:ring-1 focus:ring-primary/20"
                       >
                         <SelectValue placeholder="Sin filtrar" className="text-muted-foreground" />
                       </SelectTrigger>
                       <SelectContent position="popper">
-                        <SelectItem value="" className="text-[12.5px]">
+                        <SelectItem value="" className="text-[13px]">
                           Sin filtrar
                         </SelectItem>
                         {candidate.options.map((option) => (
-                          <SelectItem key={option.id} value={option.id} className="text-[12.5px]">
+                          <SelectItem key={option.id} value={option.id} className="text-[13px]">
                             {option.label}
                           </SelectItem>
                         ))}
@@ -393,7 +393,7 @@ export function CommentsFiltersButton({
               variant="ghost"
               size="sm"
               onClick={clearAll}
-              className="justify-start rounded-none border-t border-border/30 px-0 pb-1 pt-3 text-[12px] text-primary hover:bg-transparent hover:underline"
+              className="justify-start rounded-none border-t border-border/60 px-0 pb-1 pt-3 text-[12px] text-primary hover:bg-transparent hover:underline"
             >
               Quitar filtros
             </Button>

@@ -39,14 +39,14 @@ export function ResultsHeader({
           size="icon"
           onClick={onBack}
           aria-label="Volver a la lista de encuestas"
-          className="h-9 w-9 shrink-0 rounded-full bg-surface shadow-sm hover:bg-muted"
+          className="h-9 w-9 shrink-0 rounded-full bg-surface shadow-card hover:bg-muted"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <span className="truncate text-base font-bold tracking-tight text-text-primary">
           {draft.name}
         </span>
-        <span className="inline-flex shrink-0 items-center justify-center rounded-full px-3 py-1.5 text-[11.5px] font-bold shadow-sm bg-status-positive/10 text-status-positive">
+        <span className="inline-flex shrink-0 items-center justify-center rounded-full px-3 py-1.5 text-[12px] font-bold shadow-card bg-status-positive/10 text-status-positive">
           Finalizada
         </span>
       </div>
@@ -66,8 +66,8 @@ function MetaItem({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
-        <Icon className="h-3.5 w-3.5 shrink-0 opacity-60" strokeWidth={2.2} />
+      <dt className="flex items-center gap-2 text-[13px] text-muted-foreground">
+        <Icon className="h-3.5 w-3.5 shrink-0 opacity-60" strokeWidth={2} />
         {label}
       </dt>
       <dd className="whitespace-nowrap text-right text-[13px] font-semibold tabular-nums text-text-primary">{children}</dd>

@@ -45,6 +45,7 @@ function App() {
   // Which step the builder should land on. "Editar participantes" is the same
   // editor as "Editar", opened at the one panel the person asked for.
   const [builderInitialStep, setBuilderInitialStep] = React.useState<FixedBlockId>("general");
+  const [builderInitialSelection, setBuilderInitialSelection] = React.useState<any | undefined>(undefined);
   const [resultsSurveyId, setResultsSurveyId] = React.useState<string | null>(null);
   // Owned here rather than inside the table: the metric cards that set these
   // live above the tabs, outside the table's subtree.
@@ -177,8 +178,10 @@ function App() {
       >
         {view === "builder" ? (
           <SurveyBuilder
+            key={editingDraft?.name || "blank"}
             initialDraft={editingDraft}
             initialStep={builderInitialStep}
+            initialSelection={builderInitialSelection}
             onExit={handleBuilderExit}
             onDraftChange={handleDraftChange}
           />
@@ -217,7 +220,7 @@ function App() {
                 ]}
                 activeTabId={homeTab}
                 onTabChange={(id) => setHomeTab(id as HomeTab)}
-                variant="results"
+                variant="page"
                 fitContent
                 className="mb-0"
               />
@@ -228,6 +231,14 @@ function App() {
                 onCreateBlank={() => {
                   setEditingDraft(undefined);
                   setBuilderInitialStep("general");
+                  setBuilderInitialSelection(undefined);
+                  setView("builder");
+                }}
+                onCreateFromTemplate={(template) => {
+                  const draftClone = JSON.parse(JSON.stringify(template));
+                  setEditingDraft(draftClone);
+                  setBuilderInitialSelection(undefined);
+                  setBuilderInitialStep("general");
                   setView("builder");
                 }}
                 onEdit={(id) => {
@@ -235,6 +246,7 @@ function App() {
                   if (survey) {
                     setEditingDraft((survey as any).draft || createPublishedSurveyDraft(survey));
                     setBuilderInitialStep("general");
+                    setBuilderInitialSelection(undefined);
                     setView("builder");
                   }
                 }}
@@ -243,6 +255,7 @@ function App() {
                   if (!survey) return;
                   setEditingDraft((survey as any).draft || createPublishedSurveyDraft(survey));
                   setBuilderInitialStep("participants");
+                  setBuilderInitialSelection(undefined);
                   setView("builder");
                 }}
                 onViewResults={(id) => {

@@ -13,6 +13,7 @@ import { childEntries, type SectionTreeEntry } from "./sectionTree";
 import { depthLabel, canHaveQuestions } from "./surveyBuilderTypes";
 
 interface SectionEditorProps extends SubsectionAccordionHandlers {
+  readOnly?: boolean;
   /** Always a level-1 section: the card is the root of one branch. */
   entry: SectionTreeEntry;
   /** Controlled by the parent: only one root card is expanded at a time. */
@@ -31,6 +32,7 @@ interface SectionEditorProps extends SubsectionAccordionHandlers {
  * container whose body is the nested accordion of its subsections.
  */
 export function SectionEditor({
+  readOnly,
   entry,
   isCollapsed,
   onToggleCardCollapse,
@@ -71,7 +73,7 @@ export function SectionEditor({
       className={cn(
         "flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-surface shadow-card",
         isCollapsed ? "shrink-0" : "flex-1",
-        isSelected ? "border-primary/40" : "border-border/50"
+        isSelected ? "border-primary/40" : "border-border/60"
       )}
     >
       {/* Card header: same white as the body, split off by a divider rather
@@ -124,34 +126,37 @@ export function SectionEditor({
               </p>
               <input
                 value={section.title}
+                readOnly={readOnly}
                 onChange={(event) => onTitleChange(section.id, event.target.value)}
                 onFocus={() => onSelect(section.id)}
                 placeholder={`${depthLabel(depth)} ${numbering}`}
                 aria-label="Título de la sección"
-                className="w-full cursor-text rounded-lg bg-transparent px-1.5 py-0.5 text-[15px] font-bold tracking-tight text-text-primary outline-none transition-colors hover:bg-border/30 focus:bg-border/40 placeholder:text-muted-foreground/70"
+                className="w-full cursor-text rounded-lg bg-transparent px-1.5 py-0.5 text-[14px] font-bold tracking-tight text-text-primary outline-none transition-colors hover:bg-border/30 focus:bg-border/40 placeholder:text-muted-foreground/70 disabled:opacity-70 disabled:cursor-default"
               />
               <textarea
                 ref={descriptionRef}
                 value={section.description}
+                readOnly={readOnly}
                 onChange={(event) => onDescriptionChange(section.id, event.target.value)}
-                placeholder="Añade una descripción o instrucciones para esta sección."
+                onFocus={() => onSelect(section.id)}
+                placeholder="Descripción (opcional)"
                 aria-label="Descripción de la sección"
                 rows={1}
-                className="w-full resize-none cursor-text overflow-hidden rounded-lg bg-transparent px-1.5 py-0.5 text-[12px] font-normal leading-relaxed text-text-secondary outline-none transition-colors hover:bg-border/30 focus:bg-border/40 placeholder:text-muted-foreground/70"
+                className="mt-0.5 w-full resize-none overflow-hidden rounded-lg bg-transparent px-1.5 py-0.5 text-[13px] font-medium leading-relaxed text-muted-foreground/90 outline-none transition-colors hover:bg-border/30 focus:bg-border/40 placeholder:text-muted-foreground/50 disabled:opacity-70 disabled:cursor-default"
               />
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-start gap-1 p-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     type="button"
                     onClick={() => onDelete(section.id)}
-                    disabled={!canDelete}
+                    disabled={readOnly || !canDelete}
                     aria-label="Eliminar sección"
                     className="rounded-lg border border-border/60 p-1.5 text-muted-foreground/70 transition-all hover:border-status-negative/30 hover:bg-status-negative/5 hover:text-status-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border/60 disabled:hover:bg-transparent disabled:hover:text-muted-foreground/70"
                   >
-                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2.2} />
+                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
@@ -198,6 +203,7 @@ export function SectionEditor({
             <>
               {canHaveQuestions(depth) && section.questions.length > 0 && (
                 <SectionQuestions
+                  readOnly={readOnly}
                   sectionId={section.id}
                   questions={section.questions}
                   editingQuestionId={handlers.editingQuestionId}
@@ -216,7 +222,7 @@ export function SectionEditor({
               {children.length > 0 && (
                 <ul className={cn("flex flex-col", SIBLING_DIVIDER)}>
                   {children.map((child) => (
-                    <SubsectionAccordion key={child.section.id} entry={child} {...handlers} />
+                    <SubsectionAccordion key={child.section.id} entry={child} readOnly={readOnly} {...handlers} />
                   ))}
                 </ul>
               )}

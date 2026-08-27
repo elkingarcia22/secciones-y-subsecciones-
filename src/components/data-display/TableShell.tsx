@@ -26,7 +26,7 @@ export function TableShell({
   ...props
 }: TableShellProps) {
   return (
-    <Card className={cn("overflow-hidden border-border bg-card", className)} {...props}>
+    <Card className={cn("overflow-hidden border-border bg-surface", className)} {...props}>
       {(title || description || actions) && (
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="space-y-1">
@@ -53,7 +53,7 @@ export function TableShell({
           <div 
             className={cn(
               "relative overflow-x-auto w-full",
-              stickyHeader && "[&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-card"
+              stickyHeader && "[&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-surface"
             )}
           >
             {children}

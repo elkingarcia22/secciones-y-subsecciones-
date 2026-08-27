@@ -79,7 +79,7 @@ export function AiGapsSection({
       meta={<AiSectionMeta count={analyses.length} unit="corte" unitPlural="cortes" />}
     >
       {analyses.length === 0 ? (
-        <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+        <p className="text-[13px] leading-relaxed text-muted-foreground">
           Ningún corte demográfico separa a sus grupos lo suficiente como para reportarlo. Abre el
           heatmap en Favorabilidad para ver los números uno a uno.
         </p>
@@ -157,11 +157,11 @@ function GapRows({
           </div>
         </td>
 
-        <td className="hidden py-3 text-right text-[11.5px] tabular-nums text-text-secondary sm:table-cell">
+        <td className="hidden py-3 text-right text-[12px] tabular-nums text-text-secondary sm:table-cell">
           {outliers.length === 0 ? "—" : formatCount(outliers.length)}
         </td>
 
-        <td className="py-3 text-right text-[11.5px] font-semibold tabular-nums text-text-primary">
+        <td className="py-3 text-right text-[12px] font-semibold tabular-nums text-text-primary">
           {formatScore(average)}
         </td>
 
@@ -171,7 +171,7 @@ function GapRows({
               {formatScore(widest.spread)} pts
             </span>
           ) : (
-            <span className="text-[11.5px] text-muted-foreground">—</span>
+            <span className="text-[12px] text-muted-foreground">—</span>
           )}
         </td>
 
@@ -181,13 +181,13 @@ function GapRows({
               "ml-auto h-4 w-4 text-muted-foreground/60 transition-transform duration-200 group-hover:text-text-primary",
               open && "rotate-90"
             )}
-            strokeWidth={2.4}
+            strokeWidth={2}
           />
         </td>
       </tr>
 
       {open && (
-        <tr className="bg-muted/10">
+        <tr className="bg-muted/30">
           <td colSpan={6} className="px-4 py-4">
             <div className="flex flex-col gap-5 duration-200 animate-in fade-in slide-in-from-top-1">
               {widest && <WidestGapBlock widest={widest} />}
@@ -205,7 +205,7 @@ function GapRows({
                 </AiSubHeading>
 
                 {outliers.length === 0 ? (
-                  <p className="text-[12.5px] text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Ningún grupo de{" "}
                     <strong className="font-semibold text-text-primary">{segment.label}</strong> se
                     aparta negativamente del promedio.
@@ -222,7 +222,7 @@ function GapRows({
                     "flex items-start gap-3 text-[12px] leading-relaxed text-muted-foreground"
                   )}
                 >
-                  <Users className="mt-0.5 h-4 w-4 shrink-0 text-text-secondary" strokeWidth={2.2} />
+                  <Users className="mt-0.5 h-4 w-4 shrink-0 text-text-secondary" strokeWidth={2} />
                   <div className="flex flex-col gap-1">
                     <span className="font-semibold text-text-primary">
                       Cobertura: {masked.length}{" "}
@@ -273,10 +273,10 @@ function OutlierTable({
           <tr key={row.id} className={AI_ROW_STATIC}>
             <td className={AI_RANK_CELL}>{index + 1}</td>
             <td className={AI_TITLE_CELL}>{row.label}</td>
-            <td className="hidden py-3 text-right text-[11.5px] tabular-nums text-text-secondary sm:table-cell">
+            <td className="hidden py-3 text-right text-[12px] tabular-nums text-text-secondary sm:table-cell">
               {formatCount(row.completed)} de {formatCount(row.invited)}
             </td>
-            <td className="py-3 text-right text-[11.5px] font-semibold tabular-nums text-status-negative">
+            <td className="py-3 text-right text-[12px] font-semibold tabular-nums text-status-negative">
               {formatScore(gap)}
             </td>
             <td className="py-3 pr-4 text-right">
@@ -303,8 +303,8 @@ function WidestGapBlock({ widest }: { widest: WidestGap }) {
       <AiSubHeading icon={Split}>Mayor polarización</AiSubHeading>
 
       <div className={cn(AI_DETAIL_PANEL, "p-0")}>
-        <div className="border-b border-border/40 px-4 py-2.5">
-          <span className="text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="border-b border-border/60 px-4 py-2.5">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             Pregunta
           </span>
           <p className="mt-0.5 text-[13px] font-bold leading-snug text-text-primary">

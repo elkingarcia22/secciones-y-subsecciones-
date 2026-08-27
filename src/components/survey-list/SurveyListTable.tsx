@@ -293,7 +293,7 @@ export function SurveyListTable({
   const hasActiveFilters = query !== "" || hasAnyFilter(filters);
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-border/50 bg-surface p-6 shadow-sm">
+    <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <h3 className="text-[13px] font-bold text-text-primary">Lista de encuestas</h3>
@@ -330,7 +330,7 @@ export function SurveyListTable({
             >
               <Search
                 className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]"
-                strokeWidth={2.2}
+                strokeWidth={2}
               />
             </div>
 
@@ -378,16 +378,16 @@ export function SurveyListTable({
                 setPage(1);
               }}
               className={cn(
-                "flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border px-3 text-[12.5px] font-semibold transition-colors",
+                "flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border px-3 text-[13px] font-semibold transition-colors",
                 onlySelected
                   ? "border-primary/40 bg-primary/5 text-primary"
                   : "border-border text-text-secondary hover:border-primary/30 hover:text-primary"
               )}
             >
               {onlySelected ? (
-                <EyeOff className="h-3.5 w-3.5" strokeWidth={2.3} />
+                <EyeOff className="h-3.5 w-3.5" strokeWidth={2} />
               ) : (
-                <Eye className="h-3.5 w-3.5" strokeWidth={2.3} />
+                <Eye className="h-3.5 w-3.5" strokeWidth={2} />
               )}
               {onlySelected ? "Ver todas" : `Ver seleccionadas (${formatCount(selectedIds.size)})`}
             </button>
@@ -399,8 +399,8 @@ export function SurveyListTable({
           that clicking a greyed row no longer can. */}
       {editingSurvey && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
-          <CalendarClock className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.3} />
-          <p className="text-[12.5px] text-text-secondary">
+          <CalendarClock className="h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
+          <p className="text-[13px] text-text-secondary">
             {dateEdit?.mode === "reopen" ? "Reabriendo " : "Editando la fecha de cierre de "}
             <span className="font-bold text-text-primary">{editingSurvey.name}</span>
             {dateEdit?.mode === "reopen"
@@ -410,7 +410,7 @@ export function SurveyListTable({
           <Button
             variant="ghost"
             size="sm"
-            className="ml-auto h-8 text-[12.5px]"
+            className="ml-auto h-8 text-[13px]"
             onClick={() => onDateEditCancel?.()}
           >
             Cancelar
@@ -586,7 +586,7 @@ export function SurveyListTable({
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={6}>
               {PAGE_SIZES.map((size) => (
-                <SelectItem key={size} value={String(size)} className="text-[12.5px]">
+                <SelectItem key={size} value={String(size)} className="text-[13px]">
                   {size} por página
                 </SelectItem>
               ))}
@@ -659,7 +659,7 @@ function SurveyRow({
       data-state={isSelected ? "selected" : undefined}
       onClick={isEditing ? undefined : onToggle}
       className={cn(
-        "group border-border/50 transition-all",
+        "group border-border/60 transition-all",
         isEditing
           ? "bg-primary/[0.04] shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
           : "cursor-pointer hover:bg-muted/30",
@@ -688,21 +688,21 @@ function SurveyRow({
           }}
           // Navigating away mid-edit would silently drop the date being picked.
           disabled={isEditing}
-          className="truncate text-left text-[12.5px] font-semibold text-text-primary transition-colors hover:text-primary hover:underline disabled:cursor-default disabled:no-underline disabled:hover:text-text-primary"
+          className="truncate text-left text-[13px] font-semibold text-text-primary transition-colors hover:text-primary hover:underline disabled:cursor-default disabled:no-underline disabled:hover:text-text-primary"
         >
           {survey.name}
         </button>
       </TableCell>
-      <TableCell className="py-3 text-[12.5px] text-muted-foreground">
+      <TableCell className="py-3 text-[13px] text-muted-foreground">
         <span className="block truncate">{survey.type}</span>
       </TableCell>
       <TableCell className="py-3">
         <Badge variant={statusVariant(survey)}>{survey.status}</Badge>
       </TableCell>
-      <TableCell className="px-2 py-3 text-[12.5px] tabular-nums text-muted-foreground">
+      <TableCell className="px-2 py-3 text-[13px] tabular-nums text-muted-foreground">
         {survey.startDate}
       </TableCell>
-      <TableCell className="px-2 py-3 text-[12.5px] tabular-nums text-muted-foreground">
+      <TableCell className="px-2 py-3 text-[13px] tabular-nums text-muted-foreground">
         {isEditing ? (
           <SurveyCloseDateCell
             value={survey.endDate}
@@ -715,7 +715,7 @@ function SurveyRow({
           survey.endDate
         )}
       </TableCell>
-      <TableCell className="px-2 py-3 text-right text-[12.5px] font-semibold tabular-nums text-text-primary">
+      <TableCell className="px-2 py-3 text-right text-[13px] font-semibold tabular-nums text-text-primary">
         {survey.participants}
       </TableCell>
       <TableCell className="w-[220px] py-3 pr-7">

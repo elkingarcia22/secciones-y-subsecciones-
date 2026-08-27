@@ -51,7 +51,7 @@ export function PreviewAnswerField({ question, value, onChange }: PreviewAnswerF
         onChange={(event) => onChange(event.target.value)}
         rows={4}
         placeholder="Escribe tu respuesta"
-        className="w-full resize-y rounded-lg border border-border/70 bg-surface px-4 py-3 text-[13.5px] leading-relaxed text-text-primary outline-none transition-colors placeholder:text-text-muted hover:border-border focus:border-primary focus:ring-4 focus:ring-primary/10"
+        className="w-full resize-y rounded-lg border border-border/70 bg-surface px-4 py-3 text-[14px] leading-relaxed text-text-primary outline-none transition-colors placeholder:text-text-muted hover:border-border focus:border-primary focus:ring-4 focus:ring-primary/10"
       />
     );
   }
@@ -121,7 +121,7 @@ function ChoiceField({
               <span
                 className={cn(
                   "flex h-[18px] w-[18px] shrink-0 items-center justify-center border transition-colors",
-                  type === "single" ? "rounded-full" : "rounded-[6px]",
+                  type === "single" ? "rounded-full" : "rounded-xs",
                   isSelected
                     ? "border-primary bg-primary text-white"
                     : "border-border bg-surface group-hover:border-primary/50"
@@ -131,10 +131,10 @@ function ChoiceField({
                   (type === "single" ? (
                     <span className="h-1.5 w-1.5 rounded-full bg-white" />
                   ) : (
-                    <Check className="h-3 w-3" strokeWidth={3} />
+                    <Check className="h-3 w-3" strokeWidth={2.5} />
                   ))}
               </span>
-              <span className="min-w-0 flex-1 text-[13.5px] font-medium text-text-primary">
+              <span className="min-w-0 flex-1 text-[14px] font-medium text-text-primary">
                 {option.label.trim() || `Opción ${index + 1}`}
               </span>
             </button>
@@ -159,7 +159,7 @@ function DropdownField({
   return (
     <div className="relative max-w-md">
       <Select value={value} onValueChange={(val) => onChange(val || null)}>
-        <SelectTrigger className="w-full appearance-none rounded-xl border border-border/70 bg-surface px-4 py-6 text-[13.5px] font-medium text-text-primary outline-none transition-colors hover:border-border focus:border-primary focus:ring-4 focus:ring-primary/10">
+        <SelectTrigger className="w-full appearance-none rounded-xl border border-border/70 bg-surface px-4 py-6 text-[14px] font-medium text-text-primary outline-none transition-colors hover:border-border focus:border-primary focus:ring-4 focus:ring-primary/10">
           <SelectValue placeholder="Buscar o seleccionar…" />
         </SelectTrigger>
         <SelectContent>
@@ -209,7 +209,7 @@ function ScaleField({
                 "flex-1 sm:flex-none inline-flex items-center justify-center rounded-xl border px-4 py-2.5 text-center text-[13px] font-medium leading-tight transition-all duration-150",
                 isOptOut && "border-dashed",
                 isSelected
-                  ? "border-primary bg-primary text-white shadow-sm"
+                  ? "border-primary bg-primary text-white shadow-card"
                   : "border-border/70 bg-surface text-text-secondary hover:-translate-y-px hover:border-primary/40 hover:text-text-primary"
               )}
             >
@@ -274,7 +274,7 @@ function ScaleField({
                       ? "fill-status-warning text-status-warning"
                       : "text-border hover:text-status-warning/50"
                   )}
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                 />
               </button>
             );
@@ -308,7 +308,7 @@ function ScaleField({
                     : "border-transparent text-text-muted hover:-translate-y-px hover:border-border/70 hover:text-text-secondary"
                 )}
               >
-                <Face className="h-7 w-7" strokeWidth={1.7} />
+                <Face className="h-7 w-7" strokeWidth={2} />
               </button>
             );
           })}
@@ -350,7 +350,7 @@ function ScaleField({
   }
 
   return (
-    <p className="rounded-xl border border-dashed border-border px-4 py-3 text-[12.5px] text-text-muted">
+    <p className="rounded-xl border border-dashed border-border px-4 py-3 text-[13px] text-text-muted">
       Esta pregunta todavía no tiene un tipo de escala configurado.
     </p>
   );
@@ -359,7 +359,7 @@ function ScaleField({
 function EndLabels({ min, max }: { min: string; max: string }) {
   if (!min && !max) return null;
   return (
-    <div className="flex items-center justify-between gap-4 text-[11.5px] font-medium text-text-muted">
+    <div className="flex items-center justify-between gap-4 text-[12px] font-medium text-text-muted">
       <span>{min}</span>
       <span className="text-right">{max}</span>
     </div>
@@ -368,7 +368,7 @@ function EndLabels({ min, max }: { min: string; max: string }) {
 
 function EmptyOptions() {
   return (
-    <p className="rounded-xl border border-dashed border-border px-4 py-3 text-[12.5px] text-text-muted">
+    <p className="rounded-xl border border-dashed border-border px-4 py-3 text-[13px] text-text-muted">
       Esta pregunta todavía no tiene opciones de respuesta.
     </p>
   );

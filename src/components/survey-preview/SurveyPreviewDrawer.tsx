@@ -132,7 +132,7 @@ export function SurveyPreviewDrawer({ draft, open, onOpenChange }: SurveyPreview
         // `!` on the widths: SheetContent's own `data-[side=right]` rules are
         // more specific than a plain utility, so a right-side drawer stays
         // 384px wide unless it is overridden outright.
-        className="!w-[80vw] !max-w-none gap-0 border-l border-border/50 bg-background p-0 shadow-2xl"
+        className="!w-[80vw] !max-w-none gap-0 border-l border-border/60 bg-background p-0 shadow-drawer"
         aria-describedby={undefined}
       >
         <SheetTitle className="sr-only">
@@ -190,14 +190,14 @@ export function SurveyPreviewDrawer({ draft, open, onOpenChange }: SurveyPreview
             )}
           </div>
 
-          <footer className="mx-3 mb-3 flex shrink-0 items-center justify-between gap-4 rounded-2xl border border-border/50 bg-surface px-5 py-3.5 shadow-sm">
+          <footer className="mx-3 mb-3 flex shrink-0 items-center justify-between gap-4 rounded-2xl border border-border/60 bg-surface px-5 py-3.5 shadow-card">
             <button
               type="button"
               onClick={() => goTo(safeIndex - 1)}
               disabled={safeIndex === 0}
               className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-surface px-4 py-2.5 text-[13px] font-semibold text-text-secondary transition-colors hover:border-border hover:text-text-primary disabled:pointer-events-none disabled:opacity-40"
             >
-              <ArrowLeft className="h-4 w-4" strokeWidth={2.3} />
+              <ArrowLeft className="h-4 w-4" strokeWidth={2} />
               Anterior
             </button>
 
@@ -213,7 +213,7 @@ export function SurveyPreviewDrawer({ draft, open, onOpenChange }: SurveyPreview
                 : isNextClosing
                   ? "Enviar y finalizar"
                   : "Siguiente"}
-              {!isLast && !isNextClosing && <ArrowRight className="h-4 w-4" strokeWidth={2.3} />}
+              {!isLast && !isNextClosing && <ArrowRight className="h-4 w-4" strokeWidth={2} />}
             </button>
           </footer>
         </div>
@@ -263,20 +263,20 @@ function PreviewHeader({
   onClose,
 }: PreviewHeaderProps) {
   return (
-    <header className="mx-3 mt-3 shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-surface shadow-sm">
+    <header className="mx-3 mt-3 shrink-0 overflow-hidden rounded-2xl border border-border/60 bg-surface shadow-card">
       <div className="flex h-14 items-center gap-3 px-4 sm:px-5">
-        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/8 px-3 py-1.5 text-[11px] font-semibold text-primary">
-          <Eye className="h-3.5 w-3.5" strokeWidth={2.4} />
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary">
+          <Eye className="h-3.5 w-3.5" strokeWidth={2} />
           Vista previa
         </span>
 
-        <h2 className="min-w-0 flex-1 truncate text-[15px] font-bold tracking-tight text-text-primary">
+        <h2 className="min-w-0 flex-1 truncate text-[14px] font-bold tracking-tight text-text-primary">
           {name.trim() || "Encuesta sin título"}
         </h2>
 
         {askedTotal > 0 && (
           <div className="hidden items-center gap-2.5 md:flex">
-            <span className="text-[11.5px] font-semibold text-text-secondary">
+            <span className="text-[12px] font-semibold text-text-secondary">
               {answered} de {askedTotal} respondidas
             </span>
             <div className="h-1.5 w-28 overflow-hidden rounded-full bg-surface-muted">
@@ -285,7 +285,7 @@ function PreviewHeader({
                 style={{ width: `${percent}%` }}
               />
             </div>
-            <span className="w-8 text-right text-[11.5px] font-bold tabular-nums text-text-primary">
+            <span className="w-8 text-right text-[12px] font-bold tabular-nums text-text-primary">
               {percent}%
             </span>
           </div>
@@ -296,15 +296,15 @@ function PreviewHeader({
             <button
               type="button"
               className={cn(
-                "inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-[12.5px] font-semibold transition-colors",
+                "inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-[13px] font-semibold transition-colors",
                 isContentsOpen
-                  ? "border-primary/40 bg-primary/8 text-primary"
+                  ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-border/70 bg-surface text-text-secondary hover:border-primary/40 hover:text-primary"
               )}
             >
-              <ListTree className="h-4 w-4" strokeWidth={2.2} />
+              <ListTree className="h-4 w-4" strokeWidth={2} />
               <span className="hidden sm:inline">Contenido</span>
-              <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.4} />
+              <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
           </PopoverTrigger>
           <PopoverContent align="end" sideOffset={8} className="w-[320px] rounded-2xl p-2">
@@ -328,13 +328,13 @@ function PreviewHeader({
           type="button"
           onClick={onClose}
           aria-label="Cerrar vista previa"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-status-negative/8 hover:text-status-negative"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-status-negative/10 hover:text-status-negative"
         >
-          <X className="h-4 w-4" strokeWidth={2.3} />
+          <X className="h-4 w-4" strokeWidth={2} />
         </button>
       </div>
 
-      <div className="flex items-center justify-between gap-4 border-t border-border/40 bg-surface-muted/50 px-4 py-2 sm:px-5">
+      <div className="flex items-center justify-between gap-4 border-t border-border/60 bg-surface-muted px-4 py-2 sm:px-5">
         <Location page={page} />
         <span className="shrink-0 text-[11px] font-bold tabular-nums text-text-secondary">
           {index + 1} / {total}
@@ -366,7 +366,7 @@ function Location({ page }: { page: PreviewPage | undefined }) {
           </span>
           <ChevronRight
             className="hidden h-3.5 w-3.5 shrink-0 text-text-muted sm:block"
-            strokeWidth={2.4}
+            strokeWidth={2}
           />
         </React.Fragment>
       ))}

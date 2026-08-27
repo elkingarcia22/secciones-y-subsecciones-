@@ -70,7 +70,7 @@ export function AnswerTallyList({ breakdown, onDrillDown, dense }: AnswerTallyLi
               className={cn(
                 "group flex min-w-[64px] flex-col items-center gap-1 rounded-xl border px-2.5 py-2 transition-all",
                 interactive
-                  ? "hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  ? "hover:-translate-y-0.5 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   : "cursor-default opacity-70"
               )}
               style={{ backgroundColor: palette.background, borderColor: palette.border }}
@@ -87,7 +87,7 @@ export function AnswerTallyList({ breakdown, onDrillDown, dense }: AnswerTallyLi
                 {tally.shortLabel}
               </span>
               <span
-                className="text-[15px] font-extrabold leading-none tabular-nums"
+                className="text-[14px] font-extrabold leading-none tabular-nums"
                 style={{ color: palette.foreground }}
               >
                 {formatCount(tally.count)}
@@ -121,7 +121,7 @@ export function AnswerTallyList({ breakdown, onDrillDown, dense }: AnswerTallyLi
             {/* The step number is already the first thing the option says
                 ("3 · Ni de acuerdo ni en desacuerdo"), so it is not repeated
                 as a badge. The colour lives on the bar and the count. */}
-            <span className="col-start-1 min-w-0 truncate text-[12.5px] font-semibold text-text-primary">
+            <span className="col-start-1 min-w-0 truncate text-[13px] font-semibold text-text-primary">
               {tally.label}
             </span>
 
@@ -134,7 +134,7 @@ export function AnswerTallyList({ breakdown, onDrillDown, dense }: AnswerTallyLi
                   <span className="text-[14px] font-extrabold leading-none tabular-nums text-text-primary">
                     {formatCount(tally.count)}
                   </span>
-                  <span className="w-[52px] text-right text-[11.5px] font-semibold leading-none tabular-nums text-muted-foreground">
+                  <span className="w-[52px] text-right text-[12px] font-semibold leading-none tabular-nums text-muted-foreground">
                     {formatShare(tally.percentage)}
                   </span>
                 </span>
@@ -156,9 +156,9 @@ export function AnswerTallyList({ breakdown, onDrillDown, dense }: AnswerTallyLi
                         type="button"
                         onClick={() => onDrillDown(tally.id)}
                         aria-label={`Ver las ${formatCount(tally.count)} personas que respondieron ${tally.label}`}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-surface text-muted-foreground shadow-sm transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-surface text-muted-foreground shadow-card transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                       >
-                        <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.6} />
+                        <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent

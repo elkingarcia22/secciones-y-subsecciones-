@@ -222,17 +222,17 @@ export function DemographicsEditor({
   };
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/50 bg-surface shadow-card">
-      <div className="flex items-center gap-3 border-b border-border/40 px-6 py-4">
+    <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/60 bg-surface shadow-card">
+      <div className="flex items-center gap-3 border-b border-border/60 px-6 py-4">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary">
-          <BarChart3 className="h-[18px] w-[18px]" strokeWidth={2.2} />
+          <BarChart3 className="h-[18px] w-[18px]" strokeWidth={2} />
         </span>
-        <h2 className="min-w-0 flex-1 truncate text-[15px] font-bold tracking-tight text-text-primary">
+        <h2 className="min-w-0 flex-1 truncate text-[14px] font-bold tracking-tight text-text-primary">
           Datos demográficos
         </h2>
 
         {enabled && fields.length > 0 && (
-          <span className="shrink-0 rounded-full bg-status-positive/10 px-2.5 py-1 text-[11.5px] font-semibold tabular-nums text-status-positive">
+          <span className="shrink-0 rounded-full bg-status-positive/10 px-2.5 py-1 text-[12px] font-semibold tabular-nums text-status-positive">
             {fields.length === 1 ? "1 dato" : `${fields.length} datos`}
           </span>
         )}
@@ -252,14 +252,14 @@ export function DemographicsEditor({
         {enabled ? (
           <>
             {enabled && fields.length === 0 && (
-              <p className="flex items-center gap-1.5 text-[11.5px] font-medium text-destructive">
-                <TriangleAlert className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />
+              <p className="flex items-center gap-1.5 text-[12px] font-medium text-destructive">
+                <TriangleAlert className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                 Si usas datos demográficos en la encuesta, activa o crea al menos un dato demográfico
                 para poder continuar.
               </p>
             )}
 
-            <p className="text-[12.5px] leading-relaxed text-text-secondary">
+            <p className="text-[13px] leading-relaxed text-text-secondary">
               Estos son los datos con los que después vas a poder filtrar los resultados. Puedes
               combinarlos a la vez: activa los que ya tenemos en la plataforma, los que detectamos
               en tu archivo de usuarios, agrega los que ya se usaron en otras encuestas, o crea
@@ -372,7 +372,7 @@ export function DemographicsEditor({
                 line: the number that is easy to lose track of once part of the
                 list is hidden. */}
             {fields.length > 0 && (
-              <p className="px-1 text-[11.5px] leading-relaxed text-muted-foreground">
+              <p className="px-1 text-[12px] leading-relaxed text-muted-foreground">
                 {summarizeVisibility(fields.length, visibleFields(fields).length)}
               </p>
             )}
@@ -427,12 +427,12 @@ function AccordionSection({
         )}
       >
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="h-4 w-4" strokeWidth={2.3} />
+          <Icon className="h-4 w-4" strokeWidth={2} />
         </span>
 
         <span className="min-w-0 flex-1">
-          <span className="block text-[12.5px] font-semibold text-text-primary">{title}</span>
-          <span className="mt-0.5 block text-[11.5px] leading-relaxed text-text-secondary">
+          <span className="block text-[13px] font-semibold text-text-primary">{title}</span>
+          <span className="mt-0.5 block text-[12px] leading-relaxed text-text-secondary">
             {description}
           </span>
         </span>
@@ -453,7 +453,7 @@ function AccordionSection({
       </button>
 
       {isOpen && (
-        <div className="border-t border-border/50 px-4 py-4 animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="border-t border-border/60 px-4 py-4 animate-in fade-in slide-in-from-top-1 duration-200">
           {children}
         </div>
       )}
@@ -507,7 +507,7 @@ function CatalogRow({
           {label}
         </span>
         {description && (
-          <span className="mt-0.5 block truncate text-[10.5px] font-semibold text-muted-foreground/80">
+          <span className="mt-0.5 block truncate text-[11px] font-semibold text-muted-foreground/80">
             {description}
           </span>
         )}
@@ -523,7 +523,7 @@ function EditorCard({ children }: { children: React.ReactNode }) {
   return (
     <div
       {...{ [ANCHOR_ATTRIBUTE]: true }}
-      className="rounded-md border-2 border-primary bg-surface p-4 shadow-card ring-4 ring-primary/10 animate-in fade-in zoom-in-[0.99] duration-200"
+      className="rounded-xl border border-primary bg-surface p-4 shadow-card ring-2 ring-primary/20 animate-in fade-in zoom-in-[0.99] duration-200"
     >
       {children}
     </div>
@@ -601,7 +601,7 @@ function SystemAccordionContent({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="max-w-md text-[11.5px] leading-relaxed text-text-secondary">
+        <p className="max-w-md text-[12px] leading-relaxed text-text-secondary">
           Los que se pueden precargar también dejan elegir si el participante los ve o si se usan
           solo para filtrar.
         </p>
@@ -703,7 +703,7 @@ function LibraryAccordionContent({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="max-w-md text-[11.5px] leading-relaxed text-text-secondary">
+        <p className="max-w-md text-[12px] leading-relaxed text-text-secondary">
           Se agregan con su redacción original, pero siguen siendo tuyas para editar en esta
           encuesta. Los que guardes en otras encuestas también aparecen aquí.
         </p>
@@ -846,7 +846,7 @@ function ImportedAccordionContent({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="max-w-md text-[11.5px] leading-relaxed text-text-secondary">
+        <p className="max-w-md text-[12px] leading-relaxed text-text-secondary">
           El valor de cada nuevo usuario ya viene en el archivo, así que se puede precargar. Elige
           si el participante lo ve o si se usa solo para filtrar.
         </p>
@@ -963,12 +963,12 @@ function CustomAccordionContent({
   return (
     <div className="flex flex-col gap-3">
       {customFields.length === 0 ? (
-        <p className="text-[12.5px] leading-relaxed text-text-secondary">
+        <p className="text-[13px] leading-relaxed text-text-secondary">
           Aún no has creado ningún dato demográfico para esta encuesta. Crea el primero.
         </p>
       ) : (
         <>
-          <p className="max-w-md text-[11.5px] leading-relaxed text-text-secondary">
+          <p className="max-w-md text-[12px] leading-relaxed text-text-secondary">
             Cada dato tiene un botón para guardarlo en el módulo de encuestas y reutilizarlo en
             otras. Guárdalos antes de que desaparezcan con esta encuesta.
           </p>
@@ -998,7 +998,7 @@ function CustomAccordionContent({
         onClick={onAdd}
         data-click-outside-ignore
         className={cn(
-          "flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border/70 px-3 py-2.5 text-[11.5px] font-semibold text-muted-foreground transition-all",
+          "flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border/70 px-3 py-2.5 text-[12px] font-semibold text-muted-foreground transition-all",
           "hover:border-primary/40 hover:bg-primary/5 hover:text-primary",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
         )}
@@ -1026,7 +1026,7 @@ function TextToggleButton({
       disabled={disabled}
       onClick={onSelect}
       className={cn(
-        "flex h-8 items-center rounded-md px-2.5 text-[11.5px] font-semibold text-text-secondary transition-all",
+        "flex h-8 items-center rounded-md px-2.5 text-[12px] font-semibold text-text-secondary transition-all",
         "hover:bg-primary/5 hover:text-primary",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
         "disabled:cursor-default disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-text-secondary"
@@ -1060,11 +1060,11 @@ function summarizeVisibility(total: number, visible: number): string {
  */
 function DisabledNotice({ count }: { count: number }) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl bg-muted/25 px-4 py-3.5">
-      <p className="text-[12.5px] font-semibold text-text-primary">
+    <div className="flex flex-col gap-2 rounded-xl bg-muted/30 px-4 py-3.5">
+      <p className="text-[13px] font-semibold text-text-primary">
         Esta encuesta no pedirá ni guardará datos demográficos.
       </p>
-      <p className="max-w-2xl text-[12.5px] leading-relaxed text-text-secondary">
+      <p className="max-w-2xl text-[13px] leading-relaxed text-text-secondary">
         El participante no verá preguntas demográficas y los resultados no se podrán filtrar por
         área, nivel, antigüedad ni ningún otro dato.
         {count > 0 &&

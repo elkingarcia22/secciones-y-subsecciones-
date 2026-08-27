@@ -12,6 +12,7 @@ import { depthLabel } from "./surveyBuilderTypes";
 const INDENT_PER_LEVEL = 14;
 
 interface SectionTreeItemProps {
+  readOnly?: boolean;
   entry: SectionTreeEntry;
   isActive: boolean;
   isCollapsed: boolean;
@@ -77,13 +78,19 @@ export function SectionTreeItem({
         )}
       >
         {/* Every level reorders the same way: drag among siblings under the same parent. */}
-        <span
-          {...handleProps}
-          aria-label={`Reordenar ${section.title}`}
-          className="shrink-0 cursor-grab rounded-md p-0.5 text-muted-foreground/50 transition-colors hover:text-text-primary active:cursor-grabbing"
-        >
-          <GripVertical className="h-3.5 w-3.5" strokeWidth={2.5} />
-        </span>
+        {readOnly ? (
+          <span className="shrink-0 rounded-md p-0.5 text-muted-foreground/30 transition-colors">
+            <span className="h-3.5 w-3.5 block" />
+          </span>
+        ) : (
+          <span
+            {...handleProps}
+            aria-label={`Reordenar ${section.title}`}
+            className="shrink-0 cursor-grab rounded-md p-0.5 text-muted-foreground/50 transition-colors hover:text-text-primary active:cursor-grabbing"
+          >
+            <GripVertical className="h-3.5 w-3.5" strokeWidth={2.5} />
+          </span>
+        )}
 
         {canCollapse ? (
           <button
@@ -104,13 +111,13 @@ export function SectionTreeItem({
           <span className="h-3.5 w-[18px] shrink-0" aria-hidden="true" />
         )}
 
-        {isRenaming ? (
+        {isRenaming && !readOnly ? (
           <RenameField initialValue={section.title} onCommit={onRename} onCancel={onCancelRename} />
         ) : (
           <button
             type="button"
             onClick={onSelect}
-            onDoubleClick={onStartRename}
+            onDoubleClick={readOnly ? undefined : onStartRename}
             title={`${numbering} · ${section.title}`}
             className="flex min-w-0 flex-1 cursor-text items-baseline gap-1.5 rounded-md py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           >
@@ -124,7 +131,7 @@ export function SectionTreeItem({
             </span>
             <span
               className={cn(
-                "truncate text-[12.5px] tracking-tight transition-colors",
+                "truncate text-[13px] tracking-tight transition-colors",
                 isActive ? "font-semibold text-primary" : "font-medium text-text-primary"
               )}
             >
@@ -164,7 +171,7 @@ function MenuItemIcon({ icon: Icon, tone = "default" }: { icon: LucideIcon; tone
       {/* size-3.5, not h-3.5 w-3.5: DropdownMenuItem's base styles force any
           svg lacking a "size-*" class to size-4, which would silently
           override plain height/width utilities here. */}
-      <Icon className="size-3.5" strokeWidth={2.2} />
+      <Icon className="size-3.5" strokeWidth={2} />
     </span>
   );
 }
@@ -215,7 +222,7 @@ function RenameField({ initialValue, onCommit, onCancel }: RenameFieldProps) {
         }
       }}
       aria-label="Nuevo nombre de la sección"
-      className="min-w-0 flex-1 rounded-md border border-primary/40 bg-surface px-1.5 py-0.5 text-[12.5px] font-medium tracking-tight text-text-primary outline-none ring-2 ring-primary/20"
+      className="min-w-0 flex-1 rounded-md border border-primary/40 bg-surface px-1.5 py-0.5 text-[13px] font-medium tracking-tight text-text-primary outline-none ring-2 ring-primary/20"
     />
   );
 }

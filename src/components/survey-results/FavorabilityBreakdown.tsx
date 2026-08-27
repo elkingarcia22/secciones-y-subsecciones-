@@ -90,7 +90,7 @@ export function FavorabilityBreakdownDots({
           <TooltipTrigger asChild>
             <div
               className={cn(
-                "flex shrink-0 cursor-default items-center py-[3px] text-[11.5px] font-medium tabular-nums text-text-primary transition-opacity",
+                "flex shrink-0 cursor-default items-center py-[3px] text-[12px] font-medium tabular-nums text-text-primary transition-opacity",
                 compact ? "gap-1.5" : "w-[84px] justify-end gap-2",
                 activeGroups && !activeGroups.has(group.key) && "opacity-35 grayscale"
               )}
@@ -161,7 +161,7 @@ export function FavorabilityWithBreakdown({
           }}
           aria-expanded={expanded}
           className={cn(
-            "mr-3 flex h-6 items-center rounded-md border border-border/50 bg-secondary/50 px-2.5 text-[10px] font-medium text-secondary-foreground transition-all hover:bg-secondary",
+            "mr-3 flex h-6 items-center rounded-md border border-border/60 bg-secondary/50 px-2.5 text-[10px] font-medium text-secondary-foreground transition-all hover:bg-secondary",
             expanded
               ? "opacity-100"
               : "opacity-0 group-hover:opacity-100 group-hover/score:opacity-100"

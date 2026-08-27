@@ -136,7 +136,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         key={item.id}
         onClick={() => selectNode(item.id)}
         className={cn(
-          "relative flex w-full items-center gap-2 rounded-[10px] px-2 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-background hover:text-text-primary",
+          "relative flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-background hover:text-text-primary",
           item.id === "inicio" && "font-semibold",
           isCurrent && "bg-surface-muted font-semibold text-primary hover:bg-surface-muted hover:text-primary",
           collapsed && "justify-center px-0"
@@ -197,7 +197,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       <button
         onClick={() => !collapsed && setOpenSections((sections) => ({ ...sections, [item.id]: !isOpen }))}
         className={cn(
-          "flex w-full items-center gap-2 rounded-[10px] px-2 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-background hover:text-text-primary",
+          "flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-background hover:text-text-primary",
           collapsed && "justify-center px-0",
           isCurrentCollapsed && "bg-surface-muted font-semibold text-primary hover:bg-surface-muted hover:text-primary"
         )}
@@ -364,7 +364,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
       {/* ---------- Workspace / Agente IA segmented ---------- */}
       {!collapsed && (
-        <div className="relative mb-4 flex shrink-0 rounded-[10px] bg-background p-1">
+        <div className="relative mb-4 flex shrink-0 rounded-md bg-background p-1">
           <span
             className="absolute bottom-1 left-1 top-1 z-0 w-[calc(50%-4px)] rounded-lg bg-surface shadow-card transition-transform duration-300 ease-[cubic-bezier(.34,1.4,.5,1)]"
             style={{ transform: mode === "agent" ? "translateX(100%)" : "translateX(0)" }}
@@ -404,7 +404,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           <nav className="flex h-full flex-col gap-1 overflow-y-auto pr-1 animate-in fade-in duration-200">
             <button
               onClick={() => setActiveChatIndex(-1)}
-              className="mb-2 flex w-full shrink-0 items-center justify-center gap-2 rounded-[10px] border border-border bg-surface px-3 py-2 text-sm font-bold text-text-primary transition-colors hover:border-primary hover:bg-surface-muted hover:text-primary"
+              className="mb-2 flex w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm font-bold text-text-primary transition-colors hover:border-primary hover:bg-surface-muted hover:text-primary"
             >
               <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
               Nuevo chat
@@ -490,7 +490,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
       {/* ---------- LMS promo card ---------- */}
       {!collapsed && !adDismissed && mode === "workspace" && (
-        <div className="relative mt-2 shrink-0 rounded-2xl bg-surface-muted/70 p-4 text-center">
+        <div className="relative mt-2 shrink-0 rounded-2xl bg-surface-muted p-4 text-center">
           <button
             onClick={() => setAdDismissed(true)}
             className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded text-text-muted transition-colors hover:bg-surface hover:text-text-secondary"
@@ -515,11 +515,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       )}
 
       {/* ---------- Footer: feedback ---------- */}
-      <div className="mt-2 shrink-0 border-t border-border/40 pt-2">
+      <div className="mt-2 shrink-0 border-t border-border/60 pt-2">
         <button
           onClick={onOpenFeedback}
           className={cn(
-            "flex w-full items-center gap-2 rounded-[10px] px-2 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-background hover:text-text-secondary",
+            "flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-background hover:text-text-secondary",
             collapsed && "justify-center px-0"
           )}
         >

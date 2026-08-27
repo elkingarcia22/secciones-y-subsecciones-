@@ -37,7 +37,7 @@ export function Field({
           >
             {label}
             {required && (
-              <span className="text-negative ml-1" aria-hidden="true">
+              <span className="text-status-negative ml-1" aria-hidden="true">
                 *
               </span>
             )}
@@ -75,7 +75,7 @@ export function Field({
       {error && (
         <p
           id={errorId}
-          className="text-[13px] font-medium text-negative animate-in fade-in slide-in-from-top-1 duration-200"
+          className="text-[13px] font-medium text-status-negative animate-in fade-in slide-in-from-top-1 duration-200"
         >
           {error}
         </p>
@@ -102,7 +102,7 @@ export function FieldDescription({ children, className, ...props }: React.HTMLAt
 
 export function FieldError({ children, className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn("text-[13px] font-medium text-negative", className)} {...props}>
+    <p className={cn("text-[13px] font-medium text-status-negative", className)} {...props}>
       {children}
     </p>
   )

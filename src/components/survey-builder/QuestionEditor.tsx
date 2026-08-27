@@ -36,6 +36,7 @@ import type {
 } from "./surveyBuilderTypes";
 
 interface QuestionEditorProps {
+  readOnly?: boolean;
   /** The question as it stands in the survey right now. */
   question: SurveyQuestion;
   index: number;
@@ -131,7 +132,7 @@ export function QuestionEditor({
               aria-label={`Eliminar pregunta ${index + 1}`}
               className="shrink-0 rounded-md border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-status-negative/30 hover:bg-status-negative/5 hover:text-status-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <Trash2 className="h-3.5 w-3.5" strokeWidth={2.2} />
+              <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
           </TooltipTrigger>
           <TooltipContent side="left">Eliminar pregunta</TooltipContent>
@@ -286,7 +287,7 @@ export function QuestionEditor({
           onClick={onDuplicate}
           className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-semibold text-text-primary transition-all hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
         >
-          <Copy className="h-3.5 w-3.5" strokeWidth={2.2} />
+          <Copy className="h-3.5 w-3.5" strokeWidth={2} />
           Duplicar
         </button>
       </div>
@@ -301,7 +302,7 @@ export function QuestionEditor({
           aria-label="Eliminar pregunta"
           className="-mx-4 -mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-border/60 bg-status-negative/5 px-4 py-3 animate-in fade-in duration-200"
         >
-          <p className="min-w-0 text-[12.5px] leading-relaxed text-text-secondary">
+          <p className="min-w-0 text-[13px] leading-relaxed text-text-secondary">
             <span className="font-bold text-status-negative">¿Eliminar esta pregunta? </span>
             Esta acción no se puede deshacer.
           </p>
@@ -341,9 +342,9 @@ function Field({
 }) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-[11.5px] font-semibold text-text-secondary">{label}</span>
+      <span className="text-[12px] font-semibold text-text-secondary">{label}</span>
       {children}
-      {error && <span className="text-[11.5px] text-destructive">{error}</span>}
+      {error && <span className="text-[12px] text-destructive">{error}</span>}
     </label>
   );
 }

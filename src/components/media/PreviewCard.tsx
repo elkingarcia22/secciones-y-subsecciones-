@@ -27,7 +27,7 @@ export function PreviewCard({
   return (
     <Card 
       className={cn(
-        'group relative flex flex-col overflow-hidden transition-all duration-300 border-border/50',
+        'group relative flex flex-col overflow-hidden transition-all duration-300 border-border/60',
         onSelect && !disabled && 'cursor-pointer hover:border-primary/40',
         selected && 'border-primary ring-1 ring-primary/50 bg-primary/[0.02]',
         disabled && 'opacity-50 cursor-not-allowed grayscale',
@@ -36,7 +36,7 @@ export function PreviewCard({
       onClick={() => onSelect && !disabled && onSelect(item.id)}
     >
       {/* Visual Area */}
-      <div className="relative aspect-video bg-muted/50 flex items-center justify-center overflow-hidden">
+      <div className="relative aspect-video bg-muted/40 flex items-center justify-center overflow-hidden">
         {item.src ? (
           <img 
             src={item.src} 
@@ -90,7 +90,7 @@ export function PreviewCard({
         )}
 
         {actions && (
-          <div className="pt-3 flex items-center gap-2 border-t border-border/40 mt-3" onClick={(e) => e.stopPropagation()}>
+          <div className="pt-3 flex items-center gap-2 border-t border-border/60 mt-3" onClick={(e) => e.stopPropagation()}>
             {actions}
           </div>
         )}

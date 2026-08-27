@@ -1,5 +1,11 @@
 import type { Distribution, SectionResult } from "@/mocks/surveyResults";
 import {
+  VERDICT_COPY,
+  formatPercent,
+  formatScore,
+  verdictForFavorability,
+} from "../../favorabilityScale";
+import {
   FAVORABILITY_BANDS,
   NSNR,
   NSNR_BG,
@@ -13,17 +19,13 @@ import {
   SOFTER_NEGATIVE_BG,
   SOFTER_NEGATIVE_BORDER,
   SOFTER_NEGATIVE_TEXT,
-  VERDICT_COPY,
   YELLOW,
   YELLOW_BG,
   YELLOW_BORDER,
   YELLOW_TEXT,
   bandForScore,
-  formatPercent,
-  formatScore,
   npsBandForScore,
-  verdictForFavorability,
-} from "../../favorabilityScale";
+} from "./pdfPalette";
 
 // --- Texto y números --------------------------------------------------------------
 

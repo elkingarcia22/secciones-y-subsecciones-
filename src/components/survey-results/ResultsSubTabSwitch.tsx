@@ -17,17 +17,15 @@ interface ResultsSubTabSwitchProps {
 export function ResultsSubTabSwitch({ value, onChange }: ResultsSubTabSwitchProps) {
   return (
     <Tabs value={value} onValueChange={(val) => onChange(val as ResultsSubTab)} className="w-auto shrink-0">
-      <TabsList className="h-9 bg-muted/60 p-1">
+      <TabsList>
         <TabsTrigger
           value="questions"
-          className="flex h-full items-center gap-2 rounded-md px-3 py-0 text-[13px] font-medium transition-all data-[state=active]:bg-surface data-[state=active]:text-brand data-[state=active]:shadow-sm text-muted-foreground hover:text-text-primary"
         >
           <List className="h-3.5 w-3.5" />
           Secciones
         </TabsTrigger>
         <TabsTrigger
           value="heatmap"
-          className="flex h-full items-center gap-2 rounded-md px-3 py-0 text-[13px] font-medium transition-all data-[state=active]:bg-surface data-[state=active]:text-brand data-[state=active]:shadow-sm text-muted-foreground hover:text-text-primary"
         >
           <Grid2X2 className="h-3.5 w-3.5" />
           Heatmap

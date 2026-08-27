@@ -62,7 +62,7 @@ export function PreviewWelcomePage({
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-8 sm:px-8">
       {/* Hero. Updated with a modern vibrant gradient and blur effects. */}
-      <section className="relative overflow-hidden rounded-3xl border border-border/40 bg-gradient-to-br from-primary/95 via-primary to-brand-hover px-7 py-10 sm:px-10 sm:py-12">
+      <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/95 via-primary to-brand-hover px-7 py-10 sm:px-10 sm:py-12">
         {/* Decorative blur elements */}
         <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-white/20 blur-[80px]" />
         <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-white/10 blur-[100px]" />
@@ -76,15 +76,15 @@ export function PreviewWelcomePage({
             )}
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-white/90 backdrop-blur-sm">
               {isAnonymous ? (
-                <Lock className="h-3 w-3" strokeWidth={2.6} />
+                <Lock className="h-3 w-3" strokeWidth={2.5} />
               ) : (
-                <Eye className="h-3 w-3" strokeWidth={2.6} />
+                <Eye className="h-3 w-3" strokeWidth={2.5} />
               )}
               {SURVEY_VISIBILITY_LABELS[draft.visibility]}
             </span>
           </div>
 
-          <h1 className="max-w-2xl text-[32px] font-bold leading-[1.1] tracking-tight text-white sm:text-[38px]">
+          <h1 className="max-w-2xl text-[28px] font-bold leading-[1.1] tracking-tight text-white sm:text-[38px]">
             {draft.name.trim() || "Encuesta sin título"}
           </h1>
 
@@ -95,16 +95,16 @@ export function PreviewWelcomePage({
           )}
 
           {(start || deadline) && (
-            <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12.5px] font-medium text-white/55">
+            <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[13px] font-medium text-white/55">
               {start && (
                 <span className="inline-flex items-center gap-1.5">
-                  <CalendarDays className="h-3.5 w-3.5" strokeWidth={2.2} />
+                  <CalendarDays className="h-3.5 w-3.5" strokeWidth={2} />
                   Abre el {start}
                 </span>
               )}
               {deadline && (
                 <span className="inline-flex items-center gap-1.5">
-                  <Clock3 className="h-3.5 w-3.5" strokeWidth={2.2} />
+                  <Clock3 className="h-3.5 w-3.5" strokeWidth={2} />
                   Cierra el {deadline}
                 </span>
               )}
@@ -115,10 +115,10 @@ export function PreviewWelcomePage({
             <button
               type="button"
               onClick={onStart}
-              className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-[14px] font-bold text-primary shadow-lg shadow-black/10 transition-all duration-200 hover:scale-105 hover:bg-white/90"
+              className="group inline-flex items-center gap-2 rounded-xl bg-surface px-6 py-3 text-[14px] font-bold text-primary shadow-lg shadow-black/10 transition-all duration-200 hover:scale-105 hover:bg-white/90"
             >
               Comenzar encuesta
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={2.4} />
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={2} />
             </button>
           </div>
         </div>
@@ -147,7 +147,7 @@ export function PreviewWelcomePage({
 
       <div className="flex flex-col gap-4">
         {hasMessage && (
-          <section className="relative overflow-hidden rounded-3xl border border-border/40 bg-surface p-6 sm:p-8">
+          <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
             <h2 className="mb-4 text-[14px] font-bold text-primary">
               Antes de empezar
             </h2>
@@ -157,7 +157,7 @@ export function PreviewWelcomePage({
           </section>
         )}
 
-        <section className="rounded-3xl border border-border/40 bg-surface p-6 sm:p-8">
+        <section className="rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
           <h2 className="mb-4 text-[14px] font-bold text-primary">
             Contenido de la encuesta
           </h2>
@@ -170,10 +170,10 @@ export function PreviewWelcomePage({
 
 function StatTile({ icon: Icon, value, label }: { icon: LucideIcon; value: string; label: string }) {
   return (
-    <div className="rounded-2xl border border-border/50 bg-surface px-4 py-4">
-      <Icon className="mb-2.5 h-4 w-4 text-primary" strokeWidth={2.3} />
-      <p className="text-[19px] font-bold leading-none tracking-tight text-text-primary">{value}</p>
-      <p className="mt-1.5 text-[11.5px] font-medium text-text-secondary">{label}</p>
+    <div className="rounded-2xl border border-border/60 bg-surface px-4 py-4">
+      <Icon className="mb-2.5 h-4 w-4 text-primary" strokeWidth={2} />
+      <p className="text-[20px] font-bold leading-none tracking-tight text-text-primary">{value}</p>
+      <p className="mt-1.5 text-[12px] font-medium text-text-secondary">{label}</p>
     </div>
   );
 }

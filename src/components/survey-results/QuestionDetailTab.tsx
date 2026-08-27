@@ -195,22 +195,22 @@ export function QuestionDetailTab({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="grid shrink-0 grid-cols-2 gap-3 pt-6 sm:grid-cols-3 sm:pt-8 lg:grid-cols-5">
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={ListChecks}
           label="Preguntas"
           value={<AnimatedNumber value={totals.questions} format={formatCount} />}
         />
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={Vote}
           label="Respuestas registradas"
           value={<AnimatedNumber value={totals.answers} format={formatCount} />}
         />
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={Users}
           label="Personas con respuesta"
           value={<AnimatedNumber value={respondents.length} format={formatCount} />}
         />
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={MessageSquareQuote}
           label="Comentarios abiertos"
           value={<AnimatedNumber value={scopedComments.length} format={formatCount} />}
@@ -221,10 +221,10 @@ export function QuestionDetailTab({
       {/* pb-20: the screen's floating action rail hovers over the last ~80px of
           the scroll area, and this tab's lists end in a real control. */}
       <div className="min-h-0 flex-1 pb-20 pt-6">
-        <div className="flex flex-col gap-6 rounded-2xl border border-border/50 bg-surface p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
           {/* Same sticky toolbar the Favorabilidad views use: title, count, the
               shared filters, the view switch and the scale legend. */}
-          <div className="sticky top-4 z-30 -mt-6 bg-surface pb-2 pt-6 sm:-mt-8 sm:pt-8">
+          <div className="sticky top-3 z-30 -mt-6 bg-surface pb-2 pt-6 sm:-mt-8 sm:pt-8">
             <div className="flex flex-wrap items-center gap-4 pb-2">
               <div className="flex items-center gap-2">
                 <h3 className="text-[13px] font-bold text-text-primary">
@@ -401,7 +401,7 @@ function SentimentAverageCard({ average }: { average: SentimentAverage }) {
   const empty = average.index === null;
 
   return (
-    <MiniMetricCard
+    <MiniMetricCard size="compact"
       icon={Gauge}
       label="Sentimiento promedio"
       color={empty ? undefined : style.foreground}
@@ -424,7 +424,7 @@ function SentimentAverageCard({ average }: { average: SentimentAverage }) {
                 color: style.foreground,
               }}
             >
-              <style.icon className="h-3 w-3" strokeWidth={2.6} />
+              <style.icon className="h-3 w-3" strokeWidth={2.5} />
               {style.label}
             </span>
           </span>
@@ -441,7 +441,7 @@ function SentimentAverageCard({ average }: { average: SentimentAverage }) {
               <Info className="h-3 w-3" />
             </button>
           </TooltipTrigger>
-          <TooltipContent className="max-w-[400px] border-none bg-slate-900 p-4 text-slate-100 shadow-xl">
+          <TooltipContent className="max-w-[400px] border-none bg-surface-nav p-4 text-white shadow-drawer">
             <div className="flex flex-col items-start gap-3 leading-relaxed">
               <p className="text-[12px]">
                 <strong>Sentimiento promedio:</strong>

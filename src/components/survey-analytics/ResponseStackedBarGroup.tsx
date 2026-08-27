@@ -54,7 +54,7 @@ export function ResponseStackedBarGroup({
 
       {/* Shared Legend (Top) - Only if not showing individual ones */}
       {showLegend && sharedLegendItems.length > 0 && !showIndividualLegends && (
-        <div className="pb-2 border-b border-border/40">
+        <div className="pb-2 border-b border-border/60">
           <InlineLegend items={sharedLegendItems} size="sm" />
         </div>
       )}
@@ -81,7 +81,7 @@ export function ResponseStackedBarGroup({
             />
           ))
         ) : (
-          <div className="py-8 text-center border-2 border-dashed border-border/40 rounded-lg text-sm text-muted-foreground italic">
+          <div className="py-8 text-center border-2 border-dashed border-border/60 rounded-lg text-sm text-muted-foreground italic">
             No hay datos comparativos disponibles
           </div>
         )}

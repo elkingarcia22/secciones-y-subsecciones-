@@ -17,7 +17,7 @@ const PageShell = React.forwardRef<HTMLDivElement, PageShellProps>(
       <main
         ref={ref}
         className={cn(
-          "flex-1 overflow-y-auto bg-app p-8 transition-all scroll-smooth",
+          "flex-1 overflow-y-auto bg-background p-8 transition-all scroll-smooth",
           className
         )}
         {...props}

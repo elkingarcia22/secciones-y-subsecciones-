@@ -74,8 +74,8 @@ export function KpiCard({
 }: KpiCardProps) {
   // Color hints based on trend (for styling context only)
   const trendColorClass = {
-    positive: "text-green-600 dark:text-green-500",
-    negative: "text-red-600 dark:text-red-500",
+    positive: "text-status-positive",
+    negative: "text-status-negative",
     neutral: "text-muted-foreground",
   }[trend]
 

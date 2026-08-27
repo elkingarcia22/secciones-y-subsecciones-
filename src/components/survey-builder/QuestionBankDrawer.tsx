@@ -125,12 +125,12 @@ export function QuestionBankDrawer({ open, onOpenChange, onAddQuestions }: Quest
       className="!w-[50vw] !max-w-[50vw]"
       disablePadding
     >
-      <div className="flex flex-col h-full bg-white">
+      <div className="flex flex-col h-full bg-surface">
         <div className="flex flex-col gap-4 px-6 pt-4 pb-2">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="all" className="data-[state=active]:bg-brand data-[state=active]:text-white">Catálogo</TabsTrigger>
-              <TabsTrigger value="selected" className="data-[state=active]:bg-brand data-[state=active]:text-white">
+            <TabsList variant="page" className="w-full grid grid-cols-2">
+              <TabsTrigger value="all">Catálogo</TabsTrigger>
+              <TabsTrigger value="selected">
                 Seleccionadas {selectedQuestions.size > 0 && `(${selectedQuestions.size})`}
               </TabsTrigger>
             </TabsList>
@@ -144,7 +144,7 @@ export function QuestionBankDrawer({ open, onOpenChange, onAddQuestions }: Quest
                     Tipo de encuesta
                   </label>
                   <Select value={selectedType} onValueChange={setSelectedType}>
-                    <SelectTrigger className="h-10 w-full bg-white">
+                    <SelectTrigger className="h-10 w-full bg-surface">
                       <SelectValue placeholder="Selecciona el tipo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -162,7 +162,7 @@ export function QuestionBankDrawer({ open, onOpenChange, onAddQuestions }: Quest
                     Sección
                   </label>
                   <Select value={selectedSection} onValueChange={setSelectedSection}>
-                    <SelectTrigger className="h-10 w-full bg-white">
+                    <SelectTrigger className="h-10 w-full bg-surface">
                       <SelectValue placeholder="Selecciona la sección" />
                     </SelectTrigger>
                     <SelectContent>
@@ -199,7 +199,7 @@ export function QuestionBankDrawer({ open, onOpenChange, onAddQuestions }: Quest
                     Filtrar por tipo
                   </label>
                   <Select value={selectedTabType} onValueChange={setSelectedTabType}>
-                    <SelectTrigger className="h-10 w-full bg-white">
+                    <SelectTrigger className="h-10 w-full bg-surface">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
@@ -218,7 +218,7 @@ export function QuestionBankDrawer({ open, onOpenChange, onAddQuestions }: Quest
                     Filtrar por sección
                   </label>
                   <Select value={selectedTabSection} onValueChange={setSelectedTabSection} disabled={selectedTabType === "all"}>
-                    <SelectTrigger className="h-10 w-full bg-white">
+                    <SelectTrigger className="h-10 w-full bg-surface">
                       <SelectValue placeholder="Todas" />
                     </SelectTrigger>
                     <SelectContent>
@@ -262,7 +262,7 @@ export function QuestionBankDrawer({ open, onOpenChange, onAddQuestions }: Quest
                       key={q.id}
                       className={cn(
                         "group relative flex items-start gap-4 rounded-xl border p-4 cursor-pointer transition-all hover:border-primary/50",
-                        isSelected ? "border-primary bg-primary/[0.02] ring-1 ring-primary/20" : "border-border bg-card"
+                        isSelected ? "border-primary bg-primary/[0.02] ring-1 ring-primary/20" : "border-border bg-surface"
                       )}
                     >
                       <Checkbox 
@@ -275,7 +275,7 @@ export function QuestionBankDrawer({ open, onOpenChange, onAddQuestions }: Quest
                           <p className="text-[13px] font-medium leading-snug">
                             {q.text}
                           </p>
-                          <Badge variant="outline" className="text-[10px] bg-white text-muted-foreground shrink-0 mt-[-2px]">
+                          <Badge variant="outline" className="text-[10px] bg-surface text-muted-foreground shrink-0 mt-[-2px]">
                             Creada por UBITS
                           </Badge>
                         </div>
@@ -311,7 +311,7 @@ export function QuestionBankDrawer({ open, onOpenChange, onAddQuestions }: Quest
                         <p className="text-[13px] font-medium leading-snug">
                           {q.text}
                         </p>
-                        <Badge variant="outline" className="text-[10px] bg-white text-muted-foreground shrink-0 mt-[-2px]">
+                        <Badge variant="outline" className="text-[10px] bg-surface text-muted-foreground shrink-0 mt-[-2px]">
                           Creada por UBITS
                         </Badge>
                       </div>
@@ -334,7 +334,7 @@ export function QuestionBankDrawer({ open, onOpenChange, onAddQuestions }: Quest
           </div>
         </div>
 
-        <div className="border-t bg-white p-4 flex justify-end gap-3 shrink-0">
+        <div className="border-t bg-surface p-4 flex justify-end gap-3 shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>

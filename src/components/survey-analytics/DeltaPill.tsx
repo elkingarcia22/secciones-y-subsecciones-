@@ -35,11 +35,11 @@ export function DeltaPill({
   const toneClasses = {
     positive: "bg-status-positive-bg text-status-positive border-status-positive/10",
     negative: "bg-destructive/10 text-destructive border-destructive/20",
-    neutral: "bg-muted/20 text-muted-foreground border-border/50",
+    neutral: "bg-muted/30 text-muted-foreground border-border/60",
   }[resolvedTone]
 
   const sizeClasses = {
-    xs: "px-1 py-0 text-[9px] gap-0.5",
+    xs: "px-1 py-0 text-[10px] gap-0.5",
     sm: "px-1.5 py-0.5 text-[10px] gap-1",
     md: "px-2 py-1 text-[11px] gap-1.5",
   }[size]

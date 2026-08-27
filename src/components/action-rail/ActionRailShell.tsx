@@ -66,12 +66,12 @@ export function ActionRailShell({
       >
         <div
           className={cn(
-            "relative flex items-center justify-center overflow-hidden rounded-[24px] transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+            "relative flex items-center justify-center overflow-hidden rounded-3xl transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
             isExpanded
-              ? "h-14 max-w-[800px] border border-zinc-800/80 bg-zinc-900 px-3 shadow-[0_8px_30px_rgb(0,0,0,0.24)]"
+              ? "h-14 max-w-[800px] border border-white/10 bg-surface-nav px-3 shadow-rail"
               // Collapsed: a full pill rather than a half-rounded hump, so the
               // handle reads as one continuous rounded line from any angle.
-              : "h-1.5 w-[64px] max-w-[64px] translate-y-[2px] rounded-full border-transparent bg-zinc-400 shadow-sm"
+              : "h-1.5 w-[64px] max-w-[64px] translate-y-[2px] rounded-full border-transparent bg-border-strong shadow-card"
           )}
         >
           <div
@@ -83,7 +83,7 @@ export function ActionRailShell({
             {contextual && (
               <>
                 {contextual}
-                <div className="mx-1 my-2 w-px self-stretch bg-zinc-700/60" />
+                <div className="mx-1 my-2 w-px self-stretch bg-white/10" />
               </>
             )}
 
@@ -95,12 +95,12 @@ export function ActionRailShell({
                   type="button"
                   onClick={() => setAutoHide(!autoHide)}
                   aria-label={autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
                 >
                   {autoHide ? (
-                    <Pin className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                    <Pin className="h-[20px] w-[20px]" strokeWidth={2} />
                   ) : (
-                    <Minimize2 className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                    <Minimize2 className="h-[20px] w-[20px]" strokeWidth={2} />
                   )}
                 </button>
               </TooltipTrigger>
@@ -119,7 +119,7 @@ export function ActionRailShell({
 
 /** The thin vertical rule that separates groups of rail actions. */
 export function RailDivider() {
-  return <div className="mx-1 my-2 w-px self-stretch bg-zinc-700/60" />;
+  return <div className="mx-1 my-2 w-px self-stretch bg-white/10" />;
 }
 
 /**
@@ -130,7 +130,7 @@ export function RailGroupShimmer({ animKey }: { animKey: number }) {
   return (
     <div
       key={`shimmer-${animKey}`}
-      className="pointer-events-none absolute inset-0 rounded-[24px]"
+      className="pointer-events-none absolute inset-0 rounded-3xl"
       style={{ animation: "railGroupShimmer 1200ms ease-out both", animationDelay: "200ms" }}
     />
   );

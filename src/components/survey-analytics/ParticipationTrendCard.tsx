@@ -131,7 +131,7 @@ export function ParticipationTrendCard({
       </CardContent>
 
       {footer && (
-        <CardFooter className="bg-muted/5 border-t border-border/5 text-[11px] text-muted-foreground py-3">
+        <CardFooter className="bg-muted/30 border-t border-border/60 text-[11px] text-muted-foreground py-3">
           {footer}
         </CardFooter>
       )}

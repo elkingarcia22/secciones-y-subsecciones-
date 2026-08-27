@@ -96,12 +96,12 @@ export function SectionImportCard({ onImport }: SectionImportCardProps) {
         onDrop={handleDrop}
         disabled={isImporting}
         className={cn(
-          "flex w-full items-center justify-between gap-3 rounded-xl border border-border/50 bg-surface px-4 py-3 transition-all hover:border-border/70 hover:bg-muted/30 disabled:opacity-50 disabled:cursor-wait"
+          "flex w-full items-center justify-between gap-3 rounded-xl border border-border/60 bg-surface px-4 py-3 transition-all hover:border-border/70 hover:bg-muted/30 disabled:opacity-50 disabled:cursor-wait"
         )}
       >
         <div className="flex items-center gap-3 min-w-0">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <FileText className="h-4 w-4" strokeWidth={2.2} />
+            <FileText className="h-4 w-4" strokeWidth={2} />
           </span>
           <div className="min-w-0">
             <span className="block text-sm font-semibold text-text-primary">
@@ -118,8 +118,8 @@ export function SectionImportCard({ onImport }: SectionImportCardProps) {
             <span className="text-xs text-muted-foreground">Importando…</span>
           ) : (
             <>
-              <ChevronDown className="h-4 w-4 text-muted-foreground/60" strokeWidth={2.2} />
-              <UploadCloud className="h-4 w-4 text-primary" strokeWidth={2.2} />
+              <ChevronDown className="h-4 w-4 text-muted-foreground/60" strokeWidth={2} />
+              <UploadCloud className="h-4 w-4 text-primary" strokeWidth={2} />
             </>
           )}
         </div>

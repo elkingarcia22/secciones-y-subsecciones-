@@ -2,7 +2,8 @@ import {
   participationBySegment,
   type SectionResult,
 } from "@/mocks/surveyResults";
-import { NSNR, POSITIVE, YELLOW, formatPercent } from "../../favorabilityScale";
+import { formatPercent } from "../../favorabilityScale";
+import { NSNR, POSITIVE, YELLOW } from "./pdfPalette";
 import { chosenSegments, type ReportData, type ReportSection } from "./tokens";
 import {
   blockTitle,

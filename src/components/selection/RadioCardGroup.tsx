@@ -79,16 +79,16 @@ export function RadioCardGroup({
               className="group relative flex flex-col p-0 rounded-xl outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 data-[state=checked]:z-10"
             >
               <Card className={cn(
-                'flex flex-col w-full h-full p-5 border-2 transition-all duration-200',
+                'flex flex-col w-full h-full p-5 border transition-all duration-200',
                 'group-data-[state=checked]:border-primary group-data-[state=checked]:bg-primary/[0.02] group-data-[state=checked]:ring-1 group-data-[state=checked]:ring-primary/20',
-                'group-data-[state=unchecked]:border-border/50 group-data-[state=unchecked]:bg-card group-data-[state=unchecked]:hover:border-primary/30',
-                isDisabled && 'opacity-50 grayscale-[0.5] hover:border-border/50'
+                'group-data-[state=unchecked]:border-border/60 group-data-[state=unchecked]:bg-surface group-data-[state=unchecked]:hover:border-primary/30',
+                isDisabled && 'opacity-50 grayscale-[0.5] hover:border-border/60'
               )}>
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div className={cn(
                     'p-2.5 rounded-xl border transition-colors',
                     'group-data-[state=checked]:bg-primary group-data-[state=checked]:text-primary-foreground group-data-[state=checked]:border-primary',
-                    'group-data-[state=unchecked]:bg-muted/50 group-data-[state=unchecked]:text-muted-foreground group-data-[state=unchecked]:border-border/50 group-hover:group-data-[state=unchecked]:bg-primary/5 group-hover:group-data-[state=unchecked]:text-primary group-hover:group-data-[state=unchecked]:border-primary/20'
+                    'group-data-[state=unchecked]:bg-muted/40 group-data-[state=unchecked]:text-muted-foreground group-data-[state=unchecked]:border-border/60 group-hover:group-data-[state=unchecked]:bg-primary/5 group-hover:group-data-[state=unchecked]:text-primary group-hover:group-data-[state=unchecked]:border-primary/20'
                   )}>
                     {Icon ? <Icon className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5 opacity-20 group-data-[state=checked]:opacity-100" />}
                   </div>
@@ -96,7 +96,7 @@ export function RadioCardGroup({
                     <Badge 
                       variant="outline" 
                       className={cn(
-                        "font-bold uppercase tracking-wider text-[9px]",
+                        "font-bold uppercase tracking-wider text-[10px]",
                         "group-data-[state=checked]:bg-primary group-data-[state=checked]:text-primary-foreground group-data-[state=checked]:border-transparent"
                       )}
                     >
@@ -122,7 +122,7 @@ export function RadioCardGroup({
                 </div>
 
                 <div className={cn(
-                  "absolute top-2 right-2 flex items-center justify-center h-5 w-5 bg-primary rounded-full text-primary-foreground shadow-sm scale-0 transition-transform duration-200",
+                  "absolute top-2 right-2 flex items-center justify-center h-5 w-5 bg-primary rounded-full text-primary-foreground shadow-card scale-0 transition-transform duration-200",
                   "group-data-[state=checked]:scale-100"
                 )}>
                   <CheckCircle2 className="h-3 w-3" />

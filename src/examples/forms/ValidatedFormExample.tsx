@@ -202,7 +202,7 @@ export function ValidatedFormExample() {
           <div className="md:col-span-2 flex items-center justify-between pt-2">
             <div className="text-sm">
               {successMessage && (
-                <p className="text-positive font-medium animate-in fade-in slide-in-from-left-2">
+                <p className="text-status-positive font-medium animate-in fade-in slide-in-from-left-2">
                   {successMessage}
                 </p>
               )}

@@ -289,6 +289,8 @@ export interface DemographicsConfig {
 }
 
 export interface SurveyDraft {
+  /** If true, the survey builder will disable editing, adding, and deleting sections/questions. */
+  isReadOnly?: boolean;
   /** Editable survey name, shown as the title of the builder. */
   name: string;
   status: SurveyStatus;

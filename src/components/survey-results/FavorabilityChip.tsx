@@ -63,7 +63,7 @@ export function FavorabilityChip({
 export function NoScaleBadge({ label = "Sin escala" }: { label?: string }) {
   return (
     <Badge variant="neutral" className="gap-1.5 whitespace-nowrap">
-      <MessageSquareText className="h-3 w-3" strokeWidth={2.4} />
+      <MessageSquareText className="h-3 w-3" strokeWidth={2} />
       {label}
     </Badge>
   );

@@ -9,14 +9,8 @@ import {
   type SegmentOption,
 } from "@/mocks/surveyResults";
 import { buildSurveyAnalysis, type InsightKind } from "@/mocks/surveyInsights";
-import {
-  NSNR,
-  NSNR_BG,
-  NSNR_TEXT,
-  bandForScore,
-  formatPercent,
-  formatScore,
-} from "../../favorabilityScale";
+import { formatPercent, formatScore } from "../../favorabilityScale";
+import { NSNR, NSNR_BG, NSNR_TEXT, bandForScore } from "./pdfPalette";
 import { analyseSegmentGaps } from "../../summaryModel";
 import {
   GRID_GROUP_LABELS,

@@ -89,13 +89,13 @@ function MediaCard({
       onClick={() => !disabled && selectable && onSelect?.(item.id)}
     >
       <Card className={cn(
-        'h-full border-border/50 transition-colors',
+        'h-full border-border/60 transition-colors',
         selected && 'border-primary ring-1 ring-primary/50 bg-primary/[0.02]',
         !selected && !disabled && 'hover:border-primary/30'
       )}>
         {/* Preview Area */}
         <div className={cn(
-          'relative bg-muted/50 flex items-center justify-center overflow-hidden',
+          'relative bg-muted/40 flex items-center justify-center overflow-hidden',
           !isBento && (isCompact ? 'aspect-square' : 'aspect-video'),
           isBento && 'absolute inset-0'
         )}>
@@ -133,7 +133,7 @@ function MediaCard({
 
           {/* Bento Overlay */}
           {isBento && (
-            <div className="absolute inset-x-0 bottom-0 p-5 bg-card/95 border-t border-border/50">
+            <div className="absolute inset-x-0 bottom-0 p-5 bg-surface border-t border-border/60">
               <p className="font-bold text-sm leading-tight text-foreground">{item.title}</p>
               {item.metadata && <p className="text-muted-foreground text-[10px] mt-1 font-medium">{item.metadata}</p>}
             </div>
@@ -157,7 +157,7 @@ function MediaCard({
 
         {/* Minimal info for compact */}
         {isCompact && (
-          <div className="p-2 border-t border-border/50">
+          <div className="p-2 border-t border-border/60">
             <p className="text-[11px] font-bold truncate text-center">{item.title}</p>
           </div>
         )}

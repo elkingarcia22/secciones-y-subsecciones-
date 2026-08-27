@@ -15,7 +15,7 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
       <header
         ref={ref}
         className={cn(
-          "flex h-20 w-full items-center justify-between border-b border-border/10 bg-card px-8 shrink-0",
+          "flex h-20 w-full items-center justify-between border-b border-border/60 bg-surface px-8 shrink-0",
           className
         )}
         {...props}
@@ -43,7 +43,7 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
         <div className="flex items-center space-x-4">
           <div className="relative group">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted transition-colors group-focus-within:text-primary" />
-            <div className="h-11 w-64 rounded-xl border border-input bg-surface-muted/30 pl-10 pr-4 text-sm text-text-muted flex items-center transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30">
+            <div className="h-10 w-64 rounded-xl border border-input bg-surface-muted pl-10 pr-4 text-sm text-text-muted flex items-center transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30">
               Buscar en UBITS...
             </div>
           </div>

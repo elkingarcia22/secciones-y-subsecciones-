@@ -22,7 +22,7 @@ export function InlineDeleteConfirm({ message, ariaLabel, onCancel, onConfirm }:
       aria-label={ariaLabel}
       className="flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl border border-status-negative/30 bg-status-negative/5 px-4 py-3 animate-in fade-in duration-200"
     >
-      <p className="min-w-0 text-[12.5px] leading-relaxed text-text-secondary">{message}</p>
+      <p className="min-w-0 text-[13px] leading-relaxed text-text-secondary">{message}</p>
       <div className="flex shrink-0 items-center gap-2">
         <Button size="sm" variant="outline" onClick={onCancel} className="rounded-full px-4">
           Cancelar

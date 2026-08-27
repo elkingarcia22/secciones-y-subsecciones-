@@ -74,12 +74,12 @@ export function InsightConfidenceFilter({
         <Button
           variant="outline"
           size="sm"
-          className="h-9 shrink-0 justify-start gap-2 rounded-lg border-border bg-surface px-3 text-[12.5px] text-text-primary transition-colors hover:bg-border/30"
+          className="h-9 shrink-0 justify-start gap-2 rounded-lg border-border bg-surface px-3 text-[13px] text-text-primary transition-colors hover:bg-border/30"
         >
-          <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.2} />
+          <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
           Confiabilidad
           {filter.isNarrowed && (
-            <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[10.5px]">
+            <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[11px]">
               {filter.levels.size}
             </Badge>
           )}
@@ -94,7 +94,7 @@ export function InsightConfidenceFilter({
             </PopoverDescription>
           </div>
 
-          <div className="flex flex-col gap-1.5 border-t border-border/30 pt-3">
+          <div className="flex flex-col gap-1.5 border-t border-border/60 pt-3">
             {CONFIDENCE_ORDER.map((id) => {
               const style = CONFIDENCE_STYLES[id];
               return (
@@ -123,7 +123,7 @@ export function InsightConfidenceFilter({
               variant="ghost"
               size="sm"
               onClick={filter.reset}
-              className="justify-start rounded-none border-t border-border/30 px-0 pb-1 pt-3 text-[12px] text-primary hover:bg-transparent hover:underline"
+              className="justify-start rounded-none border-t border-border/60 px-0 pb-1 pt-3 text-[12px] text-primary hover:bg-transparent hover:underline"
             >
               Ver todas las lecturas
             </Button>

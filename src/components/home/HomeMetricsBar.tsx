@@ -132,6 +132,7 @@ function MetricCard({
       onClick={onClick}
       active={active}
       disabled={disabled}
+      size="compact"
     >
       <Tooltip>
         <TooltipTrigger asChild>

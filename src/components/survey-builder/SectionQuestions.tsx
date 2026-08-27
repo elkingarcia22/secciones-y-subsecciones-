@@ -29,6 +29,7 @@ export interface QuestionListHandlers {
 }
 
 interface SectionQuestionsProps extends QuestionListHandlers {
+  readOnly?: boolean;
   sectionId: string;
   questions: readonly SurveyQuestion[];
 }
@@ -45,6 +46,7 @@ interface SectionQuestionsProps extends QuestionListHandlers {
  * into another's.
  */
 export function SectionQuestions({
+  readOnly,
   sectionId,
   questions,
   editingQuestionId,
@@ -76,6 +78,7 @@ export function SectionQuestions({
     <ul className="divide-y divide-border/50 overflow-hidden rounded-md border border-border/70 bg-surface">
       {slice.map((question, index) => (
         <QuestionCard
+          readOnly={readOnly}
           key={question.id}
           question={question}
           index={offset + index}
@@ -108,9 +111,10 @@ export function SectionQuestions({
       {isEditingHere && (
         <div
           {...{ [ANCHOR_ATTRIBUTE]: true }}
-          className="rounded-md border-2 border-primary bg-surface p-4 shadow-card ring-4 ring-primary/10 animate-in fade-in zoom-in-[0.99] duration-200"
+          className="rounded-xl border border-primary bg-surface p-4 shadow-card ring-2 ring-primary/20 animate-in fade-in zoom-in-[0.99] duration-200"
         >
           <QuestionEditor
+            readOnly={readOnly}
             question={questions[editingIndex]}
             index={editingIndex}
             showValidation={showQuestionValidation}
@@ -124,19 +128,21 @@ export function SectionQuestions({
 
       {rowsAfter.length > 0 && renderRows(rowsAfter, editingIndex + 1)}
 
-      <button
-        type="button"
-        onClick={() => onAddQuestion(sectionId)}
-        data-click-outside-ignore
-        className={cn(
-          "flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border/70 px-3 py-2.5 text-[11.5px] font-semibold text-muted-foreground transition-all",
-          "hover:border-primary/40 hover:bg-primary/5 hover:text-primary",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-        )}
-      >
-        <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-        {questions.length === 0 ? "Añadir la primera pregunta" : "Añadir pregunta"}
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={() => onAddQuestion(sectionId)}
+          data-click-outside-ignore
+          className={cn(
+            "flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border/70 px-3 py-2.5 text-[12px] font-semibold text-muted-foreground transition-all",
+            "hover:border-primary/40 hover:bg-primary/5 hover:text-primary",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          )}
+        >
+          <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+          {questions.length === 0 ? "Añadir la primera pregunta" : "Añadir pregunta"}
+        </button>
+      )}
     </div>
   );
 }

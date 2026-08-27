@@ -11,6 +11,9 @@ export default {
       colors: {
         /* shadcn semantic mapping to UBITS tokens (using HSL for opacity support) */
         border: "hsl(var(--border) / <alpha-value>)",
+        /* Sin este mapeo, `text-border-strong` y `border-border-strong/40`
+           (usados en AppSidebar y EncuestasDashboard) no generaban ninguna regla. */
+        "border-strong": "hsl(var(--color-border-strong-hsl) / <alpha-value>)",
         input: "hsl(var(--input) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",
         background: "hsl(var(--background) / <alpha-value>)",
@@ -61,6 +64,7 @@ export default {
           muted: "var(--color-surface-muted)",
           subtle: "var(--color-surface-subtle)",
         },
+        "tab-track": "var(--color-tab-track)",
         text: {
           primary: "var(--color-text-primary)",
           secondary: "var(--color-text-secondary)",
@@ -81,16 +85,27 @@ export default {
           border: "var(--color-ai-border)",
         },
       },
+      /*
+       * The whole scale is declared here, 2xl and 3xl included. Leaving those
+       * two on Tailwind's defaults is what made the scale non-monotonic:
+       * `rounded-lg` resolved to 20px while `rounded-2xl` stayed at 16px, so
+       * a card came out rounder than the panel containing it.
+       */
       borderRadius: {
+        DEFAULT: "var(--radius-xs)",
+        xs: "var(--radius-xs)",
         sm: "var(--radius-sm)",
         md: "var(--radius-md)",
         lg: "var(--radius-lg)",
         xl: "var(--radius-xl)",
+        "2xl": "var(--radius-2xl)",
+        "3xl": "var(--radius-3xl)",
         full: "var(--radius-full)",
       },
       boxShadow: {
         card: "var(--shadow-card)",
         drawer: "var(--shadow-drawer)",
+        rail: "var(--shadow-rail)",
         premium: "var(--shadow-premium)",
         "ai-premium": "var(--shadow-ai-premium)",
       },

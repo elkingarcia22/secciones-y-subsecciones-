@@ -48,14 +48,14 @@ export function MeasurementScaleButton({
         <TooltipContent
           side="bottom"
           align="end"
-          className="max-w-[280px] min-w-[160px] w-auto p-4 bg-slate-900 text-slate-100 shadow-xl border-none z-[100]"
+          className="max-w-[280px] min-w-[160px] w-auto p-4 bg-surface-nav text-white shadow-drawer border-none z-[100]"
         >
           <div className="flex flex-col gap-3 items-stretch leading-relaxed">
-            <div className="text-[11px] font-bold text-slate-100/70 border-b border-slate-700 pb-2 uppercase tracking-wide">
+            <div className="text-[11px] font-bold text-white/70 border-b border-white/15 pb-2 uppercase tracking-wide">
               {title}
             </div>
             {description && (
-              <p className="text-[11.5px] font-normal leading-relaxed text-slate-100/75">
+              <p className="text-[12px] font-normal leading-relaxed text-white/75">
                 {description}
               </p>
             )}
@@ -71,9 +71,9 @@ export function MeasurementScaleButton({
                         borderColor: item.border,
                       }}
                     />
-                    <span className="text-[11.5px] font-medium text-slate-100/90">{item.label}</span>
+                    <span className="text-[12px] font-medium text-white/90">{item.label}</span>
                   </div>
-                  <span className="text-[11px] font-normal text-slate-100/60">{item.range}</span>
+                  <span className="text-[11px] font-normal text-white/60">{item.range}</span>
                 </div>
               ))}
             </div>

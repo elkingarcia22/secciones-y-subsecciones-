@@ -87,17 +87,17 @@ export function ScaleToggle({
         aria-hidden
         className={cn(
           "flex h-3.5 w-3.5 shrink-0 items-center justify-center border transition-colors",
-          singleChoice ? "rounded-full" : "rounded-[4px]",
+          singleChoice ? "rounded-full" : "rounded-xs",
           !active && "border-border bg-surface",
           active && !palette && "border-primary bg-primary"
         )}
         style={active && fill ? { backgroundColor: fill, borderColor: fill } : undefined}
       >
-        {active && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3.6} />}
+        {active && <Check className="h-2.5 w-2.5 text-white" strokeWidth={2.5} />}
       </span>
       <span className="min-w-0 flex-1 truncate">{option.label}</span>
       {option.range && (
-        <span className="shrink-0 text-[10.5px] tabular-nums opacity-65">{option.range}</span>
+        <span className="shrink-0 text-[11px] tabular-nums opacity-65">{option.range}</span>
       )}
     </button>
   );

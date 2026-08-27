@@ -219,7 +219,7 @@ export const DualDateRangePicker = React.forwardRef<
           <div className="grid gap-4 sm:grid-cols-2 w-full">
             {/* Input Fecha de Inicio */}
             <div className="flex flex-col gap-1.5">
-              <span className="text-[12.5px] font-semibold text-text-primary">
+              <span className="text-[13px] font-semibold text-text-primary">
                 {startLabel}
               </span>
               <button
@@ -228,10 +228,10 @@ export const DualDateRangePicker = React.forwardRef<
                 disabled={disabled}
                 aria-label={startLabel}
                 className={cn(
-                  "relative flex h-11 w-full items-center gap-2.5 rounded-lg border bg-surface px-3.5 text-left text-[13px] transition-all",
+                  "relative flex h-10 w-full items-center gap-2.5 rounded-lg border bg-surface px-3.5 text-left text-[13px] transition-all",
                   open && activeStep === "start"
-                    ? "border-primary ring-2 ring-primary/20 bg-primary/[0.03] shadow-sm"
-                    : "border-border hover:border-border-hover",
+                    ? "border-primary ring-2 ring-primary/20 bg-primary/[0.03] shadow-card"
+                    : "border-border hover:border-primary/30",
                   startError && "border-destructive focus:border-destructive",
                   disabled && "opacity-50 cursor-not-allowed"
                 )}
@@ -258,13 +258,13 @@ export const DualDateRangePicker = React.forwardRef<
                 )}
               </button>
               {startError && (
-                <span className="text-[11.5px] text-destructive">{startError}</span>
+                <span className="text-[12px] text-destructive">{startError}</span>
               )}
             </div>
 
             {/* Input Fecha de Cierre */}
             <div className="flex flex-col gap-1.5">
-              <span className="text-[12.5px] font-semibold text-text-primary">
+              <span className="text-[13px] font-semibold text-text-primary">
                 {endLabel}
               </span>
               <button
@@ -273,10 +273,10 @@ export const DualDateRangePicker = React.forwardRef<
                 disabled={disabled}
                 aria-label={endLabel}
                 className={cn(
-                  "relative flex h-11 w-full items-center gap-2.5 rounded-lg border bg-surface px-3.5 text-left text-[13px] transition-all",
+                  "relative flex h-10 w-full items-center gap-2.5 rounded-lg border bg-surface px-3.5 text-left text-[13px] transition-all",
                   open && activeStep === "end"
-                    ? "border-primary ring-2 ring-primary/20 bg-primary/[0.03] shadow-sm"
-                    : "border-border hover:border-border-hover",
+                    ? "border-primary ring-2 ring-primary/20 bg-primary/[0.03] shadow-card"
+                    : "border-border hover:border-primary/30",
                   endError && "border-destructive focus:border-destructive",
                   disabled && "opacity-50 cursor-not-allowed"
                 )}
@@ -303,7 +303,7 @@ export const DualDateRangePicker = React.forwardRef<
                 )}
               </button>
               {endError && (
-                <span className="text-[11.5px] text-destructive">{endError}</span>
+                <span className="text-[12px] text-destructive">{endError}</span>
               )}
             </div>
           </div>
@@ -321,7 +321,7 @@ export const DualDateRangePicker = React.forwardRef<
           {/* Animated sliding container */}
           <div
             className={cn(
-              "w-max rounded-2xl border border-border/80 bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] overflow-hidden origin-top",
+              "w-max rounded-2xl border border-border bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] overflow-hidden origin-top",
               transitionEnabled && "transition-transform duration-500 ease-in-out"
             )}
             style={{
@@ -329,7 +329,7 @@ export const DualDateRangePicker = React.forwardRef<
             }}
           >
             {/* Header step switcher tabs inside the popover */}
-            <div className="flex items-center border-b border-border/50 bg-muted/20 px-4 py-2.5">
+            <div className="flex items-center border-b border-border/60 bg-muted/30 px-4 py-2.5">
               <div className="flex items-center gap-2 text-xs font-semibold text-text-secondary">
                 <button
                   type="button"
@@ -337,8 +337,8 @@ export const DualDateRangePicker = React.forwardRef<
                   className={cn(
                     "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all cursor-pointer",
                     activeStep === "start"
-                      ? "bg-surface text-primary shadow-xs ring-1 ring-border font-bold"
-                      : "text-muted-foreground hover:text-text-primary hover:bg-surface/50"
+                      ? "bg-surface text-primary shadow-card ring-1 ring-border font-bold"
+                      : "text-muted-foreground hover:text-text-primary hover:bg-surface"
                   )}
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-primary" />
@@ -356,8 +356,8 @@ export const DualDateRangePicker = React.forwardRef<
                   className={cn(
                     "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all cursor-pointer",
                     activeStep === "end"
-                      ? "bg-surface text-primary shadow-xs ring-1 ring-border font-bold"
-                      : "text-muted-foreground hover:text-text-primary hover:bg-surface/50"
+                      ? "bg-surface text-primary shadow-card ring-1 ring-border font-bold"
+                      : "text-muted-foreground hover:text-text-primary hover:bg-surface"
                   )}
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-primary" />
@@ -405,7 +405,7 @@ export const DualDateRangePicker = React.forwardRef<
           </div>
 
           {/* Footer with Borrar and Aplicar buttons (Despegar / Avianca style) */}
-          <div className="flex items-center justify-between border-t border-border/60 bg-muted/15 px-5 py-3">
+          <div className="flex items-center justify-between border-t border-border/60 bg-muted/30 px-5 py-3">
             <button
               type="button"
               onClick={handleClear}
@@ -420,7 +420,7 @@ export const DualDateRangePicker = React.forwardRef<
                 onClick={handleApply}
                 disabled={!canApply}
                 className={cn(
-                  "flex h-9 items-center justify-center rounded-full bg-primary px-5 text-[13px] font-bold text-white shadow-xs transition-all",
+                  "flex h-9 items-center justify-center rounded-full bg-primary px-5 text-[13px] font-bold text-white shadow-card transition-all",
                   canApply
                     ? "hover:brightness-110 active:scale-95 cursor-pointer"
                     : "opacity-40 cursor-not-allowed"

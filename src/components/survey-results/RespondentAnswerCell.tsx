@@ -25,8 +25,8 @@ export function RespondentAnswerCell({
 }) {
   if (!answer || answer.skipped) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground/70">
-        <Minus className="h-3 w-3" strokeWidth={2.4} />
+      <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground/70">
+        <Minus className="h-3 w-3" strokeWidth={2} />
         Sin responder
       </span>
     );
@@ -35,7 +35,7 @@ export function RespondentAnswerCell({
   if (answer.nsnr) {
     return (
       <span
-        className="inline-flex items-center rounded-md border px-2 py-0.5 text-[11.5px] font-semibold"
+        className="inline-flex items-center rounded-md border px-2 py-0.5 text-[12px] font-semibold"
         style={{ backgroundColor: NSNR_BG, borderColor: NSNR_BORDER, color: NSNR_TEXT }}
       >
         No sabe / No responde
@@ -47,20 +47,20 @@ export function RespondentAnswerCell({
     const style = sentiment ? SENTIMENT_STYLES[sentiment] : null;
     return (
       <div className="flex min-w-0 flex-col gap-2.5">
-        <div className="rounded-md bg-muted/40 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-text-primary">
+        <div className="rounded-md bg-muted/40 px-3.5 py-2.5 text-[13px] leading-relaxed text-text-primary">
           {answer.display}
         </div>
         {style && (
           <div className="flex justify-end">
             <span
-              className="inline-flex h-6 items-center gap-1.5 rounded-md border px-2.5 text-[10.5px] font-bold shadow-sm"
+              className="inline-flex h-6 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-bold shadow-card"
               style={{
                 backgroundColor: style.background,
                 borderColor: style.border,
                 color: style.foreground,
               }}
             >
-              <style.icon className="h-3 w-3" strokeWidth={3} />
+              <style.icon className="h-3 w-3" strokeWidth={2.5} />
               {style.label}
             </span>
           </div>
@@ -81,8 +81,8 @@ export function RespondentAnswerCell({
                 key={band.id}
                 aria-hidden
                 className={cn(
-                  "flex h-6 w-6 items-center justify-center rounded-md border text-[10.5px] font-bold tabular-nums transition-all",
-                  picked ? "scale-110 shadow-sm" : "opacity-40"
+                  "flex h-6 w-6 items-center justify-center rounded-md border text-[11px] font-bold tabular-nums transition-all",
+                  picked ? "scale-110 shadow-card" : "opacity-40"
                 )}
                 style={{
                   backgroundColor: picked ? band.background : "transparent",
@@ -90,7 +90,7 @@ export function RespondentAnswerCell({
                   color: picked ? band.foreground : "hsl(var(--muted-foreground))",
                 }}
               >
-                {picked ? <Check className="h-3 w-3" strokeWidth={3} /> : index + 1}
+                {picked ? <Check className="h-3 w-3" strokeWidth={2.5} /> : index + 1}
               </span>
             );
           })}

@@ -37,7 +37,7 @@ export function FilterBar({
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-5 border border-border/10 rounded-2xl shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface p-5 border border-border/60 rounded-2xl shadow-card">
         <div className="flex flex-1 flex-col md:flex-row md:items-center gap-4">
           {onSearchChange && (
             <div className="relative w-full md:w-64">
@@ -61,7 +61,7 @@ export function FilterBar({
             <Badge
               key={filter.id}
               variant="secondary"
-              className="flex items-center gap-1 pl-2 pr-1 py-1 h-7 border-border/10 bg-secondary/50"
+              className="flex items-center gap-1 pl-2 pr-1 py-1 h-7 border-border/60 bg-secondary/50"
             >
               <span className="text-muted-foreground mr-1">{filter.label}:</span>
               <span className="font-medium">{filter.value}</span>

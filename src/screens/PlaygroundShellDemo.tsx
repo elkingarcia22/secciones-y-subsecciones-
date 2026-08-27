@@ -71,7 +71,7 @@ export const PlaygroundShellDemo: React.FC<PlaygroundShellProps> = ({ children }
                 <UbitsIcon name={isDark ? "sun" : "moon"} size="sm" tone="inverse" />
              </button>
              <div className="relative pt-2 group cursor-pointer">
-                <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-nav-foreground/20 shadow-xl transition-transform group-hover:scale-110">
+                <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-nav-foreground/20 shadow-drawer transition-transform group-hover:scale-110">
                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150&h=150" alt="User" />
                 </div>
              </div>

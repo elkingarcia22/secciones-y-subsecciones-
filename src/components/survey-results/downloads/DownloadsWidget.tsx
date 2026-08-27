@@ -38,19 +38,19 @@ export function DownloadsWidget({
     <div
       role="status"
       aria-label="Descargas activas"
-      className="fixed bottom-6 right-6 z-50 w-[320px] overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_12px_40px_rgb(0,0,0,0.16)]"
+      className="fixed bottom-6 right-6 z-50 w-[320px] overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_12px_40px_rgb(0,0,0,0.16)]"
     >
       <div className="flex items-center gap-3 px-4 py-3">
         <span
           className={cn(
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-            isBusy ? "bg-brand/10 text-brand" : "bg-status-positive/10 text-status-positive"
+            isBusy ? "bg-primary/10 text-primary" : "bg-status-positive/10 text-status-positive"
           )}
         >
           {isBusy ? (
             <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
           ) : (
-            <Check className="h-4 w-4" strokeWidth={3} />
+            <Check className="h-4 w-4" strokeWidth={2.5} />
           )}
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
@@ -61,7 +61,7 @@ export function DownloadsWidget({
                 ? `${entries[0].format} descargado`
                 : "Reportes descargados"}
           </span>
-          <span className="text-[11.5px] text-muted-foreground">
+          <span className="text-[12px] text-muted-foreground">
             {isBusy ? "Puedes seguir navegando" : "Descarga completada"}
           </span>
         </div>
@@ -95,7 +95,7 @@ export function DownloadsWidget({
                 <div key={entry.id} className="flex flex-col gap-1.5">
                   <span className="flex items-center gap-1.5 text-[12px] font-semibold text-text-primary">
                     {showsCheck && (
-                      <Check className="h-3.5 w-3.5 shrink-0 text-status-positive" strokeWidth={3} />
+                      <Check className="h-3.5 w-3.5 shrink-0 text-status-positive" strokeWidth={2.5} />
                     )}
                     <span className="truncate" title={entry.fileName}>
                       {entry.fileName}
@@ -106,11 +106,11 @@ export function DownloadsWidget({
                       <span className="text-[11px] text-muted-foreground">Reporte en progreso</span>
                       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full rounded-full bg-brand transition-[width] duration-300 ease-out"
+                          className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
                           style={{ width: `${entry.progress}%` }}
                         />
                       </div>
-                      <span className="shrink-0 text-[11px] font-bold tabular-nums text-brand">
+                      <span className="shrink-0 text-[11px] font-bold tabular-nums text-primary">
                         {Math.round(entry.progress)}%
                       </span>
                     </div>
@@ -127,7 +127,7 @@ export function DownloadsWidget({
                       <button
                         type="button"
                         onClick={() => (needsRetry ? onDeliver(entry.id) : onShare(entry.id))}
-                        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold text-brand transition-colors hover:bg-brand/10"
+                        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold text-primary transition-colors hover:bg-primary/10"
                       >
                         {needsRetry ? (
                           <>
@@ -150,7 +150,7 @@ export function DownloadsWidget({
               <button
                 type="button"
                 onClick={onOpenDrawer}
-                className="self-start text-[11.5px] font-semibold text-brand hover:underline"
+                className="self-start text-[12px] font-semibold text-primary hover:underline"
               >
                 Ver las {entries.length} descargas
               </button>

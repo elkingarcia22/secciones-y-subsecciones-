@@ -37,11 +37,11 @@ export function OptionTile({
       disabled={isDisabled}
       onClick={() => onSelect?.(option.value)}
       className={cn(
-        'group flex items-center gap-3 w-full p-3 rounded-xl border-2 text-left outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+        'group flex items-center gap-3 w-full p-3 rounded-xl border text-left outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         selected 
-          ? 'border-primary bg-primary/[0.03] ring-1 ring-primary/20' 
-          : 'border-border/50 bg-card hover:border-primary/30',
-        isDisabled && 'opacity-50 grayscale-[0.5] cursor-not-allowed hover:border-border/50',
+          ? 'border-primary bg-primary/[0.03] ring-2 ring-primary/25' 
+          : 'border-border/60 bg-surface hover:border-primary/30',
+        isDisabled && 'opacity-50 grayscale-[0.5] cursor-not-allowed hover:border-border/60',
         compact && 'p-2 gap-2',
         className
       )}
@@ -52,7 +52,7 @@ export function OptionTile({
           'shrink-0 p-2 rounded-lg border transition-colors',
           selected 
             ? 'bg-primary text-primary-foreground border-primary' 
-            : 'bg-muted/50 text-muted-foreground border-border/50 group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20',
+            : 'bg-muted/40 text-muted-foreground border-border/60 group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20',
           compact && 'p-1.5'
         )}>
           <Icon className={cn('h-4 w-4', compact && 'h-3.5 w-3.5')} />
@@ -68,7 +68,7 @@ export function OptionTile({
             {option.label}
           </span>
           {option.badge && (
-            <Badge variant={selected ? "default" : "outline"} className="text-[8px] h-3.5 px-1 font-bold  tracking-tighter">
+            <Badge variant={selected ? "default" : "outline"} className="text-[10px] h-3.5 px-1 font-bold  tracking-tighter">
               {option.badge}
             </Badge>
           )}

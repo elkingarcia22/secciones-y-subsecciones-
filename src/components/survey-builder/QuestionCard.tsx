@@ -9,6 +9,7 @@ import type { SectionTreeEntry } from "./sectionTree";
 import type { SurveyQuestion } from "./surveyBuilderTypes";
 
 interface QuestionCardProps {
+  readOnly?: boolean;
   question: SurveyQuestion;
   index: number;
   isDragging: boolean;
@@ -29,6 +30,7 @@ interface QuestionCardProps {
  * swaps the row for the full editor.
  */
 export function QuestionCard({
+  readOnly,
   question,
   index,
   isDragging,
@@ -77,13 +79,19 @@ export function QuestionCard({
           "before:absolute before:-top-px before:left-0 before:right-0 before:z-10 before:h-0.5 before:rounded-full before:bg-primary before:content-['']"
       )}
     >
-      <span
-        {...handleProps}
-        aria-label={`Reordenar pregunta ${index + 1}`}
-        className="shrink-0 rounded-md p-0.5 text-muted-foreground/30 transition-colors cursor-grab hover:text-text-primary group-hover:text-muted-foreground/70 active:cursor-grabbing"
-      >
-        <GripVertical className="h-3.5 w-3.5" strokeWidth={2.5} />
-      </span>
+      {readOnly ? (
+        <span className="shrink-0 rounded-md p-0.5 text-muted-foreground/30 transition-colors">
+          <span className="h-3.5 w-3.5 block" />
+        </span>
+      ) : (
+        <span
+          {...handleProps}
+          aria-label={`Reordenar pregunta ${index + 1}`}
+          className="shrink-0 rounded-md p-0.5 text-muted-foreground/30 transition-colors cursor-grab hover:text-text-primary group-hover:text-muted-foreground/70 active:cursor-grabbing"
+        >
+          <GripVertical className="h-3.5 w-3.5" strokeWidth={2.5} />
+        </span>
+      )}
 
       {/* Number gutter: a question is an item in a list, not a nested block. */}
       <span
@@ -95,9 +103,10 @@ export function QuestionCard({
 
       <button
         type="button"
-        onClick={onOpen}
+        onClick={readOnly ? undefined : onOpen}
         data-click-outside-ignore
-        className="min-w-0 flex-1 py-3 text-left outline-none focus-visible:underline"
+        disabled={readOnly}
+        className="min-w-0 flex-1 py-3 text-left outline-none focus-visible:underline disabled:cursor-default"
       >
         <span
           className={cn(
@@ -107,13 +116,13 @@ export function QuestionCard({
         >
           {question.statement ? question.statement.replace(/<[^>]*>?/gm, '') : "Sin enunciado"}
         </span>
-        <span className="mt-0.5 flex items-center gap-1.5 text-[10.5px] font-semibold text-muted-foreground/80">
+        <span className="mt-0.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground/80">
           {typeLabel}
           {!question.required && <span className="text-muted-foreground/60">· Opcional</span>}
           {question.isBankQuestion && (
             <>
               <span className="text-muted-foreground/60">·</span>
-              <Badge variant="outline" className="text-[9px] h-4 px-1.5 py-0 bg-transparent text-muted-foreground border-border/80">
+              <Badge variant="outline" className="text-[10px] h-4 px-1.5 py-0 bg-transparent text-muted-foreground border-border">
                 Creada por UBITS
               </Badge>
             </>
@@ -123,26 +132,30 @@ export function QuestionCard({
 
       {/* "Mover a…" alongside the delete: the popover lists every other
           section that can hold questions, across the whole tree. */}
-      <MoveToPopover
-        subjectLabel={`pregunta ${index + 1}`}
-        destinations={moveDestinations}
-        onMove={onMove}
-        triggerClassName="opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
-      />
+      {!readOnly && (
+        <MoveToPopover
+          subjectLabel={`pregunta ${index + 1}`}
+          destinations={moveDestinations}
+          onMove={onMove}
+          triggerClassName="opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
+        />
+      )}
 
-      <button
-        type="button"
-        onClick={() => setIsConfirmingRemove(true)}
-        aria-label={`Eliminar pregunta ${index + 1}`}
-        className={cn(
-          "shrink-0 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all",
-          "hover:bg-status-negative/10 hover:text-status-negative",
-          "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30",
-          "group-hover:opacity-100"
-        )}
-      >
-        <Trash2 className="h-3.5 w-3.5" strokeWidth={2.2} />
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={() => setIsConfirmingRemove(true)}
+          aria-label={`Eliminar pregunta ${index + 1}`}
+          className={cn(
+            "shrink-0 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all",
+            "hover:bg-status-negative/10 hover:text-status-negative",
+            "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30",
+            "group-hover:opacity-100"
+          )}
+        >
+          <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+        </button>
+      )}
     </li>
   );
 }

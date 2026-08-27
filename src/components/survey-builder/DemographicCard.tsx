@@ -98,7 +98,7 @@ export function DemographicCard({
         >
           {field.label || "Sin enunciado"}
         </span>
-        <span className="mt-0.5 flex items-center gap-1.5 text-[10.5px] font-semibold text-muted-foreground/80">
+        <span className="mt-0.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground/80">
           {demographicTypeLabel(field.type)} · {field.options.length} opciones
           {!field.required && <span className="text-muted-foreground/60">· Opcional</span>}
         </span>
@@ -123,7 +123,7 @@ export function DemographicCard({
           "group-hover:opacity-100"
         )}
       >
-        <Trash2 className="h-3.5 w-3.5" strokeWidth={2.2} />
+        <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
       </button>
     </li>
   );
@@ -170,9 +170,9 @@ export function SaveToModuleButton({
           )}
         >
           {saved ? (
-            <BadgeCheck className="h-3.5 w-3.5" strokeWidth={2.2} />
+            <BadgeCheck className="h-3.5 w-3.5" strokeWidth={2} />
           ) : (
-            <BookPlus className="h-3.5 w-3.5" strokeWidth={2.2} />
+            <BookPlus className="h-3.5 w-3.5" strokeWidth={2} />
           )}
         </button>
       </TooltipTrigger>

@@ -103,7 +103,7 @@ export function SurveyListActionRail({
               return (
                 <AnimatedActionItem key={id} animKey={animKey} staggerIndex={2 + index}>
                   <RailButton
-                    icon={<Icon className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                    icon={<Icon className="h-[20px] w-[20px]" strokeWidth={2} />}
                     label={spec.label}
                     tone={spec.tone}
                     onClick={() => onAction(id, selectedSurvey.id)}
@@ -122,7 +122,7 @@ export function SurveyListActionRail({
                       id,
                       label: spec.label,
                       tone: spec.tone,
-                      icon: <Icon className="h-[18px] w-[18px]" strokeWidth={2.3} />,
+                      icon: <Icon className="h-[18px] w-[18px]" strokeWidth={2} />,
                       onClick: () => onAction(id, selectedSurvey.id),
                     };
                   })}
@@ -136,21 +136,21 @@ export function SurveyListActionRail({
           <>
             <AnimatedActionItem animKey={animKey} staggerIndex={2}>
               <RailButton
-                icon={<Copy className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                icon={<Copy className="h-[20px] w-[20px]" strokeWidth={2} />}
                 label={`Duplicar (${selectedCount})`}
                 onClick={onBulkDuplicate}
               />
             </AnimatedActionItem>
             <AnimatedActionItem animKey={animKey} staggerIndex={3}>
               <RailButton
-                icon={<Download className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                icon={<Download className="h-[20px] w-[20px]" strokeWidth={2} />}
                 label={`Exportar (${selectedCount})`}
                 onClick={onBulkExport}
               />
             </AnimatedActionItem>
             <AnimatedActionItem animKey={animKey} staggerIndex={4}>
               <RailButton
-                icon={<Trash2 className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                icon={<Trash2 className="h-[20px] w-[20px]" strokeWidth={2} />}
                 label={`Eliminar (${selectedCount})`}
                 onClick={onBulkDelete}
                 tone="danger"
@@ -169,7 +169,7 @@ export function SurveyListActionRail({
         selectedCount === 0 ? (
           <>
             <RailButton
-              icon={<GitCompare className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+              icon={<GitCompare className="h-[20px] w-[20px]" strokeWidth={2} />}
               label="Comparar encuestas"
               onClick={onCompare}
             />
@@ -181,7 +181,7 @@ export function SurveyListActionRail({
                   aria-label="Crear encuesta"
                   className="flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
                 >
-                  <Plus className="h-4 w-4" strokeWidth={2.6} />
+                  <Plus className="h-4 w-4" strokeWidth={2.5} />
                   Crear encuesta
                 </button>
               </PopoverTrigger>
@@ -189,19 +189,19 @@ export function SurveyListActionRail({
                 align="end"
                 side="top"
                 sideOffset={16}
-                className="w-[280px] rounded-2xl border-zinc-800/80 bg-zinc-900 p-2 text-zinc-400 shadow-[0_8px_30px_rgb(0,0,0,0.24)]"
+                className="w-[280px] rounded-2xl border-white/10 bg-surface-nav p-2 text-white/60 shadow-rail"
               >
-                <PopoverTitle className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                <PopoverTitle className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white/45">
                   Opciones de creación
                 </PopoverTitle>
                 <RailCreateOption
-                  icon={<Plus className="h-5 w-5" strokeWidth={2.2} />}
+                  icon={<Plus className="h-5 w-5" strokeWidth={2} />}
                   title="Crear en blanco"
                   description="Empieza desde cero"
                   onClick={onCreateBlank}
                 />
                 <RailCreateOption
-                  icon={<Layout className="h-5 w-5" strokeWidth={2.2} />}
+                  icon={<Layout className="h-5 w-5" strokeWidth={2} />}
                   title="Crear con plantilla"
                   description="Usa un diseño predefinido"
                   onClick={onCreateFromTemplate}

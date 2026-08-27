@@ -44,7 +44,7 @@ export function CommentsSummaryBar({
   if (groups.total === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-border/50 bg-muted/20 px-3 py-1.5">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-border/60 bg-muted/30 px-3 py-1.5">
       <span className="mr-1 text-[12px] font-semibold leading-none text-text-secondary">
         Distribución de sentimiento
       </span>
@@ -83,7 +83,7 @@ function SentimentStat({
   return (
     <span className="flex items-center gap-1.5 px-2 py-1 leading-none">
       <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: style.color }} />
-      <span className="text-[11.5px] font-medium text-text-secondary">{style.label}</span>
+      <span className="text-[12px] font-medium text-text-secondary">{style.label}</span>
       <span className="text-[13px] font-bold tabular-nums text-text-primary">
         {shareLabel(count, total)}
       </span>
@@ -109,11 +109,11 @@ function CorrectedStat({ count, total }: { count: number; total: number }) {
     >
       <PencilLine
         className={cn("h-3 w-3 shrink-0", empty ? "text-muted-foreground/50" : "text-primary/70")}
-        strokeWidth={2.4}
+        strokeWidth={2}
       />
       <span
         className={cn(
-          "text-[11.5px] font-medium",
+          "text-[12px] font-medium",
           empty ? "text-muted-foreground/70" : "text-text-secondary"
         )}
       >

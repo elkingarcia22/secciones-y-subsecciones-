@@ -43,7 +43,7 @@ export function MediaPreview({
   return (
     <div className={cn('space-y-6', className)}>
       {/* Visual Container */}
-      <div className="relative rounded-lg border border-border/50 bg-muted/30 overflow-hidden min-h-[240px] flex items-center justify-center">
+      <div className="relative rounded-lg border border-border/60 bg-muted/30 overflow-hidden min-h-[240px] flex items-center justify-center">
         {item.src ? (
           <img 
             src={item.src} 

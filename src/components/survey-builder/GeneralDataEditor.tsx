@@ -119,7 +119,7 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
   };
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/50 bg-surface p-6 shadow-card">
+    <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
       <div className="flex flex-col gap-5">
         {/* Name leads: it is the first thing the author decides and the one
             field that shows up outside this form, in the header title. */}
@@ -131,7 +131,7 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
             aria-label="Nombre de la encuesta"
             aria-invalid={!!nameError}
             className={cn(
-              "h-11 w-full rounded-md border bg-surface px-3 text-[13px] text-text-primary outline-none transition-all focus:ring-2 placeholder:text-muted-foreground/70",
+              "h-10 w-full rounded-md border bg-surface px-3 text-[13px] text-text-primary outline-none transition-all focus:ring-2 placeholder:text-muted-foreground/70",
               nameError
                 ? "border-destructive focus:border-destructive focus:ring-destructive/25"
                 : "border-border focus:border-primary focus:ring-primary/25"
@@ -178,14 +178,14 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
                   type="button"
                   onClick={() => onChange({ kind: optionValue })}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-2.5 rounded-lg border p-4 transition-all hover:bg-surface-hover",
+                    "flex flex-col items-center justify-center gap-2.5 rounded-lg border p-4 transition-all hover:bg-background",
                     isSelected
                       ? "border-primary bg-primary/5 text-primary"
-                      : "border-border bg-surface text-text-secondary hover:border-border-hover",
+                      : "border-border bg-surface text-text-secondary hover:border-primary/30",
                     kindError && !isSelected && "border-destructive/50"
                   )}
                 >
-                  <Icon className="size-6" strokeWidth={1.5} />
+                  <Icon className="size-6" strokeWidth={2} />
                   <span className="text-center text-[12px] font-medium leading-tight">
                     {label}
                   </span>
@@ -206,20 +206,20 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
                   type="button"
                   onClick={() => onChange({ visibility: optionValue })}
                   className={cn(
-                    "flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all hover:bg-surface-hover",
+                    "flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all hover:bg-background",
                     isSelected
                       ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                      : "border-border bg-surface hover:border-border-hover"
+                      : "border-border bg-surface hover:border-primary/30"
                   )}
                 >
                   <div className="flex w-full items-center gap-2">
-                    <Icon className={cn("size-5", isSelected ? "text-primary" : "text-muted-foreground")} strokeWidth={1.75} />
+                    <Icon className={cn("size-5", isSelected ? "text-primary" : "text-muted-foreground")} strokeWidth={2} />
                     <span className={cn("text-[14px] font-semibold", isSelected ? "text-primary" : "text-text-primary")}>
                       {label}
                     </span>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <p className="text-[12.5px] font-semibold text-text-primary">
+                    <p className="text-[13px] font-semibold text-text-primary">
                       {SURVEY_VISIBILITY_HEADLINES[optionValue]}
                     </p>
                     <p className="text-[12px] leading-relaxed text-text-secondary">
@@ -266,7 +266,7 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
                     if (event.key === "Enter") event.currentTarget.blur();
                   }}
                   aria-label="Mínimo de colaboradores por grupo"
-                  className="h-8 w-12 shrink-0 rounded-md border border-border bg-surface text-center text-[15px] font-bold tabular-nums text-text-primary outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+                  className="h-8 w-12 shrink-0 rounded-md border border-border bg-surface text-center text-[14px] font-bold tabular-nums text-text-primary outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
                 />
                 <button
                   type="button"
@@ -283,10 +283,10 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
               <div className="h-8 w-px shrink-0 bg-border/60" />
 
               <div className="min-w-0 flex-1">
-                <p className="text-[12.5px] font-semibold text-text-primary">
+                <p className="text-[13px] font-semibold text-text-primary">
                   Mínimo de colaboradores por grupo
                 </p>
-                <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+                <p className="text-[12px] leading-relaxed text-muted-foreground">
                   Un grupo solo verá sus resultados cuando al menos {draft.anonymityThreshold}{" "}
                   de sus colaboradores hayan respondido.
                 </p>
@@ -313,12 +313,12 @@ function Field({
 }) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-[12.5px] font-semibold text-text-primary">{label}</span>
+      <span className="text-[13px] font-semibold text-text-primary">{label}</span>
       {children}
       {error ? (
-        <span className="text-[11.5px] text-destructive">{error}</span>
+        <span className="text-[12px] text-destructive">{error}</span>
       ) : (
-        hint && <span className="text-[11.5px] text-muted-foreground">{hint}</span>
+        hint && <span className="text-[12px] text-muted-foreground">{hint}</span>
       )}
     </label>
   );
@@ -353,7 +353,7 @@ function LabelledSelect<T extends string>({
         aria-label={ariaLabel}
         aria-invalid={hasError}
         className={cn(
-          "h-11 rounded-md px-3 text-[13px]",
+          "h-10 rounded-md px-3 text-[13px]",
           hasError && "border-destructive focus:border-destructive focus:ring-destructive/25"
         )}
       >

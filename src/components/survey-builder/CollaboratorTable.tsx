@@ -78,11 +78,11 @@ function HeaderSelectionMark({ state }: { state: boolean | "indeterminate" }) {
     <span
       aria-hidden
       className={cn(
-        "flex size-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors",
+        "flex size-4 shrink-0 items-center justify-center rounded-xs border transition-colors",
         state === false ? "border-input" : "border-primary bg-primary text-primary-foreground"
       )}
     >
-      {state === "indeterminate" && <MinusIcon className="size-3.5" strokeWidth={3} />}
+      {state === "indeterminate" && <MinusIcon className="size-3.5" strokeWidth={2.5} />}
       {state === true && <CheckIcon className="size-3.5" />}
     </span>
   );
@@ -285,7 +285,7 @@ export function CollaboratorTable({
                 (isSearchExpanded || query !== "") ? "text-primary" : "text-muted-foreground"
               )}
             >
-              <Search className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]" strokeWidth={2.2} />
+              <Search className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]" strokeWidth={2} />
             </div>
             
             <input
@@ -332,16 +332,16 @@ export function CollaboratorTable({
                 setPage(1);
               }}
               className={cn(
-                "flex h-9 whitespace-nowrap shrink-0 items-center gap-2 rounded-lg border px-3 text-[12.5px] font-semibold transition-colors",
+                "flex h-9 whitespace-nowrap shrink-0 items-center gap-2 rounded-lg border px-3 text-[13px] font-semibold transition-colors",
                 onlySelected
                   ? "border-primary/40 bg-primary/5 text-primary"
                   : "border-border text-text-secondary hover:border-primary/30 hover:text-primary"
               )}
             >
               {onlySelected ? (
-                <EyeOff className="h-3.5 w-3.5" strokeWidth={2.3} />
+                <EyeOff className="h-3.5 w-3.5" strokeWidth={2} />
               ) : (
-                <Eye className="h-3.5 w-3.5" strokeWidth={2.3} />
+                <Eye className="h-3.5 w-3.5" strokeWidth={2} />
               )}
               {onlySelected ? "Ver todos" : `Ver seleccionados (${formatCount(selected.size)})`}
             </button>
@@ -476,7 +476,7 @@ export function CollaboratorTable({
                   key={person.id}
                   data-state={isSelected ? "selected" : undefined}
                   onClick={() => toggleOne(person.id)}
-                  className="cursor-pointer border-border/50"
+                  className="cursor-pointer border-border/60"
                 >
                   <TableCell className="px-0">
                     <div className="flex items-center justify-center">
@@ -499,7 +499,7 @@ export function CollaboratorTable({
 
         {rows.length === 0 && (
           <div className="flex flex-col items-center gap-1.5 px-4 py-10 text-center">
-            <UserRoundX className="h-6 w-6 text-muted-foreground/50" strokeWidth={1.8} />
+            <UserRoundX className="h-6 w-6 text-muted-foreground/50" strokeWidth={2} />
             <p className="text-[13px] font-semibold text-text-primary">
               {onlySelected ? "Aún no has seleccionado a nadie" : "Sin resultados"}
             </p>
@@ -551,7 +551,7 @@ export function CollaboratorTable({
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={6}>
               {PAGE_SIZES.map((size) => (
-                <SelectItem key={size} value={String(size)} className="text-[12.5px]">
+                <SelectItem key={size} value={String(size)} className="text-[13px]">
                   {size} por página
                 </SelectItem>
               ))}

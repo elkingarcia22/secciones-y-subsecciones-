@@ -39,7 +39,7 @@ export function SentimentSegmentedControl({
       <div
         role="radiogroup"
         aria-label="Sentimiento del comentario"
-        className="inline-flex items-center gap-0.5 rounded-lg border border-border/50 bg-muted/20 p-[3px]"
+        className="inline-flex items-center gap-0.5 rounded-lg border border-border/60 bg-muted/30 p-[3px]"
       >
         {SENTIMENT_ORDER.map((id) => {
           const style = SENTIMENT_STYLES[id];
@@ -59,14 +59,14 @@ export function SentimentSegmentedControl({
                       : undefined
                   }
                   className={cn(
-                    "inline-flex h-[22px] items-center gap-1 rounded-md px-2 text-[10.5px] transition-colors",
+                    "inline-flex h-[22px] items-center gap-1 rounded-md px-2 text-[11px] transition-colors",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                     selected
                       ? "font-semibold"
                       : "font-medium text-muted-foreground/70 hover:bg-surface hover:text-text-primary"
                   )}
                 >
-                  <style.icon className="h-3 w-3 shrink-0" strokeWidth={2.1} />
+                  <style.icon className="h-3 w-3 shrink-0" strokeWidth={2} />
                   <span className="whitespace-nowrap">{style.label}</span>
                 </button>
               </TooltipTrigger>
@@ -87,7 +87,7 @@ export function SentimentSegmentedControl({
               aria-label="Volver a la lectura de la IA"
               className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
-              <Undo2 className="h-3 w-3" strokeWidth={2.2} />
+              <Undo2 className="h-3 w-3" strokeWidth={2} />
             </button>
           </TooltipTrigger>
           <TooltipContent side="top" className="z-[100] px-2.5 py-1 text-[11px] font-medium">
@@ -113,7 +113,7 @@ export function ConfidenceMeter({ value, low }: { value: number; low: boolean })
           : "Confianza de la IA en esta lectura"
       }
     >
-      <Sparkles className="h-2.5 w-2.5" strokeWidth={2.6} />
+      <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} />
       {value}%
       <span className="h-1 w-10 overflow-hidden rounded-full bg-muted">
         <span

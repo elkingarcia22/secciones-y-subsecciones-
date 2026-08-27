@@ -60,7 +60,7 @@ export function FavorabilityTab({ results, segment, onSegmentChange }: Favorabil
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="grid shrink-0 grid-cols-2 gap-3 pt-6 sm:grid-cols-3 sm:pt-8 lg:grid-cols-5">
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={BarChart3}
           label="Total de favorabilidad"
           value={<AnimatedNumber value={results.favorability} format={formatPercent} />}
@@ -72,7 +72,7 @@ export function FavorabilityTab({ results, segment, onSegmentChange }: Favorabil
                   <Info className="h-3 w-3" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="max-w-[400px] p-4 bg-slate-900 text-slate-100 shadow-xl border-none">
+              <TooltipContent className="max-w-[400px] p-4 bg-surface-nav text-white shadow-drawer border-none">
                 <div className="flex flex-col gap-3 items-start leading-relaxed">
                   <p className="text-[12px]"><strong>Favorabilidad:</strong><br/>La favorabilidad es el porcentaje de respuestas favorables en una escala de 1 a 5, donde se consideran "favorables" las respuestas de 4 y 5.</p>
                   <FormulaBlock
@@ -86,25 +86,25 @@ export function FavorabilityTab({ results, segment, onSegmentChange }: Favorabil
           </TooltipProvider>
         </MiniMetricCard>
 
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={TrendingUp}
           label="Favorables"
           value={<AnimatedNumber value={favorableCount} format={formatCount} />}
           color={POSITIVE_TEXT}
         />
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={Minus}
           label="Neutrales"
           value={<AnimatedNumber value={neutralCount} format={formatCount} />}
           color={YELLOW_TEXT}
         />
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={TrendingDown}
           label="Desfavorables"
           value={<AnimatedNumber value={unfavorableCount} format={formatCount} />}
           color={NEGATIVE_TEXT}
         />
-        <MiniMetricCard
+        <MiniMetricCard size="compact"
           icon={HelpCircle}
           label="No sabe / No responde"
           value={<AnimatedNumber value={nsNrCount} format={formatCount} />}

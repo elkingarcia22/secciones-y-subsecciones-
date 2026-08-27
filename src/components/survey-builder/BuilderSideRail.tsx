@@ -37,6 +37,7 @@ import { depthLabel } from "./surveyBuilderTypes";
 import { RailSelectionChip } from "@/components/action-rail";
 
 interface BuilderSideRailProps {
+  readOnly?: boolean;
   /** Whether the rail should appear at the bottom (horizontal) or right (vertical). */
   orientation?: "bottom" | "right";
   /** Distance from the top of the column, so the rail tracks the active row. */
@@ -140,7 +141,7 @@ function RailButton({
           disabled={disabled}
           {...(ignoreOutsideClick ? { "data-click-outside-ignore": true } : {})}
           aria-label={label}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-zinc-400 disabled:active:scale-100"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-white/60 disabled:active:scale-100"
         >
           {icon}
         </button>
@@ -203,11 +204,11 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="flex items-center gap-2 text-[12.5px] text-zinc-400">
-        <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />
+      <dt className="flex items-center gap-2 text-[13px] text-white/60">
+        <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
         {label}
       </dt>
-      <dd className="text-[13px] font-semibold tabular-nums text-zinc-100">{value}</dd>
+      <dd className="text-[13px] font-semibold tabular-nums text-white">{value}</dd>
     </div>
   );
 }
@@ -221,6 +222,7 @@ function InfoRow({
 export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailProps>(
   function BuilderSideRail(
     {
+      readOnly,
       orientation = "bottom",
       offset,
       isScrolling,
@@ -386,16 +388,16 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
           <div
             ref={ref}
             className={cn(
-              "relative flex items-center justify-center overflow-hidden rounded-[24px] transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+              "relative flex items-center justify-center overflow-hidden rounded-3xl transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
               isExpanded
                 ? isRight
-                  ? "w-max min-w-[56px] max-h-[800px] flex-col bg-zinc-900 px-3 py-3 shadow-[-8px_0_30px_rgb(0,0,0,0.24)] border border-zinc-800/80"
-                  : "h-14 max-w-[800px] bg-zinc-900 px-3 shadow-[0_8px_30px_rgb(0,0,0,0.24)] border border-zinc-800/80"
+                  ? "w-max min-w-[56px] max-h-[800px] flex-col bg-surface-nav px-3 py-3 shadow-rail border border-white/10"
+                  : "h-14 max-w-[800px] bg-surface-nav px-3 shadow-rail border border-white/10"
                 // Collapsed: a full pill rather than a half-rounded hump, so
                 // the handle reads as one continuous rounded line either way.
                 : isRight
-                  ? "w-1.5 max-h-[64px] h-[64px] bg-zinc-400 shadow-sm border-transparent rounded-full translate-x-[2px]"
-                  : "h-1.5 max-w-[64px] w-[64px] bg-zinc-400 shadow-sm border-transparent rounded-full translate-y-[2px]"
+                  ? "w-1.5 max-h-[64px] h-[64px] bg-border-strong shadow-card border-transparent rounded-full translate-x-[2px]"
+                  : "h-1.5 max-w-[64px] w-[64px] bg-border-strong shadow-card border-transparent rounded-full translate-y-[2px]"
             )}
           >
             {/* The actual content that fades/slides in */}
@@ -406,12 +408,12 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                 isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
               )}
             >
-              {isSectionsStepActive && (
+              {isSectionsStepActive && !readOnly && (
                 <>
                   {/* Shimmer overlay for the contextual group */}
                   <div
                     key={`shimmer-sections-${stepChangeKey}`}
-                    className="pointer-events-none absolute inset-0 rounded-[24px]"
+                    className="pointer-events-none absolute inset-0 rounded-3xl"
                     style={{
                       animation: "railGroupShimmer 1200ms ease-out both",
                       animationDelay: "200ms",
@@ -419,7 +421,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                   />
                   <AnimatedActionItem animKey={stepChangeKey} staggerIndex={0}>
                     <RailButton tooltipSide={isRight ? "left" : "top"}
-                      icon={<ListPlus className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                      icon={<ListPlus className="h-[20px] w-[20px]" strokeWidth={2} />}
                       label="Añadir sección"
                       onClick={onAddSection}
                       ignoreOutsideClick
@@ -435,9 +437,9 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                               data-click-outside-ignore
                               aria-label="Añadir subsección"
                               onClick={() => setIsSubnivelMenuOpen(true)}
-                              className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                              className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
                             >
-                              <CornerDownRight className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                              <CornerDownRight className="h-[20px] w-[20px]" strokeWidth={2} />
                             </button>
                           </PopoverTrigger>
                           <PopoverContent
@@ -462,9 +464,9 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                                 }}
                                 className="flex w-full items-start gap-3 rounded-lg border border-border/60 px-4 py-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                               >
-                                <CornerDownRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.3} />
+                                <CornerDownRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
                                 <span className="min-w-0">
-                                  <span className="block text-[12.5px] font-semibold text-text-primary">
+                                  <span className="block text-[13px] font-semibold text-text-primary">
                                     {hermanaTitle}
                                   </span>
                                   <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
@@ -482,9 +484,9 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                                 }}
                                 className="flex w-full items-start gap-3 rounded-lg border border-border/60 px-4 py-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                               >
-                                <Layers className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.3} />
+                                <Layers className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
                                 <span className="min-w-0">
-                                  <span className="block text-[12.5px] font-semibold text-text-primary">
+                                  <span className="block text-[13px] font-semibold text-text-primary">
                                     {secondTitle}
                                   </span>
                                   <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
@@ -501,7 +503,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                     ) : (
                       <AnimatedActionItem animKey={stepChangeKey} staggerIndex={1}>
                         <RailButton tooltipSide={isRight ? "left" : "top"}
-                          icon={<CornerDownRight className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                          icon={<CornerDownRight className="h-[20px] w-[20px]" strokeWidth={2} />}
                           label="Añadir subsección"
                           onClick={onAddSubsection}
                           blockedReason={addSubsectionBlockedReason}
@@ -511,7 +513,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                     ))}
                   <AnimatedActionItem animKey={stepChangeKey} staggerIndex={2}>
                     <RailButton tooltipSide={isRight ? "left" : "top"}
-                      icon={<Plus className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                      icon={<Plus className="h-[20px] w-[20px]" strokeWidth={2} />}
                       label="Añadir pregunta"
                       onClick={onAddQuestion}
                       blockedReason={addQuestionBlockedReason}
@@ -520,7 +522,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                   </AnimatedActionItem>
                   <AnimatedActionItem animKey={stepChangeKey} staggerIndex={3}>
                     <RailButton tooltipSide={isRight ? "left" : "top"}
-                      icon={<Library className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                      icon={<Library className="h-[20px] w-[20px]" strokeWidth={2} />}
                       label="Banco de preguntas"
                       onClick={onOpenQuestionBank}
                       blockedReason={addQuestionBlockedReason}
@@ -531,7 +533,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                       icon={
                         isImporting
                           ? <span className="h-[20px] w-[20px] animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-                          : <UploadCloud className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                          : <UploadCloud className="h-[20px] w-[20px]" strokeWidth={2} />
                       }
                       label={isImporting ? "Importando…" : "Cargar preguntas desde archivo"}
                       onClick={() => importInputRef.current?.click()}
@@ -559,7 +561,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                   {/* Shimmer overlay for the contextual group */}
                   <div
                     key={`shimmer-demographics-${stepChangeKey}`}
-                    className="pointer-events-none absolute inset-0 rounded-[24px]"
+                    className="pointer-events-none absolute inset-0 rounded-3xl"
                     style={{
                       animation: "railGroupShimmer 1200ms ease-out both",
                       animationDelay: "200ms",
@@ -567,7 +569,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                   />
                   <AnimatedActionItem animKey={stepChangeKey} staggerIndex={0}>
                     <RailButton tooltipSide={isRight ? "left" : "top"}
-                      icon={<Plus className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                      icon={<Plus className="h-[20px] w-[20px]" strokeWidth={2} />}
                       label="Añadir dato demográfico"
                       onClick={onAddDemographic}
                       blockedReason={addDemographicBlockedReason}
@@ -580,7 +582,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                 <>
                   <div
                     key={`shimmer-participants-${stepChangeKey}`}
-                    className="pointer-events-none absolute inset-0 rounded-[24px]"
+                    className="pointer-events-none absolute inset-0 rounded-3xl"
                     style={{
                       animation: "railGroupShimmer 1200ms ease-out both",
                       animationDelay: "200ms",
@@ -597,11 +599,11 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                       table's ticks *are* the audience, so it reports no remove. */}
                   {onDeleteParticipantsSelection && (
                     <>
-                      <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
+                      <div className={cn("self-stretch bg-white/10", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
                       <AnimatedActionItem animKey={stepChangeKey} staggerIndex={2}>
                         <RailButton tooltipSide={isRight ? "left" : "top"}
                           icon={
-                            <svg className="h-[20px] w-[20px] text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                            <svg className="h-[20px] w-[20px] text-status-negative" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" />
                             </svg>
                           }
@@ -611,7 +613,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                       </AnimatedActionItem>
                     </>
                   )}
-                  <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
+                  <div className={cn("self-stretch bg-white/10", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
                 </>
               )}
 
@@ -621,7 +623,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                   {isPagesStepActive && !isSectionsStepActive && !isDemographicsStepActive && (
                     <div
                       key={`shimmer-pages-${stepChangeKey}`}
-                      className="pointer-events-none absolute inset-0 rounded-[24px]"
+                      className="pointer-events-none absolute inset-0 rounded-3xl"
                       style={{
                         animation: "railGroupShimmer 1200ms ease-out both",
                         animationDelay: "200ms",
@@ -634,7 +636,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                       staggerIndex={isSectionsStepActive ? 6 : isDemographicsStepActive ? 2 : 0}
                     >
                       <RailButton tooltipSide={isRight ? "left" : "top"}
-                        icon={<Eye className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                        icon={<Eye className="h-[20px] w-[20px]" strokeWidth={2} />}
                         label="Vista previa"
                         onClick={onPreview}
                         blockedReason={previewBlockedReason}
@@ -645,7 +647,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
               )}
 
               {(isSectionsStepActive || isDemographicsStepActive || isPagesStepActive) && (
-                <div className={cn("self-stretch bg-zinc-700/60", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
+                <div className={cn("self-stretch bg-white/10", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
               )}
 
               <HoverCard>
@@ -653,9 +655,9 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                   <button
                     type="button"
                     aria-label="Información de participantes, secciones, preguntas, datos demográficos y tiempo"
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
                   >
-                    <Info className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                    <Info className="h-[20px] w-[20px]" strokeWidth={2} />
                   </button>
                 </HoverCardTrigger>
                 <HoverCardContent
@@ -663,13 +665,13 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                   align="center"
                   sideOffset={16}
                   avoidCollisions={false}
-                  className="w-60 rounded-2xl p-4 bg-zinc-900 border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.24)]"
+                  className="w-60 rounded-2xl p-4 bg-surface-nav border border-white/10 shadow-rail"
                 >
-                  <PopoverTitle className="text-[13px] font-semibold text-zinc-100">
+                  <PopoverTitle className="text-[13px] font-semibold text-white">
                     Información
                   </PopoverTitle>
 
-                  <div className="my-2.5 h-px bg-zinc-700/60" />
+                  <div className="my-2.5 h-px bg-white/10" />
 
                   <dl className="flex flex-col gap-2.5">
                     <InfoRow icon={Users} label="Participantes" value={formatCount(participantsCount)} />
@@ -687,12 +689,12 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                     type="button"
                     onClick={() => setAutoHide(!autoHide)}
                     aria-label={autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
                   >
                     {!autoHide ? (
-                      <Minimize2 className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                      <Minimize2 className="h-[20px] w-[20px]" strokeWidth={2} />
                     ) : (
-                      <Pin className="h-[20px] w-[20px]" strokeWidth={2.3} />
+                      <Pin className="h-[20px] w-[20px]" strokeWidth={2} />
                     )}
                   </button>
                 </TooltipTrigger>
@@ -702,7 +704,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
               </Tooltip>
 
               <RailButton tooltipSide={isRight ? "left" : "top"}
-                icon={<Save className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+                icon={<Save className="h-[20px] w-[20px]" strokeWidth={2} />}
                 label="Guardar encuesta"
                 onClick={onSave}
               />
@@ -715,9 +717,9 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                 >
                   {continueLabel}
                   {continueLabel === "Finalizar" ? (
-                    <Check className="h-4 w-4" strokeWidth={2.4} />
+                    <Check className="h-4 w-4" strokeWidth={2} />
                   ) : (
-                    <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
+                    <ArrowRight className="h-4 w-4" strokeWidth={2} />
                   )}
                 </Button>
               ) : (
@@ -731,9 +733,9 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                       >
                         {continueLabel}
                         {continueLabel === "Finalizar" ? (
-                          <Check className="h-4 w-4" strokeWidth={2.4} />
+                          <Check className="h-4 w-4" strokeWidth={2} />
                         ) : (
-                          <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
+                          <ArrowRight className="h-4 w-4" strokeWidth={2} />
                         )}
                       </Button>
                     </span>

@@ -18,7 +18,7 @@ export function EmptyGalleryState({
       title={title}
       description={description}
       action={action}
-      className={cn("bg-muted/10 border-dashed border-2 min-h-[300px]", className)}
+      className={cn("bg-muted/30 border-dashed border-2 min-h-[300px]", className)}
     />
   )
 }

@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
  * Children are the bulk toggles; a `GroupActionDivider` separates clusters. */
 export function GroupActionsBar({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 rounded-lg border border-border/70 bg-muted/25 px-2.5 py-1.5">
+    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 rounded-lg border border-border/70 bg-muted/30 px-2.5 py-1.5">
       {children}
     </div>
   );
@@ -47,7 +47,7 @@ export function IconToggleButton({
         isActive ? "bg-primary/10 text-primary" : "text-muted-foreground/70 hover:text-text-primary"
       )}
     >
-      <Icon className="h-3.5 w-3.5" strokeWidth={2.3} />
+      <Icon className="h-3.5 w-3.5" strokeWidth={2} />
     </button>
   );
 

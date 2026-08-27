@@ -137,7 +137,7 @@ export function CreateDemographicDrawer({
             placeholder="Ej. Tipo de jornada"
             aria-invalid={duplicate || (attempted && missingLabel)}
             className={cn(
-              "h-11",
+              "h-10",
               (duplicate || (attempted && missingLabel)) && "border-status-negative"
             )}
           />
@@ -173,14 +173,14 @@ export function CreateDemographicDrawer({
                 className={cn(
                   "flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-all",
                   selected
-                    ? "border-brand bg-brand/[0.04] shadow-[0_0_0_1px_theme(colors.brand.DEFAULT)]"
-                    : "border-border/80 bg-card hover:border-border hover:bg-muted/40"
+                    ? "border-primary bg-primary/[0.04] shadow-[0_0_0_1px_theme(colors.brand.DEFAULT)]"
+                    : "border-border bg-surface hover:border-border hover:bg-muted/40"
                 )}
               >
                 <span
                   className={cn(
                     "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                    selected ? "bg-brand/10 text-brand" : "bg-muted text-muted-foreground"
+                    selected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
                   )}
                 >
                   <Icon className="h-5 w-5" strokeWidth={2} />
@@ -195,10 +195,10 @@ export function CreateDemographicDrawer({
                   aria-hidden
                   className={cn(
                     "flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-                    selected ? "border-brand" : "border-border"
+                    selected ? "border-primary" : "border-border"
                   )}
                 >
-                  {selected && <span className="h-2.5 w-2.5 rounded-full bg-brand" />}
+                  {selected && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
                 </span>
               </button>
             );

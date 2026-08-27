@@ -14,7 +14,7 @@ export function MetricComparisonFooter({
   
   return (
     <div className={cn(
-      "flex flex-wrap gap-x-6 gap-y-4 py-4 border-t border-border/40",
+      "flex flex-wrap gap-x-6 gap-y-4 py-4 border-t border-border/60",
       className
     )}>
       {items.map((item, index) => (

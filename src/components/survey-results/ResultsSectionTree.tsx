@@ -93,7 +93,7 @@ function RootSection({
   const subSections = section.children.filter(sectionHasContent);
 
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/50 bg-surface">
+    <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface">
       <div
         role="button"
         tabIndex={0}
@@ -120,13 +120,13 @@ function RootSection({
 
         <span
           aria-hidden
-          className="mt-0.5 flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-md border border-border/50 bg-muted/60 px-1 text-[10px] font-bold tabular-nums text-muted-foreground"
+          className="mt-0.5 flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/60 px-1 text-[10px] font-bold tabular-nums text-muted-foreground"
         >
           {section.numbering}
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1 py-0.5 text-[15px] font-bold tracking-tight text-text-primary">
+          <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1 py-0.5 text-[14px] font-bold tracking-tight text-text-primary">
             {section.title}
             <span className="text-[12px] font-medium tracking-normal text-muted-foreground">
               {body.renderSubtitle?.(section) ?? (

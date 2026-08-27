@@ -166,7 +166,7 @@ function ContentsRow({
         compact ? "py-1.5" : "py-2",
         depth > 2 && "pl-4",
         isActive
-          ? "bg-primary/8 text-primary"
+          ? "bg-primary/10 text-primary"
           : onClick
             ? "cursor-pointer hover:bg-surface-muted"
             : "cursor-default"
@@ -175,7 +175,7 @@ function ContentsRow({
       {Icon ? (
         <Icon
           className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "text-text-secondary")}
-          strokeWidth={2.3}
+          strokeWidth={2}
         />
       ) : (
         numbering && (
@@ -195,7 +195,7 @@ function ContentsRow({
         className={cn(
           "min-w-0 flex-1 truncate",
           depth > 1
-            ? "text-[12.5px] font-medium text-text-secondary"
+            ? "text-[13px] font-medium text-text-secondary"
             : "text-[13px] font-semibold text-text-primary",
           isActive && "text-primary"
         )}
@@ -205,7 +205,7 @@ function ContentsRow({
 
       {isComplete ? (
         <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-status-positive-bg text-status-positive">
-          <Check className="h-2.5 w-2.5" strokeWidth={3.5} />
+          <Check className="h-2.5 w-2.5" strokeWidth={2.5} />
         </span>
       ) : (
         count !== undefined && (
@@ -218,7 +218,7 @@ function ContentsRow({
       {onClick && !compact && (
         <ChevronRight
           className="h-3.5 w-3.5 shrink-0 text-transparent transition-colors group-hover:text-primary"
-          strokeWidth={2.4}
+          strokeWidth={2}
         />
       )}
     </Element>

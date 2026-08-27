@@ -41,15 +41,15 @@ const typeConfig = {
   opportunity: {
     icon: Target,
     label: "Oportunidad",
-    className: "border-positive/20 bg-positive/5 text-positive",
-    iconColor: "text-positive"
+    className: "border-status-positive/20 bg-status-positive/5 text-status-positive",
+    iconColor: "text-status-positive"
   }
 }
 
 const confidenceConfig = {
   low: { label: "Confiabilidad Baja", className: "bg-muted text-muted-foreground" },
   medium: { label: "Confiabilidad Media", className: "bg-primary/10 text-primary" },
-  high: { label: "Confiabilidad Alta", className: "bg-positive/10 text-positive" }
+  high: { label: "Confiabilidad Alta", className: "bg-status-positive/10 text-status-positive" }
 }
 
 export function AIInsightCard({
@@ -68,8 +68,8 @@ export function AIInsightCard({
   const confidenceData = confidenceConfig[confidence]
 
   return (
-    <Card className={cn("overflow-hidden border-border/50 shadow-sm transition-all hover:shadow-md", className)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-muted/5">
+    <Card className={cn("overflow-hidden border-border/60 shadow-card transition-all hover:shadow-drawer", className)}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-muted/30">
         <div className="flex items-center gap-2">
           <div className={cn("p-1.5 rounded-md", config.className)}>
             <Icon className={cn("h-4 w-4", config.iconColor)} />
@@ -111,7 +111,7 @@ export function AIInsightCard({
         )}
       </CardContent>
       {actionLabel && (
-        <CardFooter className="pt-2 bg-muted/5">
+        <CardFooter className="pt-2 bg-muted/30">
           <Button 
             variant="ghost" 
             size="sm" 

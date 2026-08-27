@@ -18,7 +18,7 @@ const TabsNav = React.forwardRef<HTMLDivElement, TabsNavProps>(
       <div
         ref={ref}
         className={cn(
-          "flex items-center gap-2 w-full bg-card px-8 py-3",
+          "flex items-center gap-2 w-full bg-surface px-8 py-3",
           className
         )}
         {...props}
@@ -33,7 +33,7 @@ const TabsNav = React.forwardRef<HTMLDivElement, TabsNavProps>(
               className={cn(
                 "rounded-full px-4 py-1.5 text-sm font-medium transition-all focus:outline-none",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-primary text-primary-foreground shadow-card"
                   : "text-text-muted hover:bg-accent hover:text-foreground"
               )}
             >

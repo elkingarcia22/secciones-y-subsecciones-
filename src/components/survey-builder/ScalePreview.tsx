@@ -32,13 +32,13 @@ export function ScalePreview({ question }: ScalePreviewProps) {
           {likertSteps(question).map((step) => (
             <li
               key={step}
-              className="rounded-md border border-border/70 px-2.5 py-1 text-[11.5px] font-medium text-text-secondary"
+              className="rounded-md border border-border/70 px-2.5 py-1 text-[12px] font-medium text-text-secondary"
             >
               {step}
             </li>
           ))}
           {question.scale.allowDontKnow && (
-            <li className="rounded-md border border-dashed border-border px-2.5 py-1 text-[11.5px] font-medium text-muted-foreground">
+            <li className="rounded-md border border-dashed border-border px-2.5 py-1 text-[12px] font-medium text-muted-foreground">
               No sabe / no responde
             </li>
           )}
@@ -54,7 +54,7 @@ export function ScalePreview({ question }: ScalePreviewProps) {
           {Array.from({ length: NPS_MAX - NPS_MIN + 1 }, (_, index) => (
             <span
               key={index}
-              className="flex h-7 w-7 items-center justify-center rounded-md border border-border/70 text-[11.5px] font-semibold tabular-nums text-text-secondary"
+              className="flex h-7 w-7 items-center justify-center rounded-md border border-border/70 text-[12px] font-semibold tabular-nums text-text-secondary"
             >
               {NPS_MIN + index}
             </span>
@@ -69,7 +69,7 @@ export function ScalePreview({ question }: ScalePreviewProps) {
       <PreviewFrame>
         <div className="flex items-center gap-3">
           {Array.from({ length: STAR_STEPS }, (_, index) => (
-            <Star key={index} className="h-6 w-6 text-muted-foreground/40" strokeWidth={1.75} />
+            <Star key={index} className="h-6 w-6 text-muted-foreground/40" strokeWidth={2} />
           ))}
         </div>
       </PreviewFrame>
@@ -82,7 +82,7 @@ export function ScalePreview({ question }: ScalePreviewProps) {
         <div className="flex items-center gap-4">
           {Array.from({ length: EMOJI_STEPS }, (_, index) => {
             const Face = EMOJI_FACES[index] ?? Meh;
-            return <Face key={index} className="h-7 w-7 text-muted-foreground/40" strokeWidth={1.6} />;
+            return <Face key={index} className="h-7 w-7 text-muted-foreground/40" strokeWidth={2} />;
           })}
         </div>
       </PreviewFrame>

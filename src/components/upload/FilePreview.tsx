@@ -66,7 +66,7 @@ export function FilePreview({
   if (variant === 'compact') {
     return (
       <div className={cn(
-        'flex items-center gap-2 px-3 py-1.5 rounded-full border bg-secondary/30 border-border/50 text-xs font-medium max-w-fit',
+        'flex items-center gap-2 px-3 py-1.5 rounded-full border bg-secondary/30 border-border/60 text-xs font-medium max-w-fit',
         hasError && 'border-destructive/50 bg-destructive/5',
         disabled && 'opacity-50',
         className
@@ -90,13 +90,13 @@ export function FilePreview({
   if (variant === 'row') {
     return (
       <div className={cn(
-        'flex items-center gap-3 p-3 rounded-lg border bg-card/50 border-border/50 transition-colors',
+        'flex items-center gap-3 p-3 rounded-lg border bg-surface border-border/60 transition-colors',
         hasError && 'border-destructive/50 bg-destructive/5',
         disabled && 'opacity-50',
         className
       )}>
         <div className={cn(
-          'p-2 rounded-md bg-background border border-border/50',
+          'p-2 rounded-md bg-background border border-border/60',
           hasError && 'text-destructive'
         )}>
           <Icon className="h-5 w-5" />
@@ -132,7 +132,7 @@ export function FilePreview({
   // Default: Card variant
   return (
     <div className={cn(
-      'flex flex-col p-4 rounded-xl border bg-card border-border/50 shadow-sm transition-all',
+      'flex flex-col p-4 rounded-xl border bg-surface border-border/60 shadow-card transition-all',
       hasError && 'border-destructive/50 ring-1 ring-destructive/20',
       !disabled && !hasError && 'hover:border-primary/30',
       disabled && 'opacity-50 grayscale-[0.5]',
@@ -140,7 +140,7 @@ export function FilePreview({
     )}>
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className={cn(
-          'p-3 rounded-xl bg-muted/50 border border-border/50',
+          'p-3 rounded-xl bg-muted/40 border border-border/60',
           hasError ? 'text-destructive bg-destructive/10' : 'text-primary'
         )}>
           <Icon className="h-6 w-6" />

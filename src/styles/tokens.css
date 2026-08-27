@@ -9,6 +9,7 @@
   --color-surface: #ffffff;
   --color-surface-nav: #111827;
   --color-surface-muted: #f0f4ff;
+  --color-tab-track: #ecf1fa;   /* pista de pestañas — un paso de luz sobre bg-app, sin gris */
   --color-surface-subtle: #fbfcfe;
   
   /* Typography (Figma Exact HEX) */
@@ -56,16 +57,29 @@
   --color-ai-stop-4-rgb: 234, 6, 111;
   --color-ai-stop-5-rgb: 255, 84, 22;
   
-  /* Radius — UBITS app uses generous rounding */
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  /* Radius — monotonic scale anchored on the shell.
+     The sidebar and header only ever use two: 16px for the panel itself and
+     10px for anything pressable. Those two are the fixed points (md and 2xl);
+     the rest are the steps in between and the one above, so a card nested
+     inside a panel is always rounded a little less than the panel holding it.
+     Every step is a real Tailwind class — nothing here is a default left over
+     from Tailwind, which is what let `lg` grow past `2xl` before. */
+  --radius-xs: 6px;    /* checkboxes, code inline, marcas de 20px */
+  --radius-sm: 8px;    /* badges, chips, avatares cuadrados */
+  --radius-md: 10px;   /* botones, inputs, filas — el radio del header */
+  --radius-lg: 12px;   /* tiles, filas de lista, celdas */
+  --radius-xl: 14px;   /* cards dentro de un panel */
+  --radius-2xl: 16px;  /* paneles y contenedores — el radio del aside */
+  --radius-3xl: 24px;  /* drawers, diálogos, barra de acciones flotante */
   --radius-full: 9999px;
   
   /* Shadows */
   --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.03), 0 2px 6px rgba(15, 23, 42, 0.02);
   --shadow-drawer: 0 4px 16px rgba(15, 23, 42, 0.12), 0 1px 4px rgba(15, 23, 42, 0.05);
+  /* The floating action bar is the only thing that hovers over live content
+     rather than sitting in the page, so it carries more separation than a
+     drawer. Tinted navy like the rest, never neutral black. */
+  --shadow-rail: 0 8px 30px rgba(15, 23, 42, 0.24), 0 2px 8px rgba(15, 23, 42, 0.12);
   --shadow-premium: 0 20px 50px rgba(0, 0, 0, 0.05), 0 10px 20px rgba(0, 0, 0, 0.02);
   
   /* Fonts */
@@ -80,6 +94,7 @@
   --color-text-secondary-hsl: 214 10% 40%;
   --color-text-inverse-hsl: 0 0% 100%;
   --color-border-hsl: 210 4% 82%;
+  --color-border-strong-hsl: 220 6% 62%;
   --color-negative-hsl: 357 80% 56%;
   --color-positive-hsl: 116 53% 37%;
   --color-positive-dark-hsl: 100 45% 16%;

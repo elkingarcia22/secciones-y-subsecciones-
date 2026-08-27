@@ -21,14 +21,14 @@ export function EmptyState({
   return (
     <Card
       className={cn(
-        "flex flex-col items-center justify-center p-12 text-center border-dashed border-2 bg-surface-subtle/30",
+        "flex flex-col items-center justify-center p-12 text-center border-dashed border-2 bg-surface-subtle",
         className
       )}
       {...props}
     >
       {Icon && (
         <div className="mb-4 rounded-full bg-surface-muted p-4 text-text-muted">
-          <Icon size={32} strokeWidth={1.5} />
+          <Icon size={32} strokeWidth={2} />
         </div>
       )}
       <h3 className="text-lg font-bold text-text-primary mb-2">

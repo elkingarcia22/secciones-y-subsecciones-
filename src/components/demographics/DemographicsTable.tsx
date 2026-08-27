@@ -145,7 +145,7 @@ export function DemographicsTable({
   const hasActiveFilters = query !== "" || originFilter.size > 0;
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-border/50 bg-surface p-6 shadow-sm">
+    <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <h3 className="text-[13px] font-bold text-text-primary">
@@ -353,7 +353,7 @@ export function DemographicsTable({
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={6}>
               {PAGE_SIZES.map((size) => (
-                <SelectItem key={size} value={String(size)} className="text-[12.5px]">
+                <SelectItem key={size} value={String(size)} className="text-[13px]">
                   {size} por página
                 </SelectItem>
               ))}
@@ -396,7 +396,7 @@ function DemographicTableRow({
     <TableRow
       data-state={isSelected ? "selected" : undefined}
       onClick={onToggle}
-      className="group cursor-pointer border-border/50 transition-colors hover:bg-muted/30"
+      className="group cursor-pointer border-border/60 transition-colors hover:bg-muted/30"
     >
       <TableCell className="pl-7 pr-5">
         <div className="flex items-center">
@@ -409,21 +409,21 @@ function DemographicTableRow({
         </div>
       </TableCell>
       <TableCell className="py-3">
-        <span className="block truncate text-[12.5px] font-semibold text-text-primary" title={row.name}>
+        <span className="block truncate text-[13px] font-semibold text-text-primary" title={row.name}>
           {row.name}
         </span>
       </TableCell>
-      <TableCell className="py-3 text-[12.5px] text-text-secondary">{row.typeLabel}</TableCell>
+      <TableCell className="py-3 text-[13px] text-text-secondary">{row.typeLabel}</TableCell>
       <TableCell className="py-3">
         <Badge variant={row.origin === "system" ? "info" : "neutral"}>{row.originLabel}</Badge>
       </TableCell>
-      <TableCell className="px-2 py-3 text-[12.5px] tabular-nums text-muted-foreground">
+      <TableCell className="px-2 py-3 text-[13px] tabular-nums text-muted-foreground">
         {formatIsoDay(row.createdAt)}
       </TableCell>
-      <TableCell className="py-3 text-[12.5px] text-text-secondary">
+      <TableCell className="py-3 text-[13px] text-text-secondary">
         {row.createdBy ?? "—"}
       </TableCell>
-      <TableCell className="py-3 pl-0 pr-7 text-right text-[12.5px] font-semibold tabular-nums text-text-primary">
+      <TableCell className="py-3 pl-0 pr-7 text-right text-[13px] font-semibold tabular-nums text-text-primary">
         {row.optionCount}
       </TableCell>
     </TableRow>

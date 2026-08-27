@@ -385,7 +385,7 @@ export function DownloadReportsDrawer({
                 * leer; la del formato elegido es la única que informa la
                 * descarga que viene.
                 */}
-              <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+              <div className="overflow-hidden rounded-xl border border-border/70 bg-surface">
                 <div className="flex flex-col divide-y divide-border/60">
                   {REPORT_TYPES.map((type) => (
                     <ReportTypeRow
@@ -418,7 +418,7 @@ export function DownloadReportsDrawer({
                 */}
               {kind === "pdf" && (
                 <>
-                  <div className="flex flex-col divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
+                  <div className="flex flex-col divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-surface">
                     {PDF_SECTIONS.map((section) => {
                       const unavailable = !availableSections.includes(section.id);
                       const enabled = !unavailable && pdfSections.has(section.id);
@@ -491,7 +491,7 @@ export function DownloadReportsDrawer({
                 */}
               {kind === "xlsx" && (
                 <>
-                  <div className="flex flex-col divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
+                  <div className="flex flex-col divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-surface">
                     {XLSX_SHEETS.map((sheet) => {
                       const unavailable = !availableSheets.includes(sheet.id);
                       const enabled = !unavailable && xlsxSheets.has(sheet.id);
@@ -563,7 +563,7 @@ export function DownloadReportsDrawer({
               )}
 
               {kind === "comments" && (
-                <div className="flex flex-col divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card">
+                <div className="flex flex-col divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-surface">
                   <ToggleMultiSelectRow
                     title="Sentimiento de los comentarios"
                     hint="Sin filtrar, el reporte incluye los tres sentimientos"
@@ -594,7 +594,7 @@ export function DownloadReportsDrawer({
               {(kind === "questions-csv" || kind === "answers-csv") && (
                 <div className="flex items-start gap-2.5 rounded-xl border border-border/70 bg-muted/40 px-4 py-3">
                   <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                  <p className="text-[12.5px] leading-snug text-muted-foreground">
+                  <p className="text-[13px] leading-snug text-muted-foreground">
                     {reportDetailFor(kind, isAnonymous)}
                   </p>
                 </div>
@@ -643,15 +643,15 @@ function DrawerTabs({
       type="button"
       onClick={() => onTabChange(id)}
       className={cn(
-        "relative -mb-px inline-flex items-center gap-1.5 border-b-2 px-1 pb-2.5 pt-1 text-[13.5px] font-semibold transition-colors",
+        "relative -mb-px inline-flex items-center gap-1.5 border-b-2 px-1 pb-2.5 pt-1 text-[14px] font-semibold transition-colors",
         activeTab === id
-          ? "border-brand text-brand"
+          ? "border-primary text-primary"
           : "border-transparent text-muted-foreground hover:text-text-primary"
       )}
     >
       {label}
       {badge !== undefined && badge > 0 && (
-        <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[10.5px] font-bold text-white">
+        <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-white">
           {badge}
         </span>
       )}
@@ -695,14 +695,14 @@ function ReportTypeRow({
       onClick={onSelect}
       aria-pressed={selected}
       className={cn(
-        "flex w-full items-center gap-3 px-4 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand/40",
-        selected ? "bg-brand/[0.05]" : "hover:bg-muted/40"
+        "flex w-full items-center gap-3 px-4 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40",
+        selected ? "bg-primary/[0.05]" : "hover:bg-muted/40"
       )}
     >
       <span
         className={cn(
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
-          selected ? "bg-brand/10 text-brand" : "bg-muted text-muted-foreground"
+          selected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
         )}
       >
         <Icon className="h-4 w-4" strokeWidth={2} />
@@ -711,23 +711,23 @@ function ReportTypeRow({
         <span
           className={cn(
             "text-[13px] font-semibold leading-tight",
-            selected ? "text-brand" : "text-text-primary"
+            selected ? "text-primary" : "text-text-primary"
           )}
         >
           {type.title}
         </span>
         {selected && (
-          <span className="text-[11.5px] leading-snug text-muted-foreground">{description}</span>
+          <span className="text-[12px] leading-snug text-muted-foreground">{description}</span>
         )}
       </span>
       <span
         aria-hidden
         className={cn(
           "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-          selected ? "border-brand" : "border-border"
+          selected ? "border-primary" : "border-border"
         )}
       >
-        {selected && <span className="h-2 w-2 rounded-full bg-brand" />}
+        {selected && <span className="h-2 w-2 rounded-full bg-primary" />}
       </span>
     </button>
   );
@@ -784,16 +784,16 @@ function ConfigSectionRow({
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="flex items-center gap-1.5 text-[12.5px] font-semibold leading-tight text-text-primary">
+          <span className="flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-text-primary">
             {index !== null && (
-              <span className="inline-flex h-[17px] shrink-0 items-center justify-center rounded-[5px] bg-brand/10 px-[5px] text-[10.5px] font-bold tabular-nums text-brand">
+              <span className="inline-flex h-[17px] shrink-0 items-center justify-center rounded-xs bg-primary/10 px-[5px] text-[11px] font-bold tabular-nums text-primary">
                 {index}
               </span>
             )}
             <span className="truncate">{label}</span>
           </span>
           {unavailableReason && (
-            <span className="text-[11.5px] leading-snug text-muted-foreground">
+            <span className="text-[12px] leading-snug text-muted-foreground">
               {unavailableReason}
             </span>
           )}
@@ -820,7 +820,7 @@ function ConfigSectionRow({
             */}
           <div className="flex items-center justify-between gap-3">
             {pickerLabel && (
-              <span className="min-w-0 flex-1 text-[11.5px] font-medium leading-snug text-muted-foreground">
+              <span className="min-w-0 flex-1 text-[12px] font-medium leading-snug text-muted-foreground">
                 {pickerLabel}
               </span>
             )}
@@ -843,7 +843,7 @@ function ConfigSectionRow({
             </div>
           </div>
           {picker.selected.size === 0 && pickerEmptyHint && (
-            <span className="text-[11.5px] leading-snug text-muted-foreground">
+            <span className="text-[12px] leading-snug text-muted-foreground">
               {pickerEmptyHint}
             </span>
           )}
@@ -896,10 +896,10 @@ function ToggleMultiSelectRow({
     <div className="flex flex-col gap-2.5 px-4 py-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[12.5px] font-semibold leading-tight text-text-primary">
+          <span className="text-[13px] font-semibold leading-tight text-text-primary">
             {title}
           </span>
-          <span className="text-[11.5px] leading-snug text-muted-foreground">{hint}</span>
+          <span className="text-[12px] leading-snug text-muted-foreground">{hint}</span>
         </div>
         <Switch checked={enabled} onCheckedChange={onEnabledChange} className="shrink-0" />
       </div>
@@ -908,7 +908,7 @@ function ToggleMultiSelectRow({
           {/* Misma columna de 184px que los bloques del PDF y del XLSX: el
               selector cae bajo el interruptor que lo encendió. */}
           <div className="flex items-center justify-between gap-3">
-            <span className="min-w-0 flex-1 text-[11.5px] font-medium leading-snug text-muted-foreground">
+            <span className="min-w-0 flex-1 text-[12px] font-medium leading-snug text-muted-foreground">
               Incluir
             </span>
             <div className="w-[184px] shrink-0">
@@ -923,7 +923,7 @@ function ToggleMultiSelectRow({
             </div>
           </div>
           {emptyWarning && selected.size === 0 && (
-            <span className="text-[11.5px] font-medium text-status-negative">{emptyWarning}</span>
+            <span className="text-[12px] font-medium text-status-negative">{emptyWarning}</span>
           )}
         </>
       )}
@@ -992,8 +992,8 @@ function MultiSelectDropdown({
           ref={triggerRef}
           type="button"
           className={cn(
-            "flex w-full items-center justify-between gap-2 rounded-md border border-input bg-background text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
-            compact ? "h-8 px-2.5 text-[12.5px]" : "h-10 px-3 text-[13px]"
+            "flex w-full items-center justify-between gap-2 rounded-md border border-input bg-background text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+            compact ? "h-8 px-2.5 text-[13px]" : "h-10 px-3 text-[13px]"
           )}
         >
           {/* The trigger is a fixed 184px column, so a multi-pick summary
@@ -1017,7 +1017,7 @@ function MultiSelectDropdown({
         style={width ? { width } : undefined}
         className="flex max-h-[280px] flex-col gap-0 overflow-hidden p-0"
       >
-        <label className="flex cursor-pointer items-center gap-3 border-b border-border/70 bg-muted/30 px-3 py-2 transition-colors hover:bg-muted/50">
+        <label className="flex cursor-pointer items-center gap-3 border-b border-border/70 bg-muted/30 px-3 py-2 transition-colors hover:bg-muted/40">
           <Checkbox
             checked={allSelected ? true : someSelected ? "indeterminate" : false}
             onCheckedChange={(checked) => onSelectAll(checked === true)}
@@ -1033,7 +1033,7 @@ function MultiSelectDropdown({
           {items.map((item) => (
             <label
               key={item.id}
-              className="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-muted/50"
+              className="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-muted/40"
             >
               <Checkbox checked={selected.has(item.id)} onCheckedChange={() => onToggle(item.id)} />
               <span className="text-[13px] text-text-primary">{item.label}</span>
@@ -1083,13 +1083,13 @@ function PopulationFilterCard({
   };
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-xl border border-border/70 bg-card px-4 py-3">
+    <div className="flex flex-col gap-2.5 rounded-xl border border-border/70 bg-surface px-4 py-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[12.5px] font-semibold leading-tight text-text-primary">
+          <span className="text-[13px] font-semibold leading-tight text-text-primary">
             Filtrar población
           </span>
-          <span className="text-[11.5px] leading-snug text-muted-foreground">
+          <span className="text-[12px] leading-snug text-muted-foreground">
             Genera el reporte solo para los grupos que elijas
           </span>
         </div>
@@ -1101,11 +1101,11 @@ function PopulationFilterCard({
               bloques de arriba: dos selectores lado a lado en un ancho de
               drawer quedaban de ~90px y truncaban el nombre del grupo. */}
           <div className="flex items-center justify-between gap-3">
-            <span className="min-w-0 flex-1 text-[11.5px] font-medium leading-snug text-muted-foreground">
+            <span className="min-w-0 flex-1 text-[12px] font-medium leading-snug text-muted-foreground">
               Demográfico
             </span>
             <Select value={filterKey} onValueChange={onFilterKeyChange}>
-              <SelectTrigger className="!h-8 w-[184px] shrink-0 bg-background text-[12.5px]">
+              <SelectTrigger className="!h-8 w-[184px] shrink-0 bg-background text-[13px]">
                 <SelectValue placeholder="Selecciona" />
               </SelectTrigger>
               <SelectContent>
@@ -1119,7 +1119,7 @@ function PopulationFilterCard({
           </div>
           {segment && (
             <div className="flex items-center justify-between gap-3">
-              <span className="min-w-0 flex-1 text-[11.5px] font-medium leading-snug text-muted-foreground">
+              <span className="min-w-0 flex-1 text-[12px] font-medium leading-snug text-muted-foreground">
                 Grupos
               </span>
               <div className="w-[184px] shrink-0">
@@ -1146,7 +1146,7 @@ function PopulationFilterCard({
                 </span>
               </div>
             ) : (
-              <span className="text-[11.5px] leading-snug text-muted-foreground">
+              <span className="text-[12px] leading-snug text-muted-foreground">
                 {countFormat(scope.completed)}
                 {scope.completed === 1 ? " respuesta" : " respuestas"} en la selección
                 {scope.anonymous ? ` · mínimo por grupo: ${scope.threshold}` : ""}
@@ -1203,7 +1203,7 @@ function DownloadsList({
     <div className="flex flex-1 flex-col px-5 py-4">
       <div className="mb-3 flex items-center justify-between">
         <span className="text-[13px] font-bold text-text-primary">Lista de descargas</span>
-        <span className="text-[11.5px] font-semibold text-muted-foreground">
+        <span className="text-[12px] font-semibold text-muted-foreground">
           Últimos 7 días
         </span>
       </div>
@@ -1215,7 +1215,7 @@ function DownloadsList({
           </span>
           <div className="flex flex-col gap-1">
             <span className="text-[14px] font-bold text-text-primary">Sin descargas recientes</span>
-            <span className="max-w-[260px] text-[12.5px] leading-snug text-muted-foreground">
+            <span className="max-w-[260px] text-[13px] leading-snug text-muted-foreground">
               Tus reportes generados aparecerán aquí para acceso rápido.
             </span>
           </div>
@@ -1254,7 +1254,7 @@ function DownloadRow({
   const showsCheck = !isPreparing && !needsRetry && isLatest;
 
   return (
-    <div className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-muted/50">
+    <div className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-muted/40">
       <span
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
@@ -1266,31 +1266,31 @@ function DownloadRow({
         )}
       >
         {showsCheck ? (
-          <Check className="h-[18px] w-[18px]" strokeWidth={3} />
+          <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />
         ) : (
           <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
         )}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="truncate text-[12.5px] font-semibold text-text-primary" title={entry.fileName}>
+        <span className="truncate text-[13px] font-semibold text-text-primary" title={entry.fileName}>
           {entry.fileName}
         </span>
         {isPreparing ? (
           <div className="flex items-center gap-2">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-brand transition-[width] duration-300 ease-out"
+                className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
                 style={{ width: `${entry.progress}%` }}
               />
             </div>
-            <span className="w-9 shrink-0 text-right text-[11.5px] font-bold tabular-nums text-brand">
+            <span className="w-9 shrink-0 text-right text-[12px] font-bold tabular-nums text-primary">
               {Math.round(entry.progress)}%
             </span>
           </div>
         ) : (
           <span
             className={cn(
-              "text-[11.5px]",
+              "text-[12px]",
               needsRetry ? "font-semibold text-status-warning" : "text-muted-foreground"
             )}
           >
@@ -1308,7 +1308,7 @@ function DownloadRow({
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 shrink-0 gap-1.5 rounded-full px-3 text-[11.5px] font-bold text-brand hover:bg-brand/10 hover:text-brand"
+          className="h-7 shrink-0 gap-1.5 rounded-full px-3 text-[12px] font-bold text-primary hover:bg-primary/10 hover:text-primary"
           onClick={() => onDeliver(entry.id)}
         >
           <RotateCcw className="h-3.5 w-3.5" />
@@ -1318,7 +1318,7 @@ function DownloadRow({
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 shrink-0 gap-1.5 rounded-full px-3 text-[11.5px] font-bold text-brand hover:bg-brand/10 hover:text-brand"
+          className="h-7 shrink-0 gap-1.5 rounded-full px-3 text-[12px] font-bold text-primary hover:bg-primary/10 hover:text-primary"
           onClick={() => onShare(entry.id)}
         >
           <Share2 className="h-3.5 w-3.5" />

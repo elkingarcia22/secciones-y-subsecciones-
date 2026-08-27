@@ -131,7 +131,7 @@ function NpsScoreWithTooltip({ score, promoters, passives, detractors, n, dimmed
             setExpanded(!expanded);
           }}
           className={cn(
-            "mr-3 flex h-6 items-center rounded-md border border-border/50 bg-secondary/50 px-2.5 text-[10px] font-medium text-secondary-foreground transition-all hover:bg-secondary",
+            "mr-3 flex h-6 items-center rounded-md border border-border/60 bg-secondary/50 px-2.5 text-[10px] font-medium text-secondary-foreground transition-all hover:bg-secondary",
             expanded ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-hover/score:opacity-100"
           )}
         >
@@ -152,7 +152,7 @@ function NpsScoreWithTooltip({ score, promoters, passives, detractors, n, dimmed
             <Tooltip key={segment.label}>
               <TooltipTrigger asChild>
                 <div className={cn(
-                  "flex items-center py-[3px] text-[11.5px] font-medium tabular-nums text-text-primary shrink-0 cursor-default",
+                  "flex items-center py-[3px] text-[12px] font-medium tabular-nums text-text-primary shrink-0 cursor-default",
                   compact ? "gap-1.5" : "w-[84px] gap-2 justify-end"
                 )}>
                   <div
@@ -208,7 +208,7 @@ function NpsQuestionTable({
 
   return (
     <div className="w-full">
-      <div className="flex items-end justify-between px-2 pb-1.5 border-b border-border/40">
+      <div className="flex items-end justify-between px-2 pb-1.5 border-b border-border/60">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pregunta</span>
         <div className="flex items-center">
           <div className="flex items-center gap-4 mr-[32px]">
@@ -221,8 +221,8 @@ function NpsQuestionTable({
       </div>
       <ul className="flex flex-col">
         {questions.map((q) => (
-          <li key={q.id} className="group flex items-center justify-between gap-6 py-2 px-2 border-b border-border/20 last:border-0 hover:bg-muted/10 transition-colors">
-            <span className="text-[12.5px] text-text-secondary max-w-[500px] leading-relaxed">{q.text}</span>
+          <li key={q.id} className="group flex items-center justify-between gap-6 py-2 px-2 border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors">
+            <span className="text-[13px] text-text-secondary max-w-[500px] leading-relaxed">{q.text}</span>
             <div className="flex items-center gap-6 shrink-0">
               {levelHidden ? <NpsHiddenLevelValue /> : <NpsScoreWithTooltip score={q.score} promoters={q.promoters} passives={q.passives} detractors={q.detractors} n={q.n} dimmed={isBandDimmed(q.score, highlightBands)} />}
             </div>
@@ -320,7 +320,7 @@ function NpsSectionRoot({ section, isOpen, onToggle, visibleLevels, highlightBan
   const levelHidden = !visibleLevels.has("section");
 
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/50 bg-surface">
+    <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface">
       <div
         onClick={onToggle}
         role="button"
@@ -345,12 +345,12 @@ function NpsSectionRoot({ section, isOpen, onToggle, visibleLevels, highlightBan
         </div>
         <span
           aria-hidden
-          className="mt-0.5 flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-md bg-muted/60 border border-border/50 px-1 text-[10px] font-bold tabular-nums text-muted-foreground"
+          className="mt-0.5 flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-md bg-muted/60 border border-border/60 px-1 text-[10px] font-bold tabular-nums text-muted-foreground"
         >
           {section.numbering}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="px-1 py-0.5 w-full rounded-md font-bold tracking-tight text-text-primary flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[15px]">
+          <p className="px-1 py-0.5 w-full rounded-md font-bold tracking-tight text-text-primary flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[14px]">
             {section.title}
             <span className="text-[12px] font-medium text-muted-foreground tracking-normal">
               {questionCount} preguntas
@@ -428,7 +428,7 @@ function SegmentCardRowRecursive({ row, columnIndex, visibleLevels, highlightBan
           )}
           <span className={cn(
             "truncate",
-            depth === 1 ? "text-[12.5px] font-bold text-text-primary" : "text-[11.5px] text-text-secondary"
+            depth === 1 ? "text-[13px] font-bold text-text-primary" : "text-[12px] text-text-secondary"
           )}>
             {row.title}
           </span>
@@ -454,8 +454,8 @@ function SegmentCardRowRecursive({ row, columnIndex, visibleLevels, highlightBan
 function SegmentCard({ column, totalCell, sectionRows, visibleLevels, highlightBands }: { column: any, totalCell: NpsSegmentCell | null, sectionRows: readonly NpsSegmentRow[], visibleLevels: ReadonlySet<ResultLevel>, highlightBands: ReadonlySet<string> }) {
   if (!totalCell || totalCell.belowThreshold) {
     return (
-      <div className="rounded-xl border border-border/50 bg-surface shadow-sm overflow-hidden flex flex-col opacity-60">
-        <div className="p-4 border-b border-border/40 bg-muted/10 flex items-center justify-between">
+      <div className="rounded-xl border border-border/60 bg-surface shadow-card overflow-hidden flex flex-col opacity-60">
+        <div className="p-4 border-b border-border/60 bg-muted/30 flex items-center justify-between">
           <h4 className="font-bold text-text-primary text-[14px]">{column.label}</h4>
           <Lock className="h-3.5 w-3.5 text-muted-foreground" />
         </div>
@@ -468,8 +468,8 @@ function SegmentCard({ column, totalCell, sectionRows, visibleLevels, highlightB
   }
 
   return (
-    <div className="rounded-xl border border-border/50 bg-surface shadow-sm overflow-hidden flex flex-col">
-      <div className="p-4 border-b border-border/40 bg-muted/10">
+    <div className="rounded-xl border border-border/60 bg-surface shadow-card overflow-hidden flex flex-col">
+      <div className="p-4 border-b border-border/60 bg-muted/30">
         <div className="flex items-center justify-between gap-3">
           <h4 className="font-bold text-text-primary text-[14px] truncate" title={column.label}>{column.label}</h4>
           <NpsScoreWithTooltip score={totalCell.score} promoters={totalCell.promoters} passives={totalCell.passives} detractors={totalCell.detractors} n={totalCell.n} compact dimmed={isBandDimmed(totalCell.score, highlightBands)} />
@@ -540,19 +540,16 @@ function SegmentView({ results, activeSegment, filters, visibleLevels, highlight
 function NpsViewSwitch({ value, onChange }: { value: NpsView; onChange: (v: NpsView) => void }) {
   return (
     <Tabs value={value} onValueChange={(v) => onChange(v as NpsView)} className="w-auto shrink-0">
-      <TabsList className="h-9 bg-muted/60 p-1">
-        <TabsTrigger value="dimensions"
-          className="flex h-full items-center gap-2 rounded-md px-3 py-0 text-[13px] font-medium transition-all data-[state=active]:bg-surface data-[state=active]:text-brand data-[state=active]:shadow-sm text-muted-foreground hover:text-text-primary">
+      <TabsList>
+        <TabsTrigger value="dimensions">
           <List className="h-3.5 w-3.5" />
           Secciones
         </TabsTrigger>
-        <TabsTrigger value="segment"
-          className="flex h-full items-center gap-2 rounded-md px-3 py-0 text-[13px] font-medium transition-all data-[state=active]:bg-surface data-[state=active]:text-brand data-[state=active]:shadow-sm text-muted-foreground hover:text-text-primary">
+        <TabsTrigger value="segment">
           <LayoutGrid className="h-3.5 w-3.5" />
           Por segmento
         </TabsTrigger>
-        <TabsTrigger value="depth"
-          className="flex h-full items-center gap-2 rounded-md px-3 py-0 text-[13px] font-medium transition-all data-[state=active]:bg-surface data-[state=active]:text-brand data-[state=active]:shadow-sm text-muted-foreground hover:text-text-primary">
+        <TabsTrigger value="depth">
           <MessagesSquare className="h-3.5 w-3.5" />
           Profundidad
         </TabsTrigger>
@@ -625,7 +622,7 @@ export function NpsTab({ draft, results }: NpsTabProps) {
           second card was what set eNPS apart, and what pushed the detail below
           it further down than anywhere else. */}
       <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-4">
-        <MiniMetricCard 
+        <MiniMetricCard size="compact" 
           icon={Gauge} 
           label="Puntaje eNPS" 
           value={<AnimatedNumber value={nps.score} format={(v) => (v > 0 ? "+" : "") + Math.round(v).toString() + " eNPS"} />}
@@ -637,7 +634,7 @@ export function NpsTab({ draft, results }: NpsTabProps) {
                   <Info className="h-3 w-3" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="max-w-[400px] p-4 bg-slate-900 text-slate-100 shadow-xl border-none">
+              <TooltipContent className="max-w-[400px] p-4 bg-surface-nav text-white shadow-drawer border-none">
                 <div className="flex flex-col gap-3 items-start leading-relaxed">
                   <p className="text-[12px]"><strong>Puntaje eNPS:</strong><br/>La fórmula del eNPS resta el porcentaje de detractores al de promotores.</p>
                   <div className="flex w-full flex-col gap-1 mt-1">
@@ -655,13 +652,13 @@ export function NpsTab({ draft, results }: NpsTabProps) {
             </Tooltip>
           </TooltipProvider>
         </MiniMetricCard>
-        <MiniMetricCard icon={TrendingUp} label="Promotores" value={<AnimatedNumber value={nps.n > 0 ? (counts.promoter / nps.n) * 100 : 0} format={(v) => Math.round(v).toString() + "%"} />} color={POSITIVE_TEXT} />
-        <MiniMetricCard icon={Minus} label="Neutros" value={<AnimatedNumber value={nps.n > 0 ? (counts.passive / nps.n) * 100 : 0} format={(v) => Math.round(v).toString() + "%"} />} color={YELLOW_TEXT} />
-        <MiniMetricCard icon={TrendingDown} label="Detractores" value={<AnimatedNumber value={nps.n > 0 ? (counts.detractor / nps.n) * 100 : 0} format={(v) => Math.round(v).toString() + "%"} />} color={NEGATIVE_TEXT} />
+        <MiniMetricCard size="compact" icon={TrendingUp} label="Promotores" value={<AnimatedNumber value={nps.n > 0 ? (counts.promoter / nps.n) * 100 : 0} format={(v) => Math.round(v).toString() + "%"} />} color={POSITIVE_TEXT} />
+        <MiniMetricCard size="compact" icon={Minus} label="Neutros" value={<AnimatedNumber value={nps.n > 0 ? (counts.passive / nps.n) * 100 : 0} format={(v) => Math.round(v).toString() + "%"} />} color={YELLOW_TEXT} />
+        <MiniMetricCard size="compact" icon={TrendingDown} label="Detractores" value={<AnimatedNumber value={nps.n > 0 ? (counts.detractor / nps.n) * 100 : 0} format={(v) => Math.round(v).toString() + "%"} />} color={NEGATIVE_TEXT} />
       </div>
 
-      <div className="rounded-2xl border border-border/50 bg-surface p-6 shadow-sm sm:p-8">
-        <div className="sticky top-4 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
+      <div className="rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
+        <div className="sticky top-3 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
           <div className="flex flex-wrap items-center justify-between gap-4 pb-2">
             <div className="flex items-center gap-2">
               <h3 className="text-[13px] font-bold text-text-primary">
@@ -681,7 +678,7 @@ export function NpsTab({ draft, results }: NpsTabProps) {
               {view === "depth" && depthTotals.people > 0 && (
                 // The coverage belongs next to the count: a list of answers
                 // without the share of people who wrote them is an anecdote.
-                <span className="text-[11.5px] font-medium text-muted-foreground">
+                <span className="text-[12px] font-medium text-muted-foreground">
                   {depthTotals.answered.toLocaleString("es-CO")} respuestas de{" "}
                   {depthTotals.people.toLocaleString("es-CO")} personas ·{" "}
                   {depthTotals.coverage}% de cobertura

@@ -31,8 +31,8 @@ export const UbitsMobileTabBar: React.FC<NavigationComponentProps<NavigationItem
             disabled={isDisabled}
             onClick={() => !isDisabled && onItemSelect?.(item.id)}
             className={cn(
-              "relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-lg",
-              isActive ? "text-brand" : "text-text-muted hover:text-text-primary",
+              "relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg",
+              isActive ? "text-primary" : "text-text-muted hover:text-text-primary",
               isDisabled && "opacity-40 cursor-not-allowed"
             )}
             aria-label={item.label}
@@ -49,7 +49,7 @@ export const UbitsMobileTabBar: React.FC<NavigationComponentProps<NavigationItem
               )}
               {item.badge && (
                 <span className={cn(
-                  "absolute -top-1 -right-1 flex items-center justify-center min-w-[14px] h-[14px] px-1 text-[8px] font-bold rounded-full bg-destructive text-text-inverse border-2 border-surface",
+                  "absolute -top-1 -right-1 flex items-center justify-center min-w-[14px] h-[14px] px-1 text-[10px] font-bold rounded-full bg-destructive text-text-inverse border-2 border-surface",
                   item.badge.dot && "w-2 h-2 p-0 -top-0.5 -right-0.5"
                 )}>
                   {!item.badge.dot && item.badge.count}

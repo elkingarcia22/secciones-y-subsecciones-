@@ -239,12 +239,12 @@ export function ParticipantsEditor({
   };
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/50 bg-surface shadow-card">
-      <div className="flex items-center gap-3 border-b border-border/40 px-6 py-4">
+    <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/60 bg-surface shadow-card">
+      <div className="flex items-center gap-3 border-b border-border/60 px-6 py-4">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary">
-          <Users className="h-[18px] w-[18px]" strokeWidth={2.2} />
+          <Users className="h-[18px] w-[18px]" strokeWidth={2} />
         </span>
-        <h2 className="min-w-0 flex-1 truncate text-[15px] font-bold tracking-tight text-text-primary">
+        <h2 className="min-w-0 flex-1 truncate text-[14px] font-bold tracking-tight text-text-primary">
           Participantes
         </h2>
 
@@ -252,7 +252,7 @@ export function ParticipantsEditor({
             lives in the header rather than inside whichever panel is open. */}
         <span
           className={cn(
-            "shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-semibold tabular-nums",
+            "shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold tabular-nums",
             total > 0 ? "bg-status-positive/10 text-status-positive" : "bg-border/40 text-muted-foreground"
           )}
         >
@@ -262,8 +262,8 @@ export function ParticipantsEditor({
 
       <div className="flex flex-col gap-6 px-6 py-6">
         {showValidation && total === 0 && (
-          <p className="flex items-center gap-1.5 text-[11.5px] font-medium text-destructive animate-in fade-in duration-200">
-            <TriangleAlert className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />
+          <p className="flex items-center gap-1.5 text-[12px] font-medium text-destructive animate-in fade-in duration-200">
+            <TriangleAlert className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
             Selecciona al menos un participante para poder continuar.
           </p>
         )}
@@ -294,7 +294,7 @@ export function ParticipantsEditor({
         {participants.mode === "import" && (
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[12.5px] font-semibold text-text-primary">Importar archivo</p>
+              <p className="text-[13px] font-semibold text-text-primary">Importar archivo</p>
             </div>
 
             {isAnalyzing ? (
@@ -339,7 +339,7 @@ export function ParticipantsEditor({
 
 function AnalyzingState({ progress }: { progress: number }) {
   return (
-    <div className="relative flex flex-col min-h-[300px] p-[2px] rounded-xl bg-ai-gradient shimmer-mirror shadow-sm animate-in fade-in duration-300 select-none">
+    <div className="relative flex flex-col min-h-[300px] p-[2px] rounded-xl bg-ai-gradient shimmer-mirror shadow-card animate-in fade-in duration-300 select-none">
       <div className="relative z-10 flex-1 w-full bg-ai-mesh-card rounded-[calc(var(--radius-xl)-2px)] flex flex-col items-center justify-center p-6 gap-6">
         
         {/* Pulsing UBITS AI Icon */}
@@ -383,7 +383,7 @@ function AnalyzingState({ progress }: { progress: number }) {
         </div>
 
         <div className="w-full max-w-sm flex flex-col gap-2">
-          <div className="flex justify-between items-end text-[11.5px] font-bold">
+          <div className="flex justify-between items-end text-[12px] font-bold">
             <span className="text-text-secondary">0 objetivos en 0 usuarios</span>
             <span className="text-ai-gradient">
               {progress}%
@@ -437,9 +437,9 @@ function ModeCard({
       className={cn(
         "relative flex cursor-pointer flex-col rounded-xl overflow-hidden transition",
         isAI && isActive ? "p-[2px] bg-ai-gradient" : "",
-        !isAI && isActive ? "border p-4 border-primary bg-primary/[0.04] shadow-sm ring-1 ring-primary/20" : "",
-        !isActive && !isAI ? "border p-4 border-border/60 hover:border-primary/30 hover:bg-primary/[0.02] hover:shadow-sm" : "",
-        !isActive && isAI ? "border p-4 border-border/60 hover:border-brand/30 hover:shadow-sm bg-ai-mesh-card" : ""
+        !isAI && isActive ? "border p-4 border-primary bg-primary/[0.04] shadow-card ring-1 ring-primary/20" : "",
+        !isActive && !isAI ? "border p-4 border-border/60 hover:border-primary/30 hover:bg-primary/[0.02] hover:shadow-card" : "",
+        !isActive && isAI ? "border p-4 border-border/60 hover:border-primary/30 hover:shadow-card bg-ai-mesh-card" : ""
       )}
     >
       <input
@@ -462,10 +462,10 @@ function ModeCard({
               "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors",
               isActive && !isAI ? "bg-primary/10 text-primary" : "",
               !isActive && !isAI ? "bg-muted/60 text-muted-foreground" : "",
-              isAI ? "bg-ai-bg text-brand" : ""
+              isAI ? "bg-ai-bg text-primary" : ""
             )}
           >
-            {isAI ? <Sparkles className="h-[18px] w-[18px]" strokeWidth={2.2} /> : <Icon className="h-[18px] w-[18px]" strokeWidth={2.2} />}
+            {isAI ? <Sparkles className="h-[18px] w-[18px]" strokeWidth={2} /> : <Icon className="h-[18px] w-[18px]" strokeWidth={2} />}
           </span>
 
           {isActive ? (
@@ -476,10 +476,10 @@ function ModeCard({
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-[13.5px] font-semibold tracking-tight text-text-primary">
+          <span className="text-[14px] font-semibold tracking-tight text-text-primary">
             {isAI ? "Importar archivo con IA" : title}
           </span>
-          <p className="text-[11.5px] leading-relaxed text-text-secondary">{description}</p>
+          <p className="text-[12px] leading-relaxed text-text-secondary">{description}</p>
         </div>
 
         <span
@@ -583,7 +583,7 @@ function CompanySummary() {
   }, [segmentBy]);
 
   return (
-    <div className="flex flex-col gap-5 rounded-xl border border-border/60 p-6 shadow-sm bg-surface">
+    <div className="flex flex-col gap-5 rounded-xl border border-border/60 p-6 shadow-card bg-surface">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 border-b border-border/60 pb-5">
         <div className="shrink-0">
           <p className="text-[13px] text-text-secondary font-medium mb-1">
@@ -595,7 +595,7 @@ function CompanySummary() {
           </p>
         </div>
         <div className="hidden sm:block w-px h-10 bg-border/60" />
-        <p className="text-[12.5px] leading-relaxed text-muted-foreground max-w-2xl">
+        <p className="text-[13px] leading-relaxed text-muted-foreground max-w-2xl">
           La lista de destinatarios se cerrará de forma automática al momento de lanzar la encuesta. Quienes entren a la empresa antes de esa fecha también la recibirán.
         </p>
       </div>
@@ -606,9 +606,9 @@ function CompanySummary() {
             Detalle de la distribución
           </h3>
           <div className="flex items-center gap-2">
-            <span className="text-[11.5px] font-medium text-muted-foreground">Ver por:</span>
+            <span className="text-[12px] font-medium text-muted-foreground">Ver por:</span>
             <Select value={segmentBy} onValueChange={(val) => handleSegmentByChange(val as SegmentKey)}>
-              <SelectTrigger className="h-8 w-[140px] rounded-lg border-border/60 bg-surface px-3 text-[12px] shadow-sm focus:ring-2 focus:ring-primary/20">
+              <SelectTrigger className="h-8 w-[140px] rounded-lg border-border/60 bg-surface px-3 text-[12px] shadow-card focus:ring-2 focus:ring-primary/20">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -622,7 +622,7 @@ function CompanySummary() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-border/60 shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border/60 shadow-card">
           <Table>
             <TableHeader>
               <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
@@ -668,14 +668,14 @@ function CompanySummary() {
               {segments.map(([segment, count]) => {
                 const share = Math.round((count / COLLABORATOR_COUNT) * 100);
                 return (
-                  <TableRow key={segment} className="border-border/50 bg-surface hover:bg-border/20 transition-colors">
-                    <TableCell className="py-2.5 pl-7 text-[12.5px] text-text-secondary">
+                  <TableRow key={segment} className="border-border/60 bg-surface hover:bg-border/20 transition-colors">
+                    <TableCell className="py-2.5 pl-7 text-[13px] text-text-secondary">
                       {segment}
                     </TableCell>
-                    <TableCell className="w-[120px] py-2.5 text-right tabular-nums text-[12.5px] text-text-secondary">
+                    <TableCell className="w-[120px] py-2.5 text-right tabular-nums text-[13px] text-text-secondary">
                       {formatCount(count)}
                     </TableCell>
-                    <TableCell className="w-[80px] py-2.5 pr-6 text-right tabular-nums text-[12.5px] text-text-secondary">
+                    <TableCell className="w-[80px] py-2.5 pr-6 text-right tabular-nums text-[13px] text-text-secondary">
                       {share}%
                     </TableCell>
                   </TableRow>
@@ -702,7 +702,7 @@ function ImportErrorState({ fileName }: { fileName: string }) {
         <p className="text-[14px] font-bold tracking-tight text-text-primary">
           No pudimos leer el archivo
         </p>
-        <p className="mx-auto max-w-sm text-[12.5px] leading-relaxed text-muted-foreground">
+        <p className="mx-auto max-w-sm text-[13px] leading-relaxed text-muted-foreground">
           “{fileName}” parece estar corrupto o no ser una planilla válida. Revisa el archivo y
           vuelve a intentarlo.
         </p>
@@ -716,7 +716,7 @@ function ImportErrorState({ fileName }: { fileName: string }) {
  * case, in neutral tones: wrong input, not broken bytes. */
 function EmptyImportState() {
   return (
-    <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-muted/10 px-6 py-10 text-center">
+    <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-muted/30 px-6 py-10 text-center">
       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted/60 text-muted-foreground">
         <FileSearch className="h-6 w-6" strokeWidth={2} />
       </span>
@@ -724,7 +724,7 @@ function EmptyImportState() {
         <p className="text-[14px] font-bold tracking-tight text-text-primary">
           No encontramos usuarios en el archivo
         </p>
-        <p className="mx-auto max-w-sm text-[12.5px] leading-relaxed text-muted-foreground">
+        <p className="mx-auto max-w-sm text-[13px] leading-relaxed text-muted-foreground">
           El archivo es válido, pero su estructura no nos permite detectar usuarios. Revisa que
           tenga una columna “nombre” o “username” con al menos una fila.
         </p>

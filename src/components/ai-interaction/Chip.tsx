@@ -10,13 +10,13 @@ const chipVariants = cva(
     variants: {
       tone: {
         default: "border-border bg-background text-foreground hover:bg-accent",
-        muted: "border-transparent bg-muted text-muted-foreground hover:bg-muted/80",
+        muted: "border-transparent bg-muted text-muted-foreground hover:bg-muted/60",
         primary: "border-transparent bg-primary/10 text-primary hover:bg-primary/20",
         positive: "border-transparent bg-status-positive/10 text-status-positive hover:bg-status-positive/20",
         negative: "border-transparent bg-status-negative/10 text-status-negative hover:bg-status-negative/20",
         warning: "border-transparent bg-status-warning/10 text-status-warning hover:bg-status-warning/20",
         info: "border-transparent bg-status-info/10 text-status-info hover:bg-status-info/20",
-        ai: "border-ai-gradient bg-ai-gradient/5 hover:bg-ai-gradient/10",
+        ai: "border-ai-gradient bg-ai-bg hover:bg-ai-bg",
       },
       size: {
         sm: "h-6 px-2 text-xs",
@@ -93,7 +93,7 @@ export function Chip({
         <span className={cn(
           "ml-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-bold",
           selected ? "bg-white/20 text-current" : "bg-muted-foreground/10 text-muted-foreground",
-          isAI && !selected && "bg-ai-gradient/10 text-ai-gradient"
+          isAI && !selected && "bg-ai-bg text-ai-gradient"
         )}>
           {count}
         </span>

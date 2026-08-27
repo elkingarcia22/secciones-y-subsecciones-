@@ -113,15 +113,15 @@ export function IndividualResponsesView({
     <div className="flex flex-col gap-4">
       {anonymous && (
         <div className="flex items-start gap-2.5 rounded-xl border border-info/30 bg-info/5 px-4 py-3 dark:border-info/40 dark:bg-info/10">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" strokeWidth={2.3} />
-          <p className="text-[11.5px] font-medium leading-relaxed text-info">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" strokeWidth={2} />
+          <p className="text-[12px] font-medium leading-relaxed text-info">
             <strong className="font-bold">Encuesta anónima:</strong> puedes ver las respuestas, pero no las identidades ni los datos demográficos.
           </p>
         </div>
       )}
 
       <div className="grid min-h-0 grid-cols-1 gap-5 lg:items-start lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
-        <aside className="sticky top-32 flex max-h-[calc(100vh-9rem)] min-h-0 flex-col rounded-xl border border-border/60 bg-muted/20 p-4">
+        <aside className="sticky top-32 flex max-h-[calc(100vh-9rem)] min-h-0 flex-col rounded-xl border border-border/60 bg-muted/30 p-4">
           <RespondentRoster
             respondents={respondents}
             selectedId={selectedId}

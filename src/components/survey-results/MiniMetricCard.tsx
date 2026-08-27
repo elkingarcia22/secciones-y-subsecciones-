@@ -29,6 +29,10 @@ export function MiniMetricCard({
   onClick,
   active = false,
   disabled = false,
+  /** "compact" trims padding and the value size for rows with many cards
+   *  stacked above other content (the home KPI row) — same anatomy, just
+   *  shorter, rather than a second design. */
+  size = "default",
   children,
 }: {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -43,10 +47,12 @@ export function MiniMetricCard({
   /** Only meaningful with `onClick`: the narrowing this card applies is on. */
   active?: boolean;
   disabled?: boolean;
+  size?: "default" | "compact";
   children?: React.ReactNode;
 }) {
   const interactive = onClick !== undefined;
   const Root = (interactive ? "button" : "div") as "button";
+  const compact = size === "compact";
 
   return (
     <Root
@@ -55,13 +61,14 @@ export function MiniMetricCard({
       disabled={interactive ? disabled : undefined}
       aria-pressed={interactive ? active : undefined}
       className={cn(
-        "flex flex-col gap-3 rounded-2xl border p-5",
+        "flex flex-col rounded-2xl border",
+        compact ? "gap-1.5 p-3.5" : "gap-3 p-5",
         !bgColor && !active && "border-border/60 bg-surface",
-        active && "border-brand bg-brand/[0.04] shadow-[0_0_0_1px_theme(colors.brand.DEFAULT)]",
+        active && "border-primary bg-primary/[0.04] shadow-[0_0_0_1px_theme(colors.brand.DEFAULT)]",
         // The same lift the report's other interactive cards use, so a card
         // that reacts to the pointer reacts the way they already do.
         interactive && "text-left transition-transform duration-300",
-        interactive && !disabled && "hover:scale-[1.01] hover:shadow-md active:scale-[0.99]",
+        interactive && !disabled && "hover:scale-[1.01] hover:shadow-drawer active:scale-[0.99]",
         interactive && disabled && "cursor-default opacity-60"
       )}
       style={{
@@ -70,20 +77,21 @@ export function MiniMetricCard({
       }}
     >
       <div className="flex min-w-0 items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
-        <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />
+        <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
         <span className="truncate">{label}</span>
         {children}
       </div>
       <span
         className={cn(
-          "text-[24px] font-extrabold tabular-nums leading-none",
+          "font-extrabold tabular-nums leading-none",
+          compact ? "text-[20px]" : "text-[24px]",
           !color && "text-text-primary",
           !color && tone === "positive" && "text-status-positive",
           !color && tone === "warning" && "text-status-warning",
           !color && tone === "yellow" && "text-[#EAB308]",
           !color && tone === "neutral" && "text-muted-foreground",
           !color && tone === "negative" && "text-status-negative",
-          !color && tone === "brand" && "text-brand"
+          !color && tone === "brand" && "text-primary"
         )}
         style={color ? { color } : undefined}
       >

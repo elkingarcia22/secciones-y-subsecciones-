@@ -127,10 +127,10 @@ export function UploadZone({
         onClick={() => !disabled && inputRef.current?.click()}
         className={cn(
           'relative flex flex-col items-center justify-center min-h-[160px] p-6 border-2 border-dashed rounded-xl transition-all cursor-pointer',
-          'bg-muted/5 border-border hover:bg-muted/10 hover:border-primary/50',
-          isDragActive && 'bg-primary/5 border-primary scale-[1.01] shadow-sm',
+          'bg-muted/30 border-border hover:bg-muted/30 hover:border-primary/50',
+          isDragActive && 'bg-primary/5 border-primary scale-[1.01] shadow-card',
           hasError && 'bg-destructive/5 border-destructive/50 hover:border-destructive',
-          disabled && 'opacity-50 cursor-not-allowed grayscale-[0.5] hover:border-border hover:bg-muted/5'
+          disabled && 'opacity-50 cursor-not-allowed grayscale-[0.5] hover:border-border hover:bg-muted/30'
         )}
       >
         <input
@@ -146,7 +146,7 @@ export function UploadZone({
 
         <div className="flex flex-col items-center text-center gap-3">
           <div className={cn(
-            'p-3 rounded-full bg-background shadow-sm border border-border/50',
+            'p-3 rounded-full bg-background shadow-card border border-border/60',
             isDragActive && 'text-primary',
             hasError && 'text-destructive'
           )}>
@@ -173,7 +173,7 @@ export function UploadZone({
           {value.map((file, index) => (
             <div 
               key={`${file.name}-${index}`}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/30 border border-border/50 text-xs font-medium max-w-[240px]"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/30 border border-border/60 text-xs font-medium max-w-[240px]"
             >
               <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
               <span className="truncate">{file.name}</span>

@@ -64,7 +64,7 @@ export function AiVoiceSection({
       }
     >
       {sentiment.total === 0 ? (
-        <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+        <p className="text-[13px] leading-relaxed text-muted-foreground">
           Esta medición no recogió respuestas a preguntas abiertas, así que no hay sentimiento que
           interpretar.
         </p>
@@ -72,7 +72,7 @@ export function AiVoiceSection({
         <>
           {/* The split, stated once, on the ground the tab's own summary strip
               uses. Everything below is a cut of it. */}
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-border/50 bg-muted/20 px-4 py-2.5">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-border/60 bg-muted/30 px-4 py-2.5">
             <span className="mr-1 text-[11px] font-semibold uppercase tracking-wide leading-none text-muted-foreground/80">
               Distribución de sentimiento
             </span>
@@ -133,7 +133,7 @@ export function AiVoiceSection({
                       {(["positive", "neutral"] as const).map((id) => (
                         <td
                           key={id}
-                          className="hidden py-3 text-right text-[11.5px] font-semibold tabular-nums text-text-primary sm:table-cell"
+                          className="hidden py-3 text-right text-[12px] font-semibold tabular-nums text-text-primary sm:table-cell"
                         >
                           <span className="inline-flex items-center justify-end gap-1.5">
                             <span
@@ -144,7 +144,7 @@ export function AiVoiceSection({
                           </span>
                         </td>
                       ))}
-                      <td className="py-3 text-right text-[11.5px] tabular-nums text-text-secondary">
+                      <td className="py-3 text-right text-[12px] tabular-nums text-text-secondary">
                         {formatCount(topic.total)}
                       </td>
                       <td className="py-3 pr-4 text-right">
@@ -193,7 +193,7 @@ function SentimentStat({ id, count, total }: { id: Sentiment; count: number; tot
   return (
     <span className="flex items-center gap-1.5 px-2 py-1 leading-none">
       <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: style.color }} />
-      <span className="text-[11.5px] font-medium text-text-secondary">{style.label}</span>
+      <span className="text-[12px] font-medium text-text-secondary">{style.label}</span>
       <span className="text-[13px] font-bold tabular-nums text-text-primary">
         {Math.round(share(count, total))}%
       </span>
@@ -220,7 +220,7 @@ function VerbatimCard({
 
   if (!comment) {
     return (
-      <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-4 py-3.5 text-[11.5px] text-muted-foreground">
+      <div className="rounded-xl border border-dashed border-border/60 bg-muted/30 px-4 py-3.5 text-[12px] text-muted-foreground">
         Sin un comentario {style.plural} destacable en esta medición.
       </div>
     );
@@ -228,12 +228,12 @@ function VerbatimCard({
 
   return (
     <figure className={cn(AI_DETAIL_PANEL, "flex flex-col gap-2")}>
-      <blockquote className="text-[12.5px] leading-relaxed text-text-primary">
+      <blockquote className="text-[13px] leading-relaxed text-text-primary">
         “{comment.text}”
       </blockquote>
-      <figcaption className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] text-muted-foreground">
+      <figcaption className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
-          {comment.anonymous && <ShieldCheck className="h-2.5 w-2.5" strokeWidth={2.2} />}
+          {comment.anonymous && <ShieldCheck className="h-2.5 w-2.5" strokeWidth={2} />}
           <span className="font-medium text-text-secondary">
             {comment.anonymous ? "Respuesta anónima" : comment.respondentName}
           </span>

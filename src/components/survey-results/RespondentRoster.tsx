@@ -78,7 +78,7 @@ export function RespondentRoster({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar persona"
-            className="h-9 pl-9 text-[12.5px]"
+            className="h-9 pl-9 text-[13px]"
             aria-label="Buscar persona"
           />
         </div>
@@ -118,7 +118,7 @@ export function RespondentRoster({
                 <button
                   type="button"
                   onClick={() => setLimit((current) => current + PAGE_SIZE)}
-                  className="mt-1 w-full rounded-lg border border-border/60 bg-surface py-2 text-[11.5px] font-semibold text-text-secondary transition-colors hover:bg-muted/40"
+                  className="mt-1 w-full rounded-lg border border-border/60 bg-surface py-2 text-[12px] font-semibold text-text-secondary transition-colors hover:bg-muted/40"
                 >
                   Mostrar {Math.min(PAGE_SIZE, visible.length - limit)} más
                 </button>
@@ -159,33 +159,33 @@ function RosterRow({
       className={cn(
         "flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-all",
         selected
-          ? "border-primary/40 bg-primary/[0.06] shadow-sm"
+          ? "border-primary/40 bg-primary/[0.06] shadow-card"
           : "border-transparent hover:border-border/60 hover:bg-muted/30"
       )}
     >
       <span
         aria-hidden
         className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10.5px] font-extrabold",
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold",
           person.anonymous
             ? "bg-muted text-muted-foreground"
             : "bg-primary/10 text-primary"
         )}
       >
-        {person.anonymous ? <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.4} /> : person.initials}
+        {person.anonymous ? <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} /> : person.initials}
       </span>
 
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-[12.5px] font-semibold text-text-primary">
+        <span className="truncate text-[13px] font-semibold text-text-primary">
           {person.name}
         </span>
-        <span className="truncate text-[10.5px] font-medium text-muted-foreground">
+        <span className="truncate text-[11px] font-medium text-muted-foreground">
           {rowSubtitle(person)}
         </span>
       </span>
 
       {person.status === "partial" && (
-        <Badge variant="warning" className="shrink-0 px-1.5 text-[9.5px]">
+        <Badge variant="warning" className="shrink-0 px-1.5 text-[10px]">
           Parcial
         </Badge>
       )}
@@ -193,7 +193,7 @@ function RosterRow({
       {band && person.score !== null && (
         <span
           aria-hidden
-          className="flex h-6 min-w-[30px] shrink-0 items-center justify-center rounded-md border text-[10.5px] font-bold tabular-nums"
+          className="flex h-6 min-w-[30px] shrink-0 items-center justify-center rounded-md border text-[11px] font-bold tabular-nums"
           style={{
             backgroundColor: band.background,
             borderColor: band.border,
@@ -204,7 +204,7 @@ function RosterRow({
         </span>
       )}
 
-      {selected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={3} />}
+      {selected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={2.5} />}
     </button>
   );
 }

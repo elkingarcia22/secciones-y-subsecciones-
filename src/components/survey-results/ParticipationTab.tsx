@@ -292,7 +292,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
       <div className="flex flex-col gap-6 py-6 sm:py-8">
         {/* Métricas de participación — mismas tarjetas que las de favorabilidad */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          <MiniMetricCard
+          <MiniMetricCard size="compact"
             icon={Users}
             label="Total de participación"
             value={<AnimatedNumber value={results.participation.rate} format={formatPercent} />}
@@ -308,7 +308,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
               </TooltipTrigger>
               <TooltipContent
                 side="top"
-                className="max-w-[400px] p-4 bg-slate-900 text-slate-100 shadow-xl border-none"
+                className="max-w-[400px] p-4 bg-surface-nav text-white shadow-drawer border-none"
               >
                 <div className="flex flex-col gap-3 items-start leading-relaxed">
                   <p className="text-[12px]">
@@ -326,19 +326,19 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
             </Tooltip>
           </MiniMetricCard>
 
-          <MiniMetricCard
+          <MiniMetricCard size="compact"
             icon={CheckCircle2}
             label="Completadas"
             value={<AnimatedNumber value={completed} format={formatCount} />}
             color={POSITIVE_TEXT}
           />
-          <MiniMetricCard
+          <MiniMetricCard size="compact"
             icon={Clock3}
             label="En progreso"
             value={<AnimatedNumber value={inProgress} format={formatCount} />}
             color={YELLOW_TEXT}
           />
-          <MiniMetricCard
+          <MiniMetricCard size="compact"
             icon={UserX}
             label="Faltan"
             value={<AnimatedNumber value={missing} format={formatCount} />}
@@ -346,7 +346,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
           />
         </div>
 
-        <div className="flex flex-col gap-6 rounded-2xl border border-border/50 bg-surface p-6 shadow-sm">
+        <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
               <h3 className="text-[13px] font-bold text-text-primary">
@@ -383,7 +383,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
                     (isSearchExpanded || query !== "") ? "text-primary" : "text-muted-foreground"
                   )}
                 >
-                  <Search className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]" strokeWidth={2.2} />
+                  <Search className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]" strokeWidth={2} />
                 </div>
                 
                 <input
@@ -429,25 +429,25 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
                     setPage(1);
                   }}
                   className={cn(
-                    "flex h-9 whitespace-nowrap shrink-0 items-center gap-2 rounded-lg border px-3 text-[12.5px] font-semibold transition-colors",
+                    "flex h-9 whitespace-nowrap shrink-0 items-center gap-2 rounded-lg border px-3 text-[13px] font-semibold transition-colors",
                     onlySelected
                       ? "border-primary/40 bg-primary/5 text-primary"
                       : "border-border text-text-secondary hover:border-primary/30 hover:text-primary"
                   )}
                 >
                   {onlySelected ? (
-                    <EyeOff className="h-3.5 w-3.5" strokeWidth={2.3} />
+                    <EyeOff className="h-3.5 w-3.5" strokeWidth={2} />
                   ) : (
-                    <Eye className="h-3.5 w-3.5" strokeWidth={2.3} />
+                    <Eye className="h-3.5 w-3.5" strokeWidth={2} />
                   )}
                   {onlySelected ? "Ver todos" : `Ver seleccionados (${formatCount(selectedIds.size)})`}
                 </button>
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
-                <span className="text-[12.5px] font-medium text-muted-foreground">Ver por:</span>
+                <span className="text-[13px] font-medium text-muted-foreground">Ver por:</span>
                 <Select value={segment.key} onValueChange={handleSegmentChange}>
-                  <SelectTrigger className="h-9 w-[160px] rounded-lg border-border bg-surface px-3 text-[12.5px] transition-colors hover:bg-border/30 focus:ring-2 focus:ring-primary/20">
+                  <SelectTrigger className="h-9 w-[160px] rounded-lg border-border bg-surface px-3 text-[13px] transition-colors hover:bg-border/30 focus:ring-2 focus:ring-primary/20">
                     <SelectValue className="truncate text-text-primary" />
                   </SelectTrigger>
                   <SelectContent position="popper">
@@ -649,7 +649,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
               </SelectTrigger>
               <SelectContent position="popper" sideOffset={6}>
                 {PAGE_SIZES.map((size) => (
-                  <SelectItem key={size} value={String(size)} className="text-[12.5px]">
+                  <SelectItem key={size} value={String(size)} className="text-[13px]">
                     {size} por página
                   </SelectItem>
                 ))}
@@ -691,7 +691,7 @@ function GroupRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSele
     <TableRow
       data-state={isSelected ? "selected" : undefined}
       onClick={onToggle}
-      className="cursor-pointer border-border/50 hover:bg-muted/30 transition-colors group"
+      className="cursor-pointer border-border/60 hover:bg-muted/30 transition-colors group"
     >
       <TableCell className="px-0">
         <div className="flex items-center justify-center">
@@ -705,7 +705,7 @@ function GroupRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSele
       </TableCell>
       <TableCell className="py-3">
         <div className="flex items-center gap-2">
-          <span className="text-[12.5px] text-text-secondary">{row.label}</span>
+          <span className="text-[13px] text-text-secondary">{row.label}</span>
           {missing > 0 && (
             <button
               type="button"
@@ -730,14 +730,14 @@ function GroupRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSele
           <Badge variant="warning">En progreso</Badge>
         )}
       </TableCell>
-      <TableCell className="w-[120px] py-3 text-right tabular-nums text-[12.5px] text-text-secondary">
+      <TableCell className="w-[120px] py-3 text-right tabular-nums text-[13px] text-text-secondary">
         <span className="font-semibold text-text-primary">{row.completed}</span>
         <span> / {row.invited}</span>
       </TableCell>
-      <TableCell className="w-[110px] py-3 text-right tabular-nums text-[12.5px] text-muted-foreground">
+      <TableCell className="w-[110px] py-3 text-right tabular-nums text-[13px] text-muted-foreground">
         {row.inProgress === 0 ? "—" : row.inProgress}
       </TableCell>
-      <TableCell className="w-[100px] py-3 text-right tabular-nums text-[12.5px] text-muted-foreground">
+      <TableCell className="w-[100px] py-3 text-right tabular-nums text-[13px] text-muted-foreground">
         {missing === 0 ? "—" : missing}
       </TableCell>
       <TableCell className="w-[220px] py-3 pr-6">
@@ -766,7 +766,7 @@ function PersonRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSel
     <TableRow
       data-state={isSelected ? "selected" : undefined}
       onClick={onToggle}
-      className="cursor-pointer border-border/50 hover:bg-muted/30 transition-colors group"
+      className="cursor-pointer border-border/60 hover:bg-muted/30 transition-colors group"
     >
       <TableCell className="px-0">
         <div className="flex items-center justify-center">
@@ -780,7 +780,7 @@ function PersonRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSel
       </TableCell>
       <TableCell className="py-3">
         <div className="flex items-center gap-2">
-          <span className="truncate text-[12.5px] text-text-secondary">{row.label}</span>
+          <span className="truncate text-[13px] text-text-secondary">{row.label}</span>
           {!isCompleted && (
             <button
               type="button"
@@ -796,10 +796,10 @@ function PersonRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSel
           )}
         </div>
       </TableCell>
-      <TableCell className="py-3 text-[12.5px] text-muted-foreground">
+      <TableCell className="py-3 text-[13px] text-muted-foreground">
         <span className="block truncate">{person?.leader ?? "—"}</span>
       </TableCell>
-      <TableCell className="py-3 text-[12.5px] text-muted-foreground">
+      <TableCell className="py-3 text-[13px] text-muted-foreground">
         <span className="block truncate">{person?.area ?? "—"}</span>
       </TableCell>
       <TableCell className="py-3 pl-0 pr-6">

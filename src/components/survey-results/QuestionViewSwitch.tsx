@@ -29,12 +29,11 @@ export function QuestionViewSwitch({ value, onChange }: QuestionViewSwitchProps)
       onValueChange={(next) => onChange(next as QuestionView)}
       className="w-auto shrink-0"
     >
-      <TabsList className="h-9 bg-muted/60 p-1">
+      <TabsList>
         {VIEWS.map(({ id, label, icon: Icon }) => (
           <TabsTrigger
             key={id}
             value={id}
-            className="flex h-full items-center gap-2 rounded-md px-3 py-0 text-[13px] font-medium transition-all data-[state=active]:bg-surface data-[state=active]:text-brand data-[state=active]:shadow-sm text-muted-foreground hover:text-text-primary"
           >
             <Icon className="h-3.5 w-3.5" />
             {label}

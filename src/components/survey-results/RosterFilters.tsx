@@ -272,10 +272,10 @@ export function RosterFilterButton({ state }: { state: RosterFilterState }) {
           size="sm"
           className="h-9 shrink-0 justify-start gap-2 rounded-lg border-border bg-surface px-2.5 text-[12px] text-text-primary transition-colors hover:bg-border/30"
         >
-          <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.2} />
+          <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
           Filtros
           {activeCount > 0 && (
-            <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[10.5px]">
+            <Badge variant="neutral" className="h-4.5 min-w-[18px] justify-center px-1 text-[11px]">
               {activeCount}
             </Badge>
           )}
@@ -292,11 +292,11 @@ export function RosterFilterButton({ state }: { state: RosterFilterState }) {
         </PopoverDescription>
 
         {showBands && (
-          <div className="flex flex-col gap-1.5 border-t border-border/30 pt-3">
+          <div className="flex flex-col gap-1.5 border-t border-border/60 pt-3">
             <div className="flex items-baseline justify-between gap-2">
               <span className="text-[12px] font-medium text-text-primary">Promedio</span>
               {selectedBands.length > 0 && (
-                <span className="text-[10.5px] font-medium text-muted-foreground tabular-nums">
+                <span className="text-[11px] font-medium text-muted-foreground tabular-nums">
                   {selectedBands.length} de {bands.length}
                 </span>
               )}
@@ -318,7 +318,7 @@ export function RosterFilterButton({ state }: { state: RosterFilterState }) {
         )}
 
         {facets.map((facet) => (
-          <div key={facet.key} className="flex items-center gap-2.5 border-t border-border/30 pt-3">
+          <div key={facet.key} className="flex items-center gap-2.5 border-t border-border/60 pt-3">
             <span className="w-[54px] shrink-0 text-[12px] font-medium text-text-primary">
               {facet.label}
             </span>
@@ -330,11 +330,11 @@ export function RosterFilterButton({ state }: { state: RosterFilterState }) {
                 <SelectValue placeholder="Sin filtrar" className="text-muted-foreground" />
               </SelectTrigger>
               <SelectContent position="popper">
-                <SelectItem value="" className="text-[12.5px]">
+                <SelectItem value="" className="text-[13px]">
                   Sin filtrar
                 </SelectItem>
                 {facet.options.map((option) => (
-                  <SelectItem key={option} value={option} className="text-[12.5px]">
+                  <SelectItem key={option} value={option} className="text-[13px]">
                     {option}
                   </SelectItem>
                 ))}
@@ -347,7 +347,7 @@ export function RosterFilterButton({ state }: { state: RosterFilterState }) {
             variant="ghost"
             size="sm"
             onClick={onClear}
-            className="justify-start rounded-none border-t border-border/30 px-0 pb-1 pt-3 text-[12px] text-primary hover:bg-transparent hover:underline"
+            className="justify-start rounded-none border-t border-border/60 px-0 pb-1 pt-3 text-[12px] text-primary hover:bg-transparent hover:underline"
           >
             Quitar filtros
           </Button>
@@ -385,7 +385,7 @@ export function RosterFilterChips({ state }: { state: RosterFilterState }) {
             aria-label={`Quitar promedio ${band.label}`}
             className="shrink-0 rounded-full p-0.5 opacity-70 transition-opacity hover:opacity-100"
           >
-            <X className="h-2.5 w-2.5" strokeWidth={2.6} />
+            <X className="h-2.5 w-2.5" strokeWidth={2.5} />
           </button>
         </span>
       ))}
@@ -404,7 +404,7 @@ export function RosterFilterChips({ state }: { state: RosterFilterState }) {
             aria-label={`Quitar filtro ${facet.label}`}
             className="shrink-0 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-border/40 hover:text-text-primary"
           >
-            <X className="h-2.5 w-2.5" strokeWidth={2.6} />
+            <X className="h-2.5 w-2.5" strokeWidth={2.5} />
           </button>
         </Badge>
       ))}

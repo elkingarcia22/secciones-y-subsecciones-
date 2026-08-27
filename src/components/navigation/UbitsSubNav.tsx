@@ -50,7 +50,7 @@ export const UbitsSubNav: React.FC<UbitsSubNavProps> = ({
   return (
     <header 
       className={cn(
-        "w-full h-[40px] bg-card border border-border/40 rounded-full px-5 flex items-center justify-between transition-all duration-300 z-[40]",
+        "w-full h-[40px] bg-surface border border-border/60 rounded-full px-5 flex items-center justify-between transition-all duration-300 z-[40]",
         isSticky && "sticky top-4",
         className
       )}
@@ -58,7 +58,7 @@ export const UbitsSubNav: React.FC<UbitsSubNavProps> = ({
       {/* Left Area: Logo & Navigation */}
       <div className="flex items-center h-full gap-5 flex-1 overflow-hidden">
         {showLogo && (
-          <div className="flex items-center gap-2 pr-5 border-r border-border/40 h-4">
+          <div className="flex items-center gap-2 pr-5 border-r border-border/60 h-4">
             <div className="w-5 h-5 bg-primary rounded flex items-center justify-center">
                <UbitsIcon name="sparkles" size="xs" tone="inverse" />
             </div>
@@ -76,7 +76,7 @@ export const UbitsSubNav: React.FC<UbitsSubNavProps> = ({
                    <UbitsIcon name="chevronDown" size="xs" className="opacity-30" />
                  </button>
                </DropdownMenuTrigger>
-               <DropdownMenuContent align="start" className="w-56 rounded-lg p-1 border-border/40 shadow-xl">
+               <DropdownMenuContent align="start" className="w-56 rounded-lg p-1 border-border/60 shadow-drawer">
                  {config.tabs.map((tab) => (
                    <DropdownMenuItem 
                      key={tab.id}

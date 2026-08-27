@@ -74,7 +74,7 @@ const SidebarRail = React.forwardRef<HTMLDivElement, SidebarRailProps>(
             className="text-white/60 hover:text-white transition-colors relative group"
           >
             {isDark ? <Sun size={22} /> : <Moon size={22} />}
-            <div className="absolute left-14 top-1/2 -translate-y-1/2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap shadow-md z-50">
+            <div className="absolute left-14 top-1/2 -translate-y-1/2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap shadow-drawer z-50">
               {isDark ? "Modo claro" : "Modo oscuro"}
             </div>
           </button>
@@ -85,7 +85,7 @@ const SidebarRail = React.forwardRef<HTMLDivElement, SidebarRailProps>(
               <img 
                 src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100&h=100" 
                 alt="User Avatar"
-                className="h-10 w-10 rounded-full border border-white/20 object-cover shadow-sm"
+                className="h-10 w-10 rounded-full border border-white/20 object-cover shadow-card"
               />
             }
             label="Perfil"
@@ -134,7 +134,7 @@ function NavItem({
           className={cn(
             "relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200",
             active 
-              ? "bg-white text-surface-nav shadow-lg" 
+              ? "bg-white text-surface-nav shadow-drawer" 
               : "text-white/60 hover:bg-white/5 hover:text-white",
             className
           )}
@@ -145,7 +145,7 @@ function NavItem({
 
       {/* Hover Submenu (Fidelity 1:1) */}
       <div className="absolute left-16 top-0 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 translate-x-2 group-hover:translate-x-0 z-50">
-        <div className="bg-surface-nav border border-white/10 rounded-2xl shadow-2xl p-4 w-60 text-white overflow-hidden">
+        <div className="bg-surface-nav border border-white/10 rounded-2xl shadow-drawer p-4 w-60 text-white overflow-hidden">
           {label && (
             <h4 className="text-sm font-bold mb-3 px-2 text-white/90">{label}</h4>
           )}

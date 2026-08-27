@@ -38,7 +38,7 @@ export function AiSectionCard({
   const toggle = () => setIsOpen((current) => !current);
 
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/50 bg-surface">
+    <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface">
       <div
         role="button"
         tabIndex={0}
@@ -65,13 +65,13 @@ export function AiSectionCard({
 
         <span
           aria-hidden
-          className="mt-0.5 flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-md border border-border/50 bg-muted/60 px-1 text-[10px] font-bold tabular-nums text-muted-foreground"
+          className="mt-0.5 flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/60 px-1 text-[10px] font-bold tabular-nums text-muted-foreground"
         >
           {numbering}
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1 py-0.5 text-[15px] font-bold tracking-tight text-text-primary">
+          <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1 py-0.5 text-[14px] font-bold tracking-tight text-text-primary">
             {heading}
             <span className="text-[12px] font-medium tracking-normal text-muted-foreground">
               {question}
@@ -124,7 +124,7 @@ export function AiSectionMeta({
     <span className="inline-flex items-center gap-2 rounded-md border border-border/60 bg-muted/40 px-2 py-0.5">
       <span className="text-[12px] font-semibold tabular-nums text-text-primary">
         {count}
-        <span className="ml-1 text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="ml-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           {count === 1 ? unit : unitPlural}
         </span>
       </span>
@@ -163,9 +163,9 @@ export function AiSectionMeta({
  * dividers. These are that.
  */
 export const AI_TABLE = "w-full border-collapse text-left";
-export const AI_THEAD = "bg-muted/10";
+export const AI_THEAD = "bg-muted/30";
 export const AI_THEAD_ROW =
-  "border-b border-border/30 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground/80";
+  "border-b border-border/60 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80";
 export const AI_TBODY = "divide-y divide-border/25";
 export const AI_ROW =
   "group cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30";
@@ -173,14 +173,14 @@ export const AI_ROW_STATIC = "transition-colors hover:bg-muted/30";
 export const AI_RANK_CELL =
   "px-4 py-3 text-center text-[11px] font-extrabold tabular-nums text-muted-foreground";
 export const AI_TITLE_CELL =
-  "py-3 pr-4 text-[12.5px] font-semibold leading-snug text-text-primary";
+  "py-3 pr-4 text-[13px] font-semibold leading-snug text-text-primary";
 
 /**
  * The panel an expanded row's detail sits on — and the ground the tab's own
  * "Resumen general" strip uses, so a block's prose reads the same wherever it
  * appears in the tab.
  */
-export const AI_DETAIL_PANEL = "rounded-xl border border-border/50 bg-muted/20 px-4 py-3.5";
+export const AI_DETAIL_PANEL = "rounded-xl border border-border/60 bg-muted/30 px-4 py-3.5";
 
 /** The heading over a sub-block inside an expanded row. */
 export function AiSubHeading({
@@ -194,7 +194,7 @@ export function AiSubHeading({
 }) {
   return (
     <div className="flex items-center gap-1.5">
-      <Icon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.2} />
+      <Icon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
       <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80">
         {children}
       </h4>

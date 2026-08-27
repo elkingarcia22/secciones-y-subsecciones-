@@ -25,7 +25,7 @@ export function ScoreChip({ score, className }: ScoreChipProps) {
         className={cn("gap-1 tabular-nums", className)}
         title="Grupo por debajo del mínimo de respuestas"
       >
-        <Lock className="h-3 w-3" strokeWidth={2.4} />
+        <Lock className="h-3 w-3" strokeWidth={2} />
         Reservado
       </Badge>
     );

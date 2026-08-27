@@ -17,7 +17,7 @@ export const UbitsProductHeader: React.FC<UbitsProductHeaderProps> = ({
   return (
     <header
       className={cn(
-        "flex items-center justify-between w-full h-16 bg-white border border-border shadow-sm rounded-xl px-6",
+        "flex items-center justify-between w-full h-16 bg-surface border border-border shadow-card rounded-xl px-6",
         className
       )}
     >

@@ -49,7 +49,7 @@ export function SegmentedControl({
 }: SegmentedControlProps) {
   
   const containerStyles = {
-    solid: 'p-1 bg-muted/50 rounded-lg border border-border/50',
+    solid: 'p-1 bg-muted/40 rounded-lg border border-border/60',
     outline: 'p-0.5 border border-border rounded-lg',
     underline: 'p-0 border-b border-border rounded-none bg-transparent',
   }[variant]
@@ -98,7 +98,7 @@ export function SegmentedControl({
                 variant === 'solid' && cn(
                   'rounded-md',
                   isActive 
-                    ? 'bg-card text-primary shadow-sm ring-1 ring-black/[0.05] dark:ring-white/[0.1]' 
+                    ? 'bg-surface text-primary shadow-card ring-1 ring-black/[0.05] dark:ring-white/[0.1]' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 ),
 

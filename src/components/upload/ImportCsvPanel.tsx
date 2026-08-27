@@ -108,7 +108,7 @@ export function ImportCsvPanel({
                 status={status}
                 label={status === 'uploading' ? 'Cargando archivo...' : status === 'validating' ? 'Validando datos...' : 'Procesado'}
                 error={error}
-                className="bg-muted/30 p-4 rounded-xl border border-border/50"
+                className="bg-muted/30 p-4 rounded-xl border border-border/60"
               />
             )}
           </div>
@@ -127,7 +127,7 @@ export function ImportCsvPanel({
             </div>
 
             {hasPreview ? (
-              <div className="rounded-xl border border-border/50 overflow-hidden bg-muted/5">
+              <div className="rounded-xl border border-border/60 overflow-hidden bg-muted/30">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/30 hover:bg-muted/30">
@@ -140,7 +140,7 @@ export function ImportCsvPanel({
                   </TableHeader>
                   <TableBody>
                     {previewRows.map((row, idx) => (
-                      <TableRow key={idx} className="hover:bg-muted/20">
+                      <TableRow key={idx} className="hover:bg-muted/30">
                         {previewColumns.map((col) => (
                           <TableCell key={col.key} className="py-2 text-xs truncate max-w-[200px]">
                             {String(row[col.key] ?? '')}
@@ -173,7 +173,7 @@ export function ImportCsvPanel({
 
       {/* Footer Actions */}
       {actions && (
-        <div className="px-6 py-4 bg-muted/20 border-t border-border/50 flex items-center justify-end gap-3">
+        <div className="px-6 py-4 bg-muted/30 border-t border-border/60 flex items-center justify-end gap-3">
           {actions}
         </div>
       )}

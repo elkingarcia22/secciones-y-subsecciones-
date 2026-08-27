@@ -38,14 +38,14 @@ export function ResultsSortHeader<Key extends string>({
       {label}
       {active ? (
         ascending ? (
-          <ArrowUp className="h-3 w-3" strokeWidth={2.4} />
+          <ArrowUp className="h-3 w-3" strokeWidth={2} />
         ) : (
-          <ArrowDown className="h-3 w-3" strokeWidth={2.4} />
+          <ArrowDown className="h-3 w-3" strokeWidth={2} />
         )
       ) : (
         <ArrowUpDown
           className="h-3 w-3 opacity-50 transition-opacity group-hover:opacity-100"
-          strokeWidth={2.4}
+          strokeWidth={2}
         />
       )}
     </button>

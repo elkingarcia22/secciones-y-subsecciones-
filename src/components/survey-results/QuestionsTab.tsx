@@ -130,8 +130,8 @@ export function QuestionsTab({
   };
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-border/50 bg-surface p-6 shadow-sm sm:p-8">
-      <div className="sticky top-4 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
+    <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
+      <div className="sticky top-3 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
         <div className="flex flex-wrap items-center gap-4 pb-2">
           <div className="flex items-center gap-2">
             <h3 className="text-[13px] font-bold text-text-primary">Detalle por secciones</h3>
@@ -250,7 +250,7 @@ function SectionBlock({
   return (
     <section
       className={cn(
-        "flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/50 bg-surface",
+        "flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface",
       )}
     >
       {/* Card header: with contrast background since the parent card is white */}
@@ -281,13 +281,13 @@ function SectionBlock({
         {/* Same badge as the heatmap's root section number — same tab family, same mark. */}
         <span
           aria-hidden
-          className="mt-0.5 flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-md bg-muted/60 border border-border/50 px-1 text-[10px] font-bold tabular-nums text-muted-foreground"
+          className="mt-0.5 flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-md bg-muted/60 border border-border/60 px-1 text-[10px] font-bold tabular-nums text-muted-foreground"
         >
           {section.numbering}
         </span>
 
         <div className={cn("min-w-0 flex-1", rowDimmed && "opacity-55")}>
-          <p className="px-1 py-0.5 text-[15px] font-bold tracking-tight text-text-primary flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <p className="px-1 py-0.5 text-[14px] font-bold tracking-tight text-text-primary flex flex-wrap items-baseline gap-x-2 gap-y-1">
             {section.title}
             <span className="text-[12px] font-medium text-muted-foreground tracking-normal">
               {questionCount} preguntas
@@ -597,8 +597,8 @@ function QuestionTable({
 
   return (
     <table className="w-full border-collapse text-left">
-      <thead className="bg-muted/10">
-        <tr className="border-b border-border/30 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+      <thead className="bg-muted/30">
+        <tr className="border-b border-border/60 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80">
           <th className="w-10 px-4 py-2.5 text-center">#</th>
           <th className="py-2.5">
             <ResultsSortHeader
@@ -639,7 +639,7 @@ function QuestionTable({
               </td>
               <td
                 className={cn(
-                  "py-3 pr-4 text-[12.5px] font-semibold leading-snug text-text-primary",
+                  "py-3 pr-4 text-[13px] font-semibold leading-snug text-text-primary",
                   rowDimmed && "opacity-55"
                 )}
               >
@@ -686,7 +686,7 @@ function QuestionTable({
 function NoScaleBadge() {
   return (
     <Badge variant="neutral" className="gap-1.5 whitespace-nowrap">
-      <MessageSquareText className="h-3 w-3" strokeWidth={2.4} />
+      <MessageSquareText className="h-3 w-3" strokeWidth={2} />
       Sin escala
     </Badge>
   );

@@ -55,7 +55,7 @@ export function SearchableSelect({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "h-11 w-full justify-between font-normal rounded-xl border-input bg-card dark:bg-muted px-4 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all",
+            "h-10 w-full justify-between font-normal rounded-md border-input bg-surface dark:bg-muted px-4 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all",
             !value && "text-muted-foreground",
             className
           )}
@@ -68,7 +68,7 @@ export function SearchableSelect({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-xl border shadow-md">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-xl border shadow-drawer">
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList className="max-h-[300px] overflow-y-auto">

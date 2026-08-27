@@ -77,7 +77,7 @@ export function AiPrioritiesSection({
       }
     >
       {priorities.length === 0 ? (
-        <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+        <p className="text-[13px] leading-relaxed text-muted-foreground">
           Ningún bloque de la medición está por debajo del objetivo de {FAVORABILITY_TARGET}%.
           Sostener el resultado es la tarea de este periodo.
         </p>
@@ -149,12 +149,12 @@ function PriorityRows({
           </span>
         </td>
 
-        <td className="hidden py-3 text-right text-[11.5px] tabular-nums text-text-secondary sm:table-cell">
+        <td className="hidden py-3 text-right text-[12px] tabular-nums text-text-secondary sm:table-cell">
           {formatCount(finding.n)}
         </td>
 
         <td
-          className="py-3 text-right text-[12.5px] font-bold tabular-nums"
+          className="py-3 text-right text-[13px] font-bold tabular-nums"
           style={{ color: style.color }}
         >
           {formatPercent(finding.favorability)}
@@ -170,16 +170,16 @@ function PriorityRows({
               "ml-auto h-4 w-4 text-muted-foreground/60 transition-transform duration-200 group-hover:text-text-primary",
               open && "rotate-90"
             )}
-            strokeWidth={2.4}
+            strokeWidth={2}
           />
         </td>
       </tr>
 
       {open && (
-        <tr className="bg-muted/10">
+        <tr className="bg-muted/30">
           <td colSpan={6} className="px-4 py-4">
             <div className="flex flex-col gap-3 duration-200 animate-in fade-in slide-in-from-top-1">
-              <p className="max-w-4xl text-[12.5px] leading-relaxed text-text-primary">{why}</p>
+              <p className="max-w-4xl text-[13px] leading-relaxed text-text-primary">{why}</p>
 
               {/* The factors behind the ranking, quoted the way the AI's own
                   readings quote the figure they rest on. In Resumen these hid
@@ -190,7 +190,7 @@ function PriorityRows({
                   key={item.label}
                   className="flex items-start gap-2 text-[11px] leading-relaxed text-text-secondary"
                 >
-                  <Quote className="mt-px h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={2.4} />
+                  <Quote className="mt-px h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={2} />
                   <span>
                     <span className="font-semibold uppercase tracking-wide text-muted-foreground">
                       {item.label}
@@ -209,7 +209,7 @@ function PriorityRows({
                   <span className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border/70 bg-muted/30 px-2 py-0.5 text-[11px] font-medium tabular-nums text-text-secondary">
                     <MessageSquareQuote
                       className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                      strokeWidth={2.4}
+                      strokeWidth={2}
                     />
                     {formatCount(qual.mentions)} comentarios sobre {qual.topic.toLowerCase()} ·{" "}
                     {Math.round(qual.negativeShare)}% negativos
@@ -222,10 +222,10 @@ function PriorityRows({
                     event.stopPropagation();
                     onNavigate("favorability");
                   }}
-                  className="ml-auto inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11.5px] font-semibold text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  className="ml-auto inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   Ver en Favorabilidad
-                  <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.4} />
+                  <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
                 </button>
               </div>
             </div>

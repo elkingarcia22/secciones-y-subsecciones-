@@ -35,10 +35,10 @@ export function AILoader({
 
   if (variant === "card") {
     return (
-      <div className={cn("flex flex-col gap-4 rounded-2xl border border-ai-gradient bg-card/50 p-6 shadow-ai-premium", className)} role="status" aria-live="polite">
+      <div className={cn("flex flex-col gap-4 rounded-2xl border border-ai-gradient bg-surface p-6 shadow-ai-premium", className)} role="status" aria-live="polite">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ai-gradient text-primary-foreground shadow-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ai-gradient text-primary-foreground shadow-drawer">
               <UbitsIcon name="sparkles" size="sm" tone="inverse" />
             </div>
             <div>
@@ -78,15 +78,15 @@ export function AILoader({
 
   // Default: block
   return (
-    <div className={cn("flex flex-col gap-4 p-4 rounded-xl border border-dashed border-ai-gradient/30 bg-ai-gradient/5", className)} role="status" aria-live="polite">
+    <div className={cn("flex flex-col gap-4 p-4 rounded-xl border border-dashed border-ai-border bg-ai-bg", className)} role="status" aria-live="polite">
       <div className="flex items-center gap-2">
         <UbitsIcon name="sparkles" size="sm" className="animate-pulse text-ai-gradient" />
         <span className="text-sm font-bold text-ai-gradient uppercase tracking-tight">{currentLabel}</span>
       </div>
       <div className="space-y-2.5">
-        <Skeleton className="h-2 w-full rounded-full bg-ai-gradient/10" />
-        <Skeleton className="h-2 w-11/12 rounded-full bg-ai-gradient/5" />
-        <Skeleton className="h-2 w-4/5 rounded-full bg-ai-gradient/5 opacity-50" />
+        <Skeleton className="h-2 w-full rounded-full bg-ai-bg" />
+        <Skeleton className="h-2 w-11/12 rounded-full bg-ai-bg" />
+        <Skeleton className="h-2 w-4/5 rounded-full bg-ai-bg opacity-50" />
       </div>
     </div>
   );

@@ -59,7 +59,7 @@ export function DemographicsActionRail({
         {mode === "single" && selected && (
           <AnimatedActionItem animKey={animKey} staggerIndex={2}>
             <RailButton
-              icon={<Pencil className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+              icon={<Pencil className="h-[20px] w-[20px]" strokeWidth={2} />}
               label="Editar"
               onClick={() => onEdit(selected.id)}
               blockedReason={isSystem ? systemBlock : null}
@@ -69,7 +69,7 @@ export function DemographicsActionRail({
 
         <AnimatedActionItem animKey={animKey} staggerIndex={3}>
           <RailButton
-            icon={<Copy className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+            icon={<Copy className="h-[20px] w-[20px]" strokeWidth={2} />}
             label={mode === "bulk" ? `Duplicar (${selectedCount})` : "Duplicar"}
             onClick={onDuplicate}
           />
@@ -77,7 +77,7 @@ export function DemographicsActionRail({
 
         <AnimatedActionItem animKey={animKey} staggerIndex={4}>
           <RailButton
-            icon={<Trash2 className="h-[20px] w-[20px]" strokeWidth={2.3} />}
+            icon={<Trash2 className="h-[20px] w-[20px]" strokeWidth={2} />}
             label={mode === "bulk" ? `Eliminar (${selectedCount})` : "Eliminar"}
             tone="danger"
             onClick={onDelete}
@@ -98,7 +98,7 @@ export function DemographicsActionRail({
             onClick={onCreate}
             className="flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
           >
-            <Plus className="h-4 w-4" strokeWidth={2.6} />
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
             Crear demográfico
           </button>
         ) : null

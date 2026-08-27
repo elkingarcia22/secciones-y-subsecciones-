@@ -121,11 +121,56 @@
     /* AI Premium Tokens */
     --ai-gradient-start: var(--color-ai-gradient-start-hsl);
     --ai-gradient-end: var(--color-ai-gradient-end-hsl);
+
+    /* ── Favorability status scale (pale badge/cell fills) ──
+       Screen-only tokens: results reports (pdf/pdfPalette.ts) keep their own
+       literal copy of these same light values, since a report prints from an
+       isolated iframe that never sees this stylesheet's .dark class. */
+    --fav-negative-bg: 354 80% 87%;
+    --fav-negative-border: 354 78% 54%;
+    --fav-negative-fg: 354 76% 42%;
+
+    --fav-softer-negative-bg: 1 84% 96%;
+    --fav-softer-negative-border: 357 82% 76%;
+    --fav-softer-negative-fg: 357 80% 56%;
+
+    --fav-yellow-bg: 48 96% 92%;
+    --fav-yellow-border: 48 92% 64%;
+    --fav-yellow-fg: 46 90% 42%;
+
+    --fav-positive-bg: 116 52% 94%;
+    --fav-positive-border: 116 50% 72%;
+    --fav-positive-fg: 116 48% 42%;
+
+    --fav-deep-positive-bg: 122 55% 82%;
+    --fav-deep-positive-border: 120 48% 40%;
+    --fav-deep-positive-fg: 120 46% 30%;
+
+    --fav-nsnr-bg: 218 14% 93%;
+    --fav-nsnr-border: 218 10% 66%;
+    --fav-nsnr-fg: 218 14% 38%;
   }
 
   .dark {
     /* ── Overrides de tokens UBITS directos (text-text-*, bg-surface-*) ── */
     /* Sin esto, clases como text-text-secondary quedan oscuras sobre fondo oscuro */
+
+    /* `--primary` ya sube a #3865f5 más abajo para que el azul aguante sobre
+       #0c1120. `--color-brand` alimenta bg-brand/text-brand, que el contenido
+       usa donde el shell usa bg-primary; sin este override los dos azules se
+       separan en oscuro y el menú queda más luminoso que la pantalla. */
+    --color-brand: #3865f5;
+    --color-brand-hover: #5c82f8;
+    --color-brand-pressed: #7b9bfa;
+
+    /* Rellenos pálidos pensados para papel blanco. Sin override se convierten
+       en manchas casi blancas sobre las cards oscuras. */
+    --color-ai-bg: #1b1a33;
+    --color-ai-border: #4b53a8;
+    --color-positive-bg: #17301a;
+    --color-positive-dark: #a8dfa2;
+    --color-warning-light: #7a4415;
+
     --color-text-primary: #edeeef;    /* ubits-fg-1-high dark */
     --color-text-secondary: #9aa0aa;  /* ubits fg-1-medium dark, paso intermedio */
     --color-text-muted: #6b7480;      /* reducido para hint/placeholder */
@@ -133,10 +178,12 @@
     --color-bg-app: #0c1120;          /* Deep Navy Base (Kept for Harmony) */
     --color-surface: #161e2f;         /* Elevated Card Surface (Kept for Harmony) */
     --color-surface-muted: #212d40;   /* Muted Section (Kept for Harmony) */
+    --color-tab-track: #1e2536;   /* leve, sin el peso de un bloque azul sólido */
     /* recessed, más oscuro que card */
     --color-surface-subtle: #0f172a;
     --color-border: #3d4555;
     --color-border-strong: #4f5561;
+    --color-border-strong-hsl: 220 10% 35%;
 
     /* ── Superficies ─────────────────────────────────────── */
     /* #0c1120 — pantalla base */
@@ -187,6 +234,35 @@
     --ring: 222 91% 58%;
     --nav: 222 47% 11%;
     --nav-foreground: 0 0% 100%;
+
+    /* ── Favorability status scale, re-tuned for a dark surface ──
+       The light values are pastel fills meant to sit on white — unchanged
+       they read as washed-out, low-contrast smudges on a dark card. Dark
+       mode instead deepens the fill toward the surface and lifts the text
+       so each status still reads as its own hue. */
+    --fav-negative-bg: 354 55% 22%;
+    --fav-negative-border: 354 65% 45%;
+    --fav-negative-fg: 354 90% 80%;
+
+    --fav-softer-negative-bg: 357 45% 20%;
+    --fav-softer-negative-border: 357 55% 42%;
+    --fav-softer-negative-fg: 357 85% 78%;
+
+    --fav-yellow-bg: 46 55% 20%;
+    --fav-yellow-border: 46 75% 45%;
+    --fav-yellow-fg: 46 90% 72%;
+
+    --fav-positive-bg: 116 35% 18%;
+    --fav-positive-border: 116 45% 38%;
+    --fav-positive-fg: 116 65% 70%;
+
+    --fav-deep-positive-bg: 122 40% 24%;
+    --fav-deep-positive-border: 120 55% 42%;
+    --fav-deep-positive-fg: 122 65% 74%;
+
+    --fav-nsnr-bg: 218 20% 24%;
+    --fav-nsnr-border: 218 14% 45%;
+    --fav-nsnr-fg: 218 12% 72%;
   }
 
   .bg-nav {
@@ -255,16 +331,13 @@
       rgba(255, 255, 255, 0) 100%
     );
     transform: translateX(-120%) skewX(-22deg);
-    animation: mirror-shimmer-anim 3.5s infinite ease-in-out;
+    animation: mirror-shimmer-anim 2.2s infinite ease-in-out;
     pointer-events: none;
   }
 
   @keyframes mirror-shimmer-anim {
     0% {
       transform: translateX(-120%) skewX(-22deg);
-    }
-    45% {
-      transform: translateX(120%) skewX(-22deg);
     }
     100% {
       transform: translateX(120%) skewX(-22deg);
@@ -274,33 +347,35 @@
   /* Animated subtle mesh background for AI cards */
   .bg-ai-mesh-card {
     background-color: var(--color-surface);
-    background-image: 
+    background-image:
       radial-gradient(55% 34% at 18% 0%, rgba(46, 198, 255, 0.16), transparent 65%),
       radial-gradient(45% 30% at 55% 0%, rgba(124, 58, 237, 0.08), transparent 65%),
       radial-gradient(50% 34% at 88% 0%, rgba(244, 63, 94, 0.12), transparent 65%);
-    background-size: 200% 200%;
+    background-size: 140% 140%;
     animation: mesh-drift 12s ease-in-out infinite alternate;
   }
 
   /* Animated subtle mesh background for the agent page */
   .bg-ai-mesh-agent {
-    background-image: 
+    background-image:
       radial-gradient(55% 34% at 18% 0%, rgba(46, 198, 255, 0.16), transparent 65%),
       radial-gradient(45% 30% at 55% 0%, rgba(124, 58, 237, 0.08), transparent 65%),
       radial-gradient(50% 34% at 88% 0%, rgba(244, 63, 94, 0.12), transparent 65%);
-    background-size: 200% 200%;
+    background-size: 140% 140%;
     animation: mesh-drift 14s ease-in-out infinite alternate;
   }
 
+  /* Bounded drift — the blobs stay within the visible box at every point in
+     the cycle instead of sliding past the edge and leaving the card blank. */
   @keyframes mesh-drift {
     0% {
-      background-position: 0% 0%;
+      background-position: 20% 10%;
     }
     50% {
-      background-position: 100% 40%;
+      background-position: 60% 30%;
     }
     100% {
-      background-position: 30% 100%;
+      background-position: 30% 50%;
     }
   }
 

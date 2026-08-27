@@ -98,10 +98,10 @@ export function RespondentSheet({
                   {index + 1}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[12.5px] font-semibold leading-snug text-text-primary">
+                  <p className="text-[13px] font-semibold leading-snug text-text-primary">
                     {question.statement || "Pregunta sin enunciado"}
                   </p>
-                  <p className="mt-0.5 text-[10.5px] font-medium text-muted-foreground">
+                  <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">
                     {breakdowns.get(question.id)?.formatLabel ?? "Escala"}
                   </p>
                 </div>
@@ -151,7 +151,7 @@ function SheetHeader({
     "Identidad y datos demográficos protegidos por el anonimato de la encuesta";
 
   return (
-    <header className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
+    <header className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
       <span
         aria-hidden
         className={
@@ -161,7 +161,7 @@ function SheetHeader({
         }
       >
         {respondent.anonymous ? (
-          <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={2.3} />
+          <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={2} />
         ) : (
           respondent.initials
         )}
@@ -169,18 +169,18 @@ function SheetHeader({
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <h3 className="text-[15px] font-bold tracking-tight text-text-primary">
+          <h3 className="text-[14px] font-bold tracking-tight text-text-primary">
             {respondent.name}
           </h3>
           {/* Only what the survey's own privacy setting allows: on an anonymous
               survey every demographic is null, so these render empty. */}
           {traits.map((value) => (
-            <Badge key={value} variant="neutral" className="text-[10.5px]">
+            <Badge key={value} variant="neutral" className="text-[11px]">
               {value}
             </Badge>
           ))}
           {respondent.leader && (
-            <Badge variant="neutral" className="text-[10.5px]">
+            <Badge variant="neutral" className="text-[11px]">
               Líder: {respondent.leader}
             </Badge>
           )}
@@ -188,7 +188,7 @@ function SheetHeader({
         {/* Truncated rather than wrapped: the line is a privacy note, and letting
             it reflow to two lines gives back the height this header just saved. */}
         <p
-          className="mt-0.5 truncate text-[11.5px] font-medium text-muted-foreground"
+          className="mt-0.5 truncate text-[12px] font-medium text-muted-foreground"
           title={identityLine}
         >
           {identityLine}
@@ -228,7 +228,7 @@ function SheetHeader({
             <span className="text-[11px] font-bold leading-none opacity-60">/5</span>
           </span>
           <span
-            className="border-l pl-3 text-[11.5px] font-bold leading-none"
+            className="border-l pl-3 text-[12px] font-bold leading-none"
             style={{ borderColor: band.border }}
           >
             {band.label}
@@ -256,10 +256,10 @@ function SheetFact({
   return (
     <div className="flex items-center gap-1.5">
       <dt className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-        <Icon className="h-3 w-3" strokeWidth={2.3} />
+        <Icon className="h-3 w-3" strokeWidth={2} />
         {label}
       </dt>
-      <dd className="text-[11.5px] font-bold tabular-nums text-text-primary">{value}</dd>
+      <dd className="text-[12px] font-bold tabular-nums text-text-primary">{value}</dd>
     </div>
   );
 }

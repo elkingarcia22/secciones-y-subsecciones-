@@ -128,7 +128,7 @@ export function FileUpload({
             {value.map((file, index) => (
               <div 
                 key={`${file.name}-${index}`}
-                className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border/50"
+                className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border/60"
               >
                 <div className="flex items-center gap-2 overflow-hidden">
                   <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />

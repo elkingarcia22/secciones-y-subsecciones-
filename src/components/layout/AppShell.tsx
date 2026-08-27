@@ -11,7 +11,7 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
     return (
       <div
         ref={ref}
-        className={cn("flex h-screen w-full overflow-hidden bg-app font-body", className)}
+        className={cn("flex h-screen w-full overflow-hidden bg-background font-body", className)}
         {...props}
       >
         {/* Sidebar Navigation Slot */}
