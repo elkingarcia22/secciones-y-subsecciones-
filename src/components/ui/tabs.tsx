@@ -64,7 +64,9 @@ const TabsList = React.forwardRef<
       ref={ref}
       className={cn(
         "inline-flex items-center justify-center bg-tab-track p-1 text-text-secondary",
-        variant === "page" ? "h-10 rounded-full" : "h-9 rounded-lg",
+        // Same corner ratio the other h-10 controls use (Input, Select): a
+        // full pill at this height read rounder than everything around it.
+        variant === "page" ? "h-10 rounded-md" : "h-9 rounded-lg",
         className
       )}
       {...props}
@@ -88,7 +90,7 @@ const TabsTrigger = React.forwardRef<
       className={cn(
         "relative inline-flex h-full items-center justify-center gap-2 whitespace-nowrap px-3 py-0 text-[13px] font-medium ring-offset-background transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:font-semibold",
         variant === "page"
-          ? "rounded-full data-[state=active]:text-primary-foreground"
+          ? "rounded-sm data-[state=active]:text-primary-foreground"
           : "rounded-md data-[state=active]:text-primary",
         className
       )}
@@ -99,7 +101,7 @@ const TabsTrigger = React.forwardRef<
           layoutId={`tabs-bg-${id}`}
           className={cn(
             "absolute inset-0 z-0",
-            variant === "page" ? "rounded-full bg-primary" : "rounded-md bg-surface shadow-card"
+            variant === "page" ? "rounded-sm bg-primary" : "rounded-md bg-surface shadow-card"
           )}
           initial={false}
           transition={{
