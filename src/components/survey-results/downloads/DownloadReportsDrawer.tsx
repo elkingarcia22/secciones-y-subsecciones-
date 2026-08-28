@@ -620,7 +620,7 @@ export function DownloadReportsDrawer({
             </div>
           </div>
         ) : (
-          <DownloadsList entries={entries} onDeliver={onDeliver} onShare={onShare} />
+          <DownloadsList entries={entries} results={results} onDeliver={onDeliver} onShare={onShare} />
         )}
       </div>
     </DrawerShell>
@@ -1185,10 +1185,12 @@ const countFormat = (value: number) => new Intl.NumberFormat("es-CO").format(val
 
 function DownloadsList({
   entries,
+  results,
   onDeliver,
   onShare,
 }: {
   entries: readonly DownloadEntry[];
+  results: SurveyResults;
   onDeliver: (id: string) => void;
   onShare: (id: string) => void;
 }) {
@@ -1221,11 +1223,12 @@ function DownloadsList({
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-2">
           {entries.map((entry) => (
             <DownloadRow
               key={entry.id}
               entry={entry}
+              results={results}
               isLatest={entry.id === latestDeliveredId}
               onDeliver={onDeliver}
               onShare={onShare}
@@ -1239,91 +1242,269 @@ function DownloadsList({
 
 function DownloadRow({
   entry,
+  results,
   isLatest,
   onDeliver,
   onShare,
 }: {
   entry: DownloadEntry;
+  results: SurveyResults;
   isLatest: boolean;
   onDeliver: (id: string) => void;
   onShare: (id: string) => void;
 }) {
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
   const Icon = reportTypeFor(entry.kind).icon;
   const isPreparing = entry.status === "preparing";
   const needsRetry = !isPreparing && !entry.delivered;
   const showsCheck = !isPreparing && !needsRetry && isLatest;
 
   return (
-    <div className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-muted/40">
-      <span
-        className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-          needsRetry
-            ? "bg-status-warning/10 text-status-warning"
-            : showsCheck
-              ? "bg-status-positive/10 text-status-positive"
-              : "bg-muted text-muted-foreground"
-        )}
-      >
-        {showsCheck ? (
-          <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />
-        ) : (
-          <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
-        )}
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="truncate text-[13px] font-semibold text-text-primary" title={entry.fileName}>
-          {entry.fileName}
+    <div
+      className={cn(
+        "overflow-hidden rounded-xl border bg-white transition-colors",
+        detailsOpen ? "border-border/80" : "border-border/50"
+      )}
+    >
+      {/* ── Fila principal ── */}
+      <div className="flex items-center gap-3 px-3 py-2.5">
+        <span
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+            needsRetry
+              ? "bg-status-warning/10 text-status-warning"
+              : showsCheck
+                ? "bg-status-positive/10 text-status-positive"
+                : "bg-muted text-muted-foreground"
+          )}
+        >
+          {showsCheck ? (
+            <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />
+          ) : (
+            <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+          )}
         </span>
-        {isPreparing ? (
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
-                style={{ width: `${entry.progress}%` }}
-              />
-            </div>
-            <span className="w-9 shrink-0 text-right text-[12px] font-bold tabular-nums text-primary">
-              {Math.round(entry.progress)}%
-            </span>
-          </div>
-        ) : (
-          <span
-            className={cn(
-              "text-[12px]",
-              needsRetry ? "font-semibold text-status-warning" : "text-muted-foreground"
-            )}
-          >
-            {needsRetry
-              ? "La descarga quedó bloqueada por el navegador"
-              : entry.format === "PDF"
-                ? "Descargado — se abrió para imprimir o guardar"
-                : "Descargado"}
+
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="truncate text-[13px] font-semibold text-text-primary" title={entry.fileName}>
+            {entry.fileName}
           </span>
+          {isPreparing ? (
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
+                  style={{ width: `${entry.progress}%` }}
+                />
+              </div>
+              <span className="w-9 shrink-0 text-right text-[12px] font-bold tabular-nums text-primary">
+                {Math.round(entry.progress)}%
+              </span>
+            </div>
+          ) : (
+            <span
+              className={cn(
+                "text-[12px]",
+                needsRetry ? "font-semibold text-status-warning" : "text-muted-foreground"
+              )}
+            >
+              {needsRetry
+                ? "La descarga quedó bloqueada por el navegador"
+                : (() => {
+                    const date = new Date(entry.startedAt);
+                    const day = date.getDate();
+                    const month = date.getMonth() + 1;
+                    const year = date.getFullYear();
+                    const hours = String(date.getHours()).padStart(2, "0");
+                    const minutes = String(date.getMinutes()).padStart(2, "0");
+                    return `${day}/${month}/${year} a las ${hours}:${minutes}`;
+                  })()}
+            </span>
+          )}
+        </div>
+
+        {isPreparing ? (
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" aria-label="Preparando reporte" />
+        ) : (
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
+              onClick={() => onShare(entry.id)}
+              title="Compartir"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              <span className="sr-only">Compartir</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
+              onClick={() => onDeliver(entry.id)}
+              title="Descargar"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="sr-only">Descargar</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className={cn(
+                "h-7 w-7 p-0 rounded-full transition-colors hover:bg-primary/10 hover:text-primary",
+                detailsOpen ? "bg-primary/10 text-primary" : "text-muted-foreground"
+              )}
+              onClick={() => setDetailsOpen(!detailsOpen)}
+              title="Ver detalle"
+            >
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform duration-200", detailsOpen && "rotate-180")}
+              />
+              <span className="sr-only">Ver detalle</span>
+            </Button>
+          </div>
         )}
       </div>
-      {isPreparing ? (
-        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" aria-label="Preparando reporte" />
-      ) : needsRetry ? (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 shrink-0 gap-1.5 rounded-full px-3 text-[12px] font-bold text-primary hover:bg-primary/10 hover:text-primary"
-          onClick={() => onDeliver(entry.id)}
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          Reintentar
-        </Button>
+
+      {/* ── Panel de detalle ── */}
+      {detailsOpen && entry.request && (
+        <ReportDetailPanel entry={entry} results={results} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Panel de detalle que se despliega bajo cada descarga. Muestra toda la
+ * configuración con la que se generó el reporte en una lista compacta
+ * de filas etiqueta → valor, con líneas divisoras entre ellas.
+ */
+function ReportDetailPanel({
+  entry,
+  results,
+}: {
+  entry: DownloadEntry;
+  results: SurveyResults;
+}) {
+  const req = entry.request;
+  const kind = entry.kind;
+
+  /** Una fila: etiqueta a la izquierda, chips a la derecha. */
+  const DetailRow = ({ label, values }: { label: string; values: readonly string[] }) => (
+    <div className="flex items-start justify-between gap-3 py-2">
+      <span className="shrink-0 text-[12px] text-muted-foreground">{label}</span>
+      <div className="flex flex-wrap justify-end gap-1">
+        {values.length === 0 ? (
+          <span className="text-[12px] italic text-muted-foreground">—</span>
+        ) : (
+          values.map((v) => (
+            <span
+              key={v}
+              className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+            >
+              {v}
+            </span>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
+  // ── PDF ──────────────────────────────────────────────────────────────────
+  const pdfRows = kind === "pdf" ? (() => {
+    const rows: { key: string; label: string; values: string[] }[] = [];
+
+    const sectionLabels = PDF_SECTIONS.filter(s => req.pdfSections.includes(s.id)).map(s => s.label);
+    rows.push({ key: "pdf-sections", label: "Secciones", values: sectionLabels });
+
+    const slotDefs: { slot: PdfSegmentSlot; label: string }[] = [
+      { slot: "participation", label: "Participación por" },
+      { slot: "heatmap",       label: "Heatmap por" },
+      { slot: "nps",           label: "eNPS por" },
+      { slot: "gaps",          label: "Brechas por" },
+    ];
+    for (const { slot, label } of slotDefs) {
+      const keys = req.pdfSegments[slot];
+      if (keys.length === 0 && !req.pdfSections.includes(
+        slot === "participation" ? "participation" :
+        slot === "heatmap"       ? "heatmap"       :
+        slot === "nps"           ? "nps"           : "gaps"
+      )) continue;
+      const segLabels = keys.map(key => results.segments.find(s => s.key === key)?.label ?? key);
+      rows.push({ key: `pdf-slot-${slot}`, label, values: segLabels });
+    }
+
+    if (req.pdfSections.includes("questions")) {
+      const qLabels = results.sections
+        .filter(s => req.pdfQuestionSections.includes(s.id))
+        .map(s => `${s.numbering}. ${s.title}`);
+      rows.push({ key: "pdf-qsections", label: "Secciones de preguntas", values: qLabels });
+    }
+
+    return rows;
+  })() : [];
+
+  // ── XLSX ─────────────────────────────────────────────────────────────────
+  const xlsxRows = kind === "xlsx" ? (() => {
+    const rows: { key: string; label: string; values: string[] }[] = [];
+
+    const sheetLabels = XLSX_SHEETS.filter(s => req.xlsxSheets.includes(s.id)).map(s => s.label);
+    rows.push({ key: "xlsx-sheets", label: "Hojas incluidas", values: sheetLabels });
+
+    const xlsxSlotDefs: { key: "participationSegments" | "heatmapSegments" | "npsSegments"; label: string }[] = [
+      { key: "participationSegments", label: "Participación por" },
+      { key: "heatmapSegments",       label: "Heatmap por" },
+      { key: "npsSegments",           label: "eNPS por" },
+    ];
+    for (const { key, label } of xlsxSlotDefs) {
+      const keys = req[key];
+      if (keys.length === 0) continue;
+      const segLabels = keys.map(k => results.segments.find(s => s.key === k)?.label ?? k);
+      rows.push({ key: `xlsx-${key}`, label, values: segLabels });
+    }
+
+    return rows;
+  })() : [];
+
+  // ── Comentarios ───────────────────────────────────────────────────────────
+  const commentRows = kind === "comments" ? (() => {
+    const rows: { key: string; label: string; values: string[] }[] = [];
+
+    const sentLabels = (req.commentSentiments as string[]).map(id =>
+      id === "positive" ? "Positivo" : id === "neutral" ? "Neutro" : "Negativo"
+    );
+    rows.push({ key: "comment-sentiment", label: "Sentimientos", values: sentLabels });
+
+    if (req.commentTopics.length > 0) {
+      rows.push({ key: "comment-topics", label: "Temas", values: [...req.commentTopics] });
+    }
+
+    return rows;
+  })() : [];
+
+  // ── Filtro de población ───────────────────────────────────────────────────
+  const filterRows = req.filters && req.filters.length > 0 ? (() => {
+    const byKey = new Map<string, string[]>();
+    for (const f of req.filters) {
+      if (!byKey.has(f.key)) byKey.set(f.key, []);
+      const segment = results.segments.find(s => s.key === f.key);
+      const option  = segment?.options.find(o => o.id === f.optionId);
+      byKey.get(f.key)!.push(option?.label ?? f.optionId);
+    }
+    return [...byKey.entries()].map(([key, vals]) => {
+      const seg = results.segments.find(s => s.key === key);
+      return { key: `filter-${key}`, label: `Población · ${seg?.label ?? key}`, values: vals };
+    });
+  })() : [];
+
+  const allRows = [...pdfRows, ...xlsxRows, ...commentRows, ...filterRows];
+
+  return (
+    <div className="divide-y divide-border/40 border-t border-border/40 bg-white px-3">
+      {allRows.length === 0 ? (
+        <p className="py-3 text-[12px] text-muted-foreground">Sin configuración adicional.</p>
       ) : (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 shrink-0 gap-1.5 rounded-full px-3 text-[12px] font-bold text-primary hover:bg-primary/10 hover:text-primary"
-          onClick={() => onShare(entry.id)}
-        >
-          <Share2 className="h-3.5 w-3.5" />
-          Compartir
-        </Button>
+        allRows.map(row => <DetailRow key={row.key} label={row.label} values={row.values} />)
       )}
     </div>
   );
