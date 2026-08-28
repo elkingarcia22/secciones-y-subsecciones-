@@ -24,7 +24,7 @@ import {
 } from "@/mocks/surveyResults";
 import { ScoreChip } from "./ScoreChip";
 import { MeasurementScaleButton } from "./MeasurementScaleButton";
-import { bandForScore, FAVORABILITY_SCALE_LEGEND, formatScore } from "./favorabilityScale";
+import { bandForScore, FAVORABILITY_SCALE_LEGEND, formatScore, tierForScore } from "./favorabilityScale";
 import { ResultsFilterChips, ResultsFilterControls } from "./ResultsFilterToolbar";
 import { ResultsSubTabSwitch, type ResultsSubTab } from "./ResultsSubTabSwitch";
 import type { ResultsFiltersState } from "./useResultsFilters";
@@ -114,6 +114,7 @@ export function HeatmapTab({
     toggleLevel,
     resetLevels,
     highlightBands,
+    tierBands,
     hasHiddenBands,
     toggleBand,
     resetBands,
@@ -220,7 +221,7 @@ export function HeatmapTab({
               hasHiddenLevels={hasHiddenLevels}
               onToggleLevel={toggleLevel}
               onResetLevels={resetLevels}
-              highlightBands={highlightBands}
+              highlightBands={highlightBands} tierBands={tierBands}
               hasHiddenBands={hasHiddenBands}
               onToggleBand={toggleBand}
               onResetBands={resetBands}
@@ -340,7 +341,7 @@ export function HeatmapTab({
                     columnOrder={columnOrder}
                     expanded={expanded}
                     onToggle={toggleRow}
-                    highlightBands={highlightBands}
+                    highlightBands={highlightBands} tierBands={tierBands}
                     highlightedRows={highlightedRows}
                     onRowHighlight={toggleRowHighlight}
                     visibleLevels={visibleLevels}
@@ -388,6 +389,7 @@ function RowNode({
   expanded,
   onToggle,
   highlightBands,
+  tierBands,
   highlightedRows,
   onRowHighlight,
   visibleLevels,
@@ -397,6 +399,7 @@ function RowNode({
   expanded: ReadonlySet<string>;
   onToggle: (id: string) => void;
   highlightBands?: ReadonlySet<string>;
+  tierBands?: ReadonlySet<string>;
   highlightedRows?: ReadonlySet<string>;
   onRowHighlight?: (id: string) => void;
   visibleLevels: ReadonlySet<HeatmapLevel>;
@@ -412,7 +415,7 @@ function RowNode({
         isRoot={row.depth === 1}
         isOpen={isExpanded}
         onToggle={expandable ? () => onToggle(row.id) : undefined}
-        highlightBands={highlightBands}
+        highlightBands={highlightBands} tierBands={tierBands}
         highlightedRows={highlightedRows}
         onRowHighlight={onRowHighlight}
         levelHidden={!visibleLevels.has(levelOf(row))}
@@ -425,7 +428,7 @@ function RowNode({
             columnOrder={columnOrder}
             expanded={expanded}
             onToggle={onToggle}
-            highlightBands={highlightBands}
+            highlightBands={highlightBands} tierBands={tierBands}
             highlightedRows={highlightedRows}
             onRowHighlight={onRowHighlight}
             visibleLevels={visibleLevels}
@@ -442,6 +445,7 @@ function GridRow({
   isOpen = false,
   onToggle,
   highlightBands,
+  tierBands,
   highlightedRows = new Set(),
   onRowHighlight,
   levelHidden = false,
@@ -452,6 +456,7 @@ function GridRow({
   isOpen?: boolean;
   onToggle?: () => void;
   highlightBands?: ReadonlySet<string>;
+  tierBands?: ReadonlySet<string>;
   highlightedRows?: ReadonlySet<string>;
   onRowHighlight?: (id: string) => void;
   levelHidden?: boolean;
@@ -591,13 +596,21 @@ function GridRow({
       {columnOrder.map((index) => {
         const cell = row.cells[index];
         const band = cell.score === null ? null : bandForScore(cell.score);
+        const tier = cell.score !== null ? tierForScore(cell.score) : null;
         const dimmed =
           rowDimmed ||
           (cell.score !== null &&
             !cell.masked &&
             band !== null &&
             highlightBands !== undefined &&
-            !highlightBands.has(band.id));
+            highlightBands.size > 0 &&
+            !highlightBands.has(band.id)) ||
+          (cell.score !== null &&
+            !cell.masked &&
+            tier !== null &&
+            tierBands !== undefined &&
+            tierBands.size > 0 &&
+            !tierBands.has(tier.id));
 
         return (
           <TableCell key={index} className="px-2 py-2 align-middle">

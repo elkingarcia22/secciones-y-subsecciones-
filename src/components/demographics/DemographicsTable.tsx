@@ -148,8 +148,8 @@ export function DemographicsTable({
   const hasActiveFilters = query !== "" || originFilter.size > 0;
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
-      <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-col flex-1 min-h-0 gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
+      <div className="flex flex-wrap items-center gap-4 shrink-0">
         <div className="flex items-center gap-2">
           <h3 className="text-[13px] font-bold text-text-primary">
             Lista de datos demográficos
@@ -214,7 +214,7 @@ export function DemographicsTable({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border/60">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-xl border border-border/60">
         {visibleRows.length === 0 ? (
           <div className="p-6">
             <EmptyState
@@ -240,7 +240,7 @@ export function DemographicsTable({
             />
           </div>
         ) : (
-          <div className="relative w-full overflow-x-auto">
+          <div className="relative w-full flex-1 min-h-0 overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
@@ -334,7 +334,7 @@ export function DemographicsTable({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
         <p className="text-[12px] text-muted-foreground">
           {visibleRows.length === 0
             ? "0 demográficos"

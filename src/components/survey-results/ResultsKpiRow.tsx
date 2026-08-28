@@ -1,5 +1,12 @@
 import { Gauge } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/status-badge";
+
+function mapVerdictToState(variant: string): "success" | "pending" | "failed" {
+  if (variant === "positive") return "success";
+  if (variant === "warning" || variant === "info" || variant === "neutral") return "pending";
+  return "failed";
+}
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -51,7 +58,12 @@ export function ResultsKpiRow({ results, previousLabel }: ResultsKpiRowProps) {
         segments={favorabilitySegments(distribution, "kpi", nsnr)}
         total={n + nsnr}
         showLegend={false}
-        actions={<Badge variant={verdict.variant}>{verdict.label}</Badge>}
+        actions={
+          <StatusBadge 
+            state={mapVerdictToState(verdict.variant)} 
+            labels={{ [mapVerdictToState(verdict.variant)]: verdict.label }} 
+          />
+        }
       />
 
       <SurveyMetricCard
@@ -86,21 +98,20 @@ export function ResultsKpiRow({ results, previousLabel }: ResultsKpiRowProps) {
               {results.nps.promoters} promotores · {results.nps.passives} neutros ·{" "}
               {results.nps.detractors} detractores
             </span>
-            <Badge
-              variant={
+            <StatusBadge
+              state={
                 results.nps.score >= 20
-                  ? "positive"
+                  ? "success"
                   : results.nps.score >= 0
-                    ? "warning"
-                    : "negative"
+                    ? "pending"
+                    : "failed"
               }
-            >
-              {results.nps.score >= 20
-                ? "Zona favorable"
-                : results.nps.score >= 0
-                  ? "Zona neutra"
-                  : "Zona de riesgo"}
-            </Badge>
+              labels={{
+                success: "Zona favorable",
+                pending: "Zona neutra",
+                failed: "Zona de riesgo"
+              }}
+            />
           </div>
         </SurveyMetricCard>
       ) : (

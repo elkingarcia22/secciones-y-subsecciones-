@@ -97,10 +97,10 @@ const TypeCard: React.FC<{
  <div 
  onClick={() => onSelect(title)}
  className={cn(
- "flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-400 cursor-pointer mb-2 relative overflow-hidden",
+ "hover-icon-pop group flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-400 cursor-pointer mb-2 relative overflow-hidden",
  selected 
  ? "border-primary bg-surface ring-2 ring-primary/20" 
- : "border-border/60 bg-surface"
+ : "border-border/60 bg-surface hover:border-primary/30"
  )}
  >
  {selected && (
@@ -145,10 +145,10 @@ const SurveySelectionItem: React.FC<{
  <div 
  onClick={() => onSelect(survey.id)}
  className={cn(
- "flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-400 cursor-pointer bg-surface mb-2 relative overflow-hidden",
+ "hover-icon-pop group flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-400 cursor-pointer bg-surface mb-2 relative overflow-hidden",
  selected 
  ? "border-primary ring-2 ring-primary/20" 
- : "border-border/60"
+ : "border-border/60 hover:border-primary/30"
  )}
  >
  {selected && (
@@ -406,7 +406,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
  }, [filteredSurveys]);
 
  const comparativeOptions = React.useMemo(() => {
-    let result = filteredSurveys.filter(s => s.status === "Finalizado");
+    const result = filteredSurveys.filter(s => s.status === "Finalizado");
 
     
     return [...result].sort((a, b) => {
@@ -466,8 +466,8 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
  setIsDrawerOpen(false);
  };
 
- return (
- <div className="flex flex-col">
+  return (
+  <div className="flex flex-col flex-1 min-h-0">
   {/* The list is the participation table with survey content: same shell,
       same header controls, same selection model and pager. */}
   <SurveyListTable

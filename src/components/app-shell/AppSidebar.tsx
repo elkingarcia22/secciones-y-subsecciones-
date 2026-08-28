@@ -326,11 +326,20 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           </div>
           <div className="-mx-2 my-2 h-px bg-border/60" />
           <div className="px-2 pb-1.5 pt-1 text-xs font-medium text-text-muted">Configuración</div>
-          {COMPANY_MENU_LINKS.map((label) => (
+          {COMPANY_MENU_LINKS.map((label, index) => (
             <button
               key={label}
               onClick={() => setCompanyMenuOpen(false)}
-              className="flex w-full items-center rounded-lg px-2 py-2 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-background hover:text-text-primary"
+              className={cn(
+                "flex w-full items-center rounded-lg px-2 py-2 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-background hover:text-text-primary",
+                "opacity-0 translate-y-1.5",
+                companyMenuOpen && "opacity-100 translate-y-0"
+              )}
+              style={{
+                transition: companyMenuOpen
+                  ? `opacity 260ms cubic-bezier(0.16,1,0.3,1) ${index * 40}ms, transform 260ms cubic-bezier(0.16,1,0.3,1) ${index * 40}ms`
+                  : "none",
+              }}
             >
               {label}
             </button>
@@ -338,7 +347,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           <div className="-mx-2 my-2 h-px bg-border/60" />
           <div className="px-2 pb-1.5 pt-1 text-xs font-medium text-text-muted">Empresas</div>
           <div className="flex flex-col gap-0.5">
-            {COMPANIES.map((company) => {
+            {COMPANIES.map((company, index) => {
               const isActive = company.id === activeCompanyId;
               return (
                 <button
@@ -349,8 +358,15 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-background",
-                    isActive && "font-semibold text-text-primary"
+                    isActive && "font-semibold text-text-primary",
+                    "opacity-0 translate-y-1.5",
+                    companyMenuOpen && "opacity-100 translate-y-0"
                   )}
+                  style={{
+                    transition: companyMenuOpen
+                      ? `opacity 260ms cubic-bezier(0.16,1,0.3,1) ${(COMPANY_MENU_LINKS.length * 40) + index * 40}ms, transform 260ms cubic-bezier(0.16,1,0.3,1) ${(COMPANY_MENU_LINKS.length * 40) + index * 40}ms`
+                      : "none",
+                  }}
                 >
                   <CompanyMark company={company} size="sm" />
                   <span className="min-w-0 flex-1 truncate">{company.name}</span>

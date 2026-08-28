@@ -2,6 +2,13 @@ import * as React from "react";
 import { CalendarClock, Eye, EyeOff, ListChecks, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/status-badge";
+
+function mapVariantToState(variant: "info" | "positive" | "warning" | "neutral"): "success" | "pending" | "failed" {
+  if (variant === "positive") return "success";
+  if (variant === "warning" || variant === "info" || variant === "neutral") return "pending"; // Map neutral/info to pending since there's no neutral in StatusBadge yet, or wait I'll map them appropriately if I extend it.
+  return "failed";
+}
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
@@ -323,8 +330,8 @@ export function SurveyListTable({
   const hasActiveFilters = query !== "" || hasAnyFilter(filters);
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
-      <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-col flex-1 min-h-0 gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
+      <div className="flex flex-wrap items-center gap-4 shrink-0">
         <div className="flex items-center gap-2">
           <h3 className="text-[13px] font-bold text-text-primary">Lista de encuestas</h3>
           <Badge variant="neutral" className="h-5 px-1.5 text-[11px] font-semibold tabular-nums">
@@ -428,7 +435,7 @@ export function SurveyListTable({
       {/* Names what the dimmed table is waiting for, and offers the way out
           that clicking a greyed row no longer can. */}
       {editingSurvey && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+        <div className="flex flex-wrap shrink-0 items-center gap-x-3 gap-y-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
           <CalendarClock className="h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
           <p className="text-[13px] text-text-secondary">
             {dateEdit?.mode === "reopen" ? "Reabriendo " : "Editando la fecha de cierre de "}
@@ -448,7 +455,7 @@ export function SurveyListTable({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-border/60">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-xl border border-border/60">
         {visibleRows.length === 0 ? (
           <div className="p-8">
             <EmptyState
@@ -478,7 +485,7 @@ export function SurveyListTable({
             />
           </div>
         ) : (
-          <div className="relative w-full overflow-x-auto">
+          <div className="relative w-full flex-1 min-h-0 overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
@@ -595,7 +602,7 @@ export function SurveyListTable({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
         <p className="text-[12px] text-muted-foreground">
           {visibleRows.length === 0
             ? "0 encuestas"
@@ -734,7 +741,10 @@ function SurveyRow({
         <span className="block truncate">{survey.type}</span>
       </TableCell>
       <TableCell className="py-3">
-        <Badge variant={statusVariant(survey)}>{survey.status}</Badge>
+        <StatusBadge 
+          state={mapVariantToState(statusVariant(survey))} 
+          labels={{ [mapVariantToState(statusVariant(survey))]: survey.status }} 
+        />
       </TableCell>
       <TableCell className="px-2 py-3 text-[13px] tabular-nums text-muted-foreground">
         {isEditing && editMode === "editStartDate" ? (

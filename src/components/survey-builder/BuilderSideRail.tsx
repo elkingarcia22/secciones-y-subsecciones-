@@ -17,12 +17,16 @@ import {
   Check,
   Pin,
   Minimize2,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SECTION_IMPORT_ACCEPT, importedToSections, parseSectionFile, summarizeImported } from "./sectionFileImport";
 import type { SectionImportSummary } from "./sectionFileImport";
 import type { SurveySection } from "./surveyBuilderTypes";
+import { AiAgentDrawer } from "@/components/ai/AiAgentDrawer";
+import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
+import { AI_GRADIENT } from "@/components/app-shell/appShellData";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -140,8 +144,7 @@ function RailButton({
           onClick={disabled ? undefined : onClick}
           disabled={disabled}
           {...(ignoreOutsideClick ? { "data-click-outside-ignore": true } : {})}
-          aria-label={label}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-white/60 disabled:active:scale-100"
+          className="dock-item relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-white/60"
         >
           {icon}
         </button>
@@ -265,10 +268,11 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
     const [isSubnivelMenuOpen, setIsSubnivelMenuOpen] = React.useState(false);
     const [isImporting, setIsImporting] = React.useState(false);
     const importInputRef = React.useRef<HTMLInputElement>(null);
+    const [aiDrawerOpen, setAiDrawerOpen] = React.useState(false);
 
     const [autoHide, setAutoHide] = React.useState(false);
     const [isExpanded, setIsExpanded] = React.useState(true);
-    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // ── Step-change detection ──────────────────────────────
     // Tracks the previous step to detect real transitions and drive the
@@ -276,7 +280,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
     // so CSS animations re-fire via a new React key.
     const prevStepRef = React.useRef(activeStep);
     const [stepChangeKey, setStepChangeKey] = React.useState(0);
-    const forceOpenTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+    const forceOpenTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     React.useEffect(() => {
       if (prevStepRef.current !== activeStep) {
@@ -370,8 +374,9 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
     const isRight = orientation === "right";
 
     return (
-      <div 
-        className={cn(
+      <>
+        <div 
+          className={cn(
           "absolute z-50 flex pointer-events-none",
           isRight ? "right-0 top-1/2 -translate-y-1/2 flex-row items-center justify-end" : "bottom-0 left-1/2 -translate-x-1/2 flex-col items-center justify-end"
         )}
@@ -403,7 +408,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
             {/* The actual content that fades/slides in */}
             <div 
               className={cn(
-                "flex items-center gap-2 transition-all duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+                "dock-container flex items-center gap-2 transition-all duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
                 isRight ? "h-max flex-col" : "w-max",
                 isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
               )}
@@ -462,7 +467,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                                   setIsSubnivelMenuOpen(false);
                                   onAddSiblingSubsection();
                                 }}
-                                className="flex w-full items-start gap-3 rounded-lg border border-border/60 px-4 py-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                                className="hover-icon-pop flex w-full items-start gap-3 rounded-lg border border-border/60 px-4 py-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                               >
                                 <CornerDownRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
                                 <span className="min-w-0">
@@ -482,7 +487,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                                   if (selectedDepth === 3) onAddLevelTwoSubsection();
                                   else onAddSubsection();
                                 }}
-                                className="flex w-full items-start gap-3 rounded-lg border border-border/60 px-4 py-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                                className="hover-icon-pop flex w-full items-start gap-3 rounded-lg border border-border/60 px-4 py-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                               >
                                 <Layers className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
                                 <span className="min-w-0">
@@ -655,7 +660,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                   <button
                     type="button"
                     aria-label="Información de participantes, secciones, preguntas, datos demográficos y tiempo"
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                    className="dock-item relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                   >
                     <Info className="h-[20px] w-[20px]" strokeWidth={2} />
                   </button>
@@ -665,13 +670,13 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                   align="center"
                   sideOffset={16}
                   avoidCollisions={false}
-                  className="w-60 rounded-2xl p-4 bg-surface-nav border border-white/10 shadow-rail"
+                  className="w-60 rounded-2xl p-4 bg-surface-nav border border-white/10 shadow-rail gap-0"
                 >
                   <PopoverTitle className="text-[13px] font-semibold text-white">
                     Información
                   </PopoverTitle>
 
-                  <div className="my-2.5 h-px bg-white/10" />
+                  <div className="mt-2 mb-3 h-px bg-white/10" />
 
                   <dl className="flex flex-col gap-2.5">
                     <InfoRow icon={Users} label="Participantes" value={formatCount(participantsCount)} />
@@ -689,7 +694,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                     type="button"
                     onClick={() => setAutoHide(!autoHide)}
                     aria-label={autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                    className="dock-item relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                   >
                     {!autoHide ? (
                       <Minimize2 className="h-[20px] w-[20px]" strokeWidth={2} />
@@ -703,6 +708,57 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                 </TooltipContent>
               </Tooltip>
 
+              <svg width="0" height="0" className="absolute">
+                <defs>
+                  <linearGradient id="ai-icon-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="hsl(var(--ai-gradient-start))" />
+                    <stop offset="100%" stopColor="hsl(var(--ai-gradient-end))" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setAiDrawerOpen(true)}
+                    aria-label="Agente IA"
+                    className="group hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl bg-transparent transition-all duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 overflow-hidden"
+                  >
+                    {/* Background animation on hover */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-ai-gradient -z-10" />
+                    
+                    <MovingBorderBeam 
+                      duration={4000}
+                      borderWidth={2}
+                      rx={12}
+                      ry={12}
+                      beamSize={60}
+                      colorFrom="hsl(var(--ai-gradient-start))"
+                      colorTo="hsl(var(--ai-gradient-end))"
+                      className="opacity-100 group-hover:opacity-0 transition-opacity duration-300"
+                    />
+                    
+                    {/* Gradient icon (default) */}
+                    <Sparkles 
+                      className="absolute z-10 h-[20px] w-[20px] drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] opacity-100 group-hover:opacity-0 transition-opacity duration-300" 
+                      stroke="url(#ai-icon-gradient)" 
+                      strokeWidth={2.5} 
+                    />
+                    
+                    {/* White icon (hover) */}
+                    <Sparkles 
+                      className="absolute z-10 h-[20px] w-[20px] text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
+                      strokeWidth={2.5} 
+                    />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side={isRight ? "left" : "top"}>
+                  Agente IA
+                </TooltipContent>
+              </Tooltip>
+
+              <div className={cn("self-stretch bg-white/10", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
+
               <RailButton tooltipSide={isRight ? "left" : "top"}
                 icon={<Save className="h-[20px] w-[20px]" strokeWidth={2} />}
                 label="Guardar encuesta"
@@ -713,7 +769,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                 <Button
                   size="sm"
                   onClick={onContinue}
-                  className="h-10 gap-2 rounded-full px-4 text-[13px]"
+                  className="hover-icon-pop relative h-10 gap-2 rounded-full px-4 text-[13px] transition-shadow hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)]"
                 >
                   {continueLabel}
                   {continueLabel === "Finalizar" ? (
@@ -725,11 +781,11 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span>
+                    <span className="relative">
                       <Button
                         size="sm"
                         disabled
-                        className="h-10 gap-2 rounded-full px-4 text-[13px]"
+                        className="pointer-events-none h-10 gap-2 rounded-full px-4 text-[13px] opacity-50"
                       >
                         {continueLabel}
                         {continueLabel === "Finalizar" ? (
@@ -749,6 +805,8 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
           </div>
         </div>
       </div>
-    );
+      <AiAgentDrawer open={aiDrawerOpen} onOpenChange={setAiDrawerOpen} context="builder" />
+    </>
+  );
   }
 );

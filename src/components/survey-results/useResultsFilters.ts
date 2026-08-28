@@ -71,7 +71,7 @@ export function useResultsFilters(
     () => new Set(bandIds)
   );
   const [tierBands, setTierBands] = React.useState<ReadonlySet<string>>(
-    () => new Set(FAVORABILITY_TIER_IDS)
+    new Set()
   );
   const [highlightedRows, setHighlightedRows] = React.useState<ReadonlySet<string>>(new Set());
 
@@ -135,7 +135,7 @@ export function useResultsFilters(
     });
   }, []);
   const resetTierBands = React.useCallback(
-    () => setTierBands(new Set(FAVORABILITY_TIER_IDS)),
+    () => setTierBands(new Set()),
     []
   );
 
@@ -171,7 +171,7 @@ export function useResultsFilters(
     toggleBand,
     resetBands,
     tierBands,
-    hasHiddenTierBands: tierBands.size < FAVORABILITY_TIER_IDS.length,
+    hasHiddenTierBands: tierBands.size > 0 && tierBands.size < FAVORABILITY_TIER_IDS.length,
     toggleTierBand,
     resetTierBands,
     highlightedRows,

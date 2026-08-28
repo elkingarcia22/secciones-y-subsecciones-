@@ -402,4 +402,6 @@ export interface DownloadEntry {
   delivered: boolean;
   /** Generates and hands the actual file to the browser. `false` when it failed. */
   deliver: () => boolean;
+  /** The configuration used to build the file, so it can be shown in details. */
+  request: ReportRequest;
 }

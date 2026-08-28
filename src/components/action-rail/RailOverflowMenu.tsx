@@ -50,7 +50,7 @@ export function RailOverflowMenu({
               type="button"
               aria-label={label}
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95",
+                "dock-item relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30",
                 open && "bg-white/10 text-white"
               )}
             >
@@ -67,8 +67,7 @@ export function RailOverflowMenu({
         sideOffset={16}
         className="w-[248px] rounded-2xl border-white/10 bg-surface-nav p-2 text-white/60 shadow-rail"
       >
-
-        {items.map((item) => {
+        {items.map((item, index) => {
           const disabled = item.blockedReason != null;
           return (
             <button
@@ -82,11 +81,19 @@ export function RailOverflowMenu({
                 item.onClick();
               }}
               className={cn(
-                "group flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+                "hover-icon-pop group flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40",
                 item.tone === "danger"
                   ? "hover:bg-status-negative/15 disabled:hover:bg-transparent"
-                  : "hover:bg-white/5 disabled:hover:bg-transparent"
+                  : "hover:bg-white/5 disabled:hover:bg-transparent",
+                // Stagger: empieza invisible+abajo, llega a visible+centrado
+                "opacity-0 translate-y-2",
+                open && "opacity-100 translate-y-0"
               )}
+              style={{
+                transition: open
+                  ? `opacity 260ms cubic-bezier(0.16,1,0.3,1) ${index * 50}ms, transform 260ms cubic-bezier(0.16,1,0.3,1) ${index * 50}ms`
+                  : "none",
+              }}
             >
               <span
                 className={cn(

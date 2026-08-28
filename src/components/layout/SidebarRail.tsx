@@ -51,7 +51,7 @@ const SidebarRail = React.forwardRef<HTMLDivElement, SidebarRailProps>(
         </div>
 
         {/* Navigation Icons Area */}
-        <nav className="flex flex-1 flex-col items-center space-y-4">
+        <nav className="dock-container flex flex-1 flex-col items-center gap-4">
           {navigationConfig.map((item) => (
             <NavItem 
               key={item.id}
@@ -123,16 +123,16 @@ function NavItem({
   className?: string 
 }) {
   return (
-    <div className="relative group">
+    <div className="dock-wrapper relative group">
       {noButton ? (
-        <div className={cn("cursor-pointer", className)}>
+        <div className={cn("dock-item cursor-pointer", className)}>
           {icon}
         </div>
       ) : (
         <button
           onClick={onClick}
           className={cn(
-            "relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200",
+            "dock-item relative flex h-12 w-12 items-center justify-center rounded-full transition-shadow duration-200",
             active 
               ? "bg-white text-surface-nav shadow-drawer" 
               : "text-white/60 hover:bg-white/5 hover:text-white",

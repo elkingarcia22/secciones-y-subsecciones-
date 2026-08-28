@@ -1,5 +1,5 @@
 import type * as React from "react";
-import { ChevronRight, Trash2 } from "lucide-react";
+import { ChevronRight, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
@@ -7,7 +7,7 @@ import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
 import { MoveToPopover } from "./MoveToPopover";
 import { SectionQuestions, type QuestionListHandlers } from "./SectionQuestions";
 import { CHIP_SELECTED_RING, RAIL_SELECTED, SIBLING_DIVIDER, depthTheme } from "./depthTheme";
-import { childEntries, countQuestions, moveDestinationsForSection, type SectionTreeEntry } from "./sectionTree";
+import { childEntries, countQuestions, moveDestinationsForSection, findSection, type SectionTreeEntry } from "./sectionTree";
 import { canHaveQuestions, depthLabel, type SurveySection } from "./surveyBuilderTypes";
 
 export interface SubsectionAccordionHandlers extends QuestionListHandlers {
@@ -33,6 +33,10 @@ export interface SubsectionAccordionHandlers extends QuestionListHandlers {
   pendingDeleteMessage: React.ReactNode;
   onConfirmDeleteSection: () => void;
   onCancelDeleteSection: () => void;
+  draggingSectionId: string | null;
+  overSectionId: string | null;
+  getSectionHandleProps: (id: string) => any;
+  getSectionDropTargetProps: (id: string) => any;
 }
 
 interface SubsectionAccordionProps extends SubsectionAccordionHandlers {
@@ -71,6 +75,12 @@ export function SubsectionAccordion({ entry, readOnly, ...handlers }: Subsection
   const isExpanded = expandedIds.has(section.id);
   const isSelected = selectedId === section.id;
   const isPendingDelete = pendingDeleteId === section.id;
+  
+  const isDragging = handlers.draggingSectionId === section.id;
+  const draggingParentId = handlers.draggingSectionId ? findSection(handlers.sections, handlers.draggingSectionId)?.parentId : null;
+  const isValidTarget = handlers.draggingSectionId !== null && handlers.draggingSectionId !== section.id && entry.parentId === draggingParentId;
+  const isDropTarget = handlers.overSectionId === section.id && isValidTarget;
+
   const children = childEntries(entry);
   const theme = depthTheme(depth);
   // Collapsed hides the nested rows, so the badge reports the whole subtree.
@@ -81,7 +91,15 @@ export function SubsectionAccordion({ entry, readOnly, ...handlers }: Subsection
   const moveDestinations = moveDestinationsForSection(handlers.sections, entry);
 
   return (
-    <li>
+    <li
+      {...handlers.getSectionDropTargetProps(section.id)}
+      className={cn(
+        "relative transition-all",
+        isDragging && "opacity-40",
+        isDropTarget &&
+          "before:absolute before:-top-px before:left-6 before:right-1 before:h-0.5 before:rounded-full before:bg-primary"
+      )}
+    >
       {/* Header row. Doubles as the rail's anchor when this row is the one the
           author is working in — and never while a question editor is open,
           since the editor takes the anchor instead. */}
@@ -92,7 +110,7 @@ export function SubsectionAccordion({ entry, readOnly, ...handlers }: Subsection
         // moved nothing, and the tree and rail stayed on the previous row. Not
         // while the delete banner is up: it should only ever answer that.
         onClick={() => !isPendingDelete && onSelect(section.id)}
-        className="flex items-start gap-2"
+        className={cn("flex items-start gap-2", isDropTarget && "bg-primary/5")}
       >
         {isPendingDelete ? (
           <InlineDeleteConfirm
@@ -103,27 +121,38 @@ export function SubsectionAccordion({ entry, readOnly, ...handlers }: Subsection
           />
         ) : (
           <>
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onToggleExpanded(section.id);
-              }}
-              aria-expanded={isExpanded}
-              aria-label={
-                isExpanded ? `Contraer ${depthLabel(depth)} ${numbering}` : `Expandir ${depthLabel(depth)} ${numbering}`
-              }
-              className={cn(
-                "mt-0.5 flex shrink-0 items-center justify-center rounded-lg p-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-                isExpanded ? "bg-primary/10 text-primary" : "text-muted-foreground/60 hover:bg-surface-muted",
-                theme.chevronSize
+            <div className="flex flex-col items-center mt-1">
+              {!readOnly && (
+                <span
+                  {...handlers.getSectionHandleProps(section.id)}
+                  aria-label={`Reordenar ${section.title}`}
+                  className="cursor-grab text-muted-foreground/30 hover:text-text-primary active:cursor-grabbing mb-1"
+                >
+                  <GripVertical className="h-3.5 w-3.5" strokeWidth={2.5} />
+                </span>
               )}
-            >
-              <ChevronRight
-                className={cn("transition-transform duration-200", isExpanded && "rotate-90", theme.chevronIcon)}
-                strokeWidth={isExpanded ? 3 : 2.5}
-              />
-            </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleExpanded(section.id);
+                }}
+                aria-expanded={isExpanded}
+                aria-label={
+                  isExpanded ? `Contraer ${depthLabel(depth)} ${numbering}` : `Expandir ${depthLabel(depth)} ${numbering}`
+                }
+                className={cn(
+                  "flex shrink-0 items-center justify-center rounded-lg p-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                  isExpanded ? "bg-primary/10 text-primary" : "text-muted-foreground/60 hover:bg-surface-muted",
+                  theme.chevronSize
+                )}
+              >
+                <ChevronRight
+                  className={cn("transition-transform duration-200", isExpanded && "rotate-90", theme.chevronIcon)}
+                  strokeWidth={isExpanded ? 3 : 2.5}
+                />
+              </button>
+            </div>
 
             <div className="min-w-0 flex-1 pl-0.5 pt-1">
               <span

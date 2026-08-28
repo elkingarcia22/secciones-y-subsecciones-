@@ -54,10 +54,12 @@ export function NpsDepthView({
   draft,
   results,
   filters,
+  tierBands,
 }: {
   draft: SurveyDraft;
   results: SurveyResults;
   filters: readonly SegmentFilter[];
+  tierBands?: ReadonlySet<string>;
 }) {
   const sections = React.useMemo(
     () => npsDepthBySection(draft, results, filters),
@@ -87,6 +89,7 @@ export function NpsDepthView({
           onToggle={() =>
             setOpenSection((current) => (current === section.id ? undefined : section.id))
           }
+          tierBands={tierBands}
         />
       ))}
     </div>
@@ -110,14 +113,17 @@ function sectionCaption(section: NpsDepthSection): string {
     : label;
 }
 
+
 function DepthSectionRoot({
   section,
   isOpen,
   onToggle,
+  tierBands,
 }: {
   section: NpsDepthSection;
   isOpen: boolean;
   onToggle: () => void;
+  tierBands?: ReadonlySet<string>;
 }) {
   return (
     <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface">
@@ -162,10 +168,10 @@ function DepthSectionRoot({
       {isOpen && (
         <div className="flex min-h-0 flex-col gap-5 px-6 py-5 duration-300 animate-in fade-in slide-in-from-top-1">
           {section.questions.map((question) => (
-            <DepthQuestionBlock key={question.id} question={question} />
+            <DepthQuestionBlock key={question.id} question={question} tierBands={tierBands} />
           ))}
           {section.children.length > 0 && (
-            <DepthSubsectionOutline sections={section.children} depth={2} />
+            <DepthSubsectionOutline sections={section.children} depth={2} tierBands={tierBands} />
           )}
         </div>
       )}
@@ -173,12 +179,15 @@ function DepthSectionRoot({
   );
 }
 
+
 function DepthSubsectionOutline({
   sections,
   depth,
+  tierBands,
 }: {
   sections: readonly NpsDepthSection[];
   depth: number;
+  tierBands?: ReadonlySet<string>;
 }) {
   return (
     <ul className={cn("flex flex-col", SIBLING_DIVIDER)}>
@@ -188,6 +197,7 @@ function DepthSubsectionOutline({
           section={section}
           depth={depth}
           defaultOpen={index === 0}
+          tierBands={tierBands}
         />
       ))}
     </ul>
@@ -198,10 +208,12 @@ function DepthSubsectionRow({
   section,
   depth,
   defaultOpen,
+  tierBands,
 }: {
   section: NpsDepthSection;
   depth: number;
   defaultOpen?: boolean;
+  tierBands?: ReadonlySet<string>;
 }) {
   const [expanded, setExpanded] = React.useState(defaultOpen ?? false);
   const theme = depthTheme(depth);
@@ -263,10 +275,10 @@ function DepthSubsectionRow({
           )}
         >
           {section.questions.map((question) => (
-            <DepthQuestionBlock key={question.id} question={question} />
+            <DepthQuestionBlock key={question.id} question={question} tierBands={tierBands} />
           ))}
           {section.children.length > 0 && (
-            <DepthSubsectionOutline sections={section.children} depth={depth + 1} />
+            <DepthSubsectionOutline sections={section.children} depth={depth + 1} tierBands={tierBands} />
           )}
         </div>
       )}
@@ -276,7 +288,7 @@ function DepthSubsectionRow({
 
 /* ----------------------------------------------------------------- pregunta */
 
-function DepthQuestionBlock({ question }: { question: NpsDepthQuestion }) {
+function DepthQuestionBlock({ question, tierBands }: { question: NpsDepthQuestion; tierBands?: ReadonlySet<string> }) {
   const answered = question.bands.reduce((sum, band) => sum + band.answered, 0);
 
   return (
@@ -323,23 +335,24 @@ function DepthQuestionBlock({ question }: { question: NpsDepthQuestion }) {
           the same look "comentarios de preguntas" moved away from. */}
       <ul className="flex flex-col divide-y divide-border/40">
         {question.bands.map((band) => (
-          <DepthBandRow key={band.band} band={band} />
+          <DepthBandRow key={band.band} band={band} tierBands={tierBands} />
         ))}
       </ul>
     </div>
   );
 }
 
-function DepthBandRow({ band }: { band: NpsDepthBand }) {
+function DepthBandRow({ band, tierBands }: { band: NpsDepthBand; tierBands?: ReadonlySet<string> }) {
   const [expanded, setExpanded] = React.useState(false);
   const palette = BAND_PALETTE[band.band];
   const wording = band.question.trim();
   const hasAnswers = band.answers.length > 0;
   const visible = band.answers.slice(0, VISIBLE_ANSWERS);
   const remaining = band.answers.length - visible.length;
+  const rowDimmed = tierBands !== undefined && tierBands.size > 0 && !tierBands.has(band.band);
 
   return (
-    <li>
+    <li className={cn(rowDimmed && "opacity-55 grayscale")}>
       <div
         onClick={() => hasAnswers && setExpanded((value) => !value)}
         role={hasAnswers ? "button" : undefined}

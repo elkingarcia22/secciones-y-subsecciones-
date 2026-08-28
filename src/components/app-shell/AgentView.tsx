@@ -1,5 +1,6 @@
 import * as React from "react";
 import { ArrowUp, Plus } from "lucide-react";
+import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
 import { AGENT_SUGGESTIONS, AI_GRADIENT, CURRENT_USER } from "./appShellData";
 
 /**
@@ -25,32 +26,42 @@ export const AgentView: React.FC = () => {
           {firstName}!
         </h1>
 
-        <div className="rounded-3xl border border-border/70 bg-surface p-4 shadow-card">
+        <div className="group relative rounded-[22px] bg-surface p-4 z-0 shadow-card transition-shadow focus-within:shadow-[0_0_20px_rgba(45,92,247,0.1)]">
+          {/* AI Light Border */}
+          <MovingBorderBeam 
+            duration={6000} 
+            borderWidth={1.5}
+            rx={22}
+            ry={22} 
+            colorFrom="hsl(var(--ai-gradient-start))" 
+            colorTo="hsl(var(--ai-gradient-end))" 
+          />
+
           <textarea
             ref={inputRef}
             rows={2}
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
             placeholder="¿Cuéntame como te puedo ayudar?"
-            className="min-h-12 w-full resize-none bg-transparent text-base leading-normal text-text-primary outline-none placeholder:text-text-muted"
+            className="relative z-10 min-h-12 w-full resize-none bg-transparent text-base leading-normal text-text-primary outline-none placeholder:text-text-muted"
           />
-          <div className="mt-2 flex items-center justify-between">
-            <button
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-surface text-text-secondary transition-colors hover:bg-background"
-              title="Agregar"
-              aria-label="Agregar"
-            >
-              <Plus className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <button
-              className="flex h-10 w-10 items-center justify-center rounded-full text-white transition-all hover:-translate-y-0.5 hover:brightness-110"
-              style={{ background: AI_GRADIENT }}
-              title="Enviar"
-              aria-label="Enviar"
-            >
-              <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
-            </button>
-          </div>
+          <div className="relative z-10 mt-2 flex items-center justify-between">
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-surface text-text-secondary transition-colors hover:bg-background"
+                title="Agregar"
+                aria-label="Agregar"
+              >
+                <Plus className="h-4 w-4" strokeWidth={2} />
+              </button>
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-full text-white transition-all hover:-translate-y-0.5 hover:brightness-110"
+                style={{ background: AI_GRADIENT }}
+                title="Enviar"
+                aria-label="Enviar"
+              >
+                <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+            </div>
         </div>
 
         <p className="mt-3 text-center text-xs text-text-muted">

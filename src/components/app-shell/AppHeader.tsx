@@ -47,6 +47,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onSlotRef,
 }) => {
   const [avatarMenuOpen, setAvatarMenuOpen] = React.useState(false);
+  const [notifOpen, setNotifOpen] = React.useState(false);
+
+  // Número de notificaciones "nuevas" (las primeras 2 en los datos de demo)
+  const unreadCount = 2;
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 px-1">
@@ -109,33 +113,78 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </button>
 
         {/* ---------- Notifications ---------- */}
-        <Popover>
+        <Popover open={notifOpen} onOpenChange={setNotifOpen}>
           <PopoverTrigger asChild>
             <button
-              className="relative flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-surface text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
+              className={cn(
+                "relative flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-surface text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary",
+                notifOpen && "bg-surface-muted text-text-primary"
+              )}
               title="Notificaciones"
               aria-label="Notificaciones"
             >
               <Bell className="h-4 w-4" strokeWidth={2} />
-              <span className="absolute right-1.5 top-1 h-2 w-2 rounded-full border-[1.5px] border-surface bg-primary" />
+              {unreadCount > 0 && (
+                <span className="absolute right-1.5 top-1 h-2 w-2 rounded-full border-[1.5px] border-surface bg-primary" />
+              )}
             </button>
           </PopoverTrigger>
           <PopoverContent
             align="end"
             sideOffset={8}
-            className={cn("max-h-[340px] w-[300px] overflow-y-auto", SHELL_MENU_PANEL)}
+            className={cn("w-[340px] p-0 overflow-hidden", SHELL_MENU_PANEL)}
           >
-            <div className="flex flex-col gap-1">
-              {NOTIFICATIONS.map((notification) => (
+            {/* Header del panel */}
+            <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+              <span className="text-[13px] font-bold text-text-primary">Notificaciones</span>
+              {unreadCount > 0 && (
+                <span className="inline-flex h-5 items-center rounded-full bg-primary px-2 text-[11px] font-bold text-white">
+                  {unreadCount} nuevas
+                </span>
+              )}
+            </div>
+
+            {/* Lista con stagger */}
+            <div className="flex flex-col gap-0.5 overflow-y-auto p-2" style={{ maxHeight: "380px" }}>
+              {NOTIFICATIONS.map((notification, index) => (
                 <button
                   key={notification.title}
-                  className="w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-background"
+                  className={cn(
+                    "w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-background",
+                    "opacity-0 translate-y-2",
+                    notifOpen && "opacity-100 translate-y-0"
+                  )}
+                  style={{
+                    transition: notifOpen
+                      ? `opacity 280ms cubic-bezier(0.16,1,0.3,1) ${index * 45}ms, transform 280ms cubic-bezier(0.16,1,0.3,1) ${index * 45}ms`
+                      : "none",
+                  }}
                 >
-                  <div className="text-[13px] font-bold text-text-primary">{notification.title}</div>
-                  <div className="mt-1 text-xs leading-snug text-text-secondary">{notification.description}</div>
-                  <div className="mt-1 text-xs text-text-muted">{notification.date}</div>
+                  {/* Punto de no leído para las primeras */}
+                  <div className="flex items-start gap-2.5">
+                    {index < unreadCount && (
+                      <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                    )}
+                    <div className={cn("min-w-0 flex-1", index >= unreadCount && "pl-[14px]")}>
+                      <div className={cn(
+                        "text-[13px] text-text-primary",
+                        index < unreadCount ? "font-bold" : "font-semibold"
+                      )}>
+                        {notification.title}
+                      </div>
+                      <div className="mt-0.5 text-xs leading-snug text-text-secondary">{notification.description}</div>
+                      <div className="mt-1 text-[11px] text-text-muted">{notification.date}</div>
+                    </div>
+                  </div>
                 </button>
               ))}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-border/60 px-4 py-2.5">
+              <button className="text-[12px] font-semibold text-primary transition-colors hover:text-primary/80">
+                Ver todas las notificaciones
+              </button>
             </div>
           </PopoverContent>
         </Popover>
@@ -163,21 +212,42 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 {CURRENT_USER.role}
               </span>
             </div>
-            <button
-              onClick={() => setAvatarMenuOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary transition-colors hover:bg-background hover:text-text-primary"
+            {(
+              [
+                { icon: Users, label: "Ver como colaborador" },
+                { icon: Plug, label: "Conectores" },
+              ] as const
+            ).map(({ icon: Icon, label }, index) => (
+              <button
+                key={label}
+                onClick={() => setAvatarMenuOpen(false)}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary transition-colors hover:bg-background hover:text-text-primary",
+                  "opacity-0 translate-y-1",
+                  avatarMenuOpen && "opacity-100 translate-y-0"
+                )}
+                style={{
+                  transition: avatarMenuOpen
+                    ? `opacity 260ms cubic-bezier(0.16,1,0.3,1) ${index * 40}ms, transform 260ms cubic-bezier(0.16,1,0.3,1) ${index * 40}ms`
+                    : "none",
+                }}
+              >
+                <Icon className="h-4 w-4 shrink-0 text-text-muted" strokeWidth={2} />
+                {label}
+              </button>
+            ))}
+            <div
+              className={cn(
+                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary",
+                "opacity-0 translate-y-1",
+                avatarMenuOpen && "opacity-100 translate-y-0"
+              )}
+              style={{
+                transition: avatarMenuOpen
+                  ? `opacity 260ms cubic-bezier(0.16,1,0.3,1) 80ms, transform 260ms cubic-bezier(0.16,1,0.3,1) 80ms`
+                  : "none",
+              }}
             >
-              <Users className="h-4 w-4 shrink-0 text-text-muted" strokeWidth={2} />
-              Ver como colaborador
-            </button>
-            <button
-              onClick={() => setAvatarMenuOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary transition-colors hover:bg-background hover:text-text-primary"
-            >
-              <Plug className="h-4 w-4 shrink-0 text-text-muted" strokeWidth={2} />
-              Conectores
-            </button>
-            <div className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary">
               {isDark ? (
                 <Moon className="h-4 w-4 shrink-0 text-text-muted" strokeWidth={2} />
               ) : (
@@ -189,8 +259,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <button
               onClick={() => setAvatarMenuOpen(false)}
               className={cn(
-                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10",
+                "opacity-0 translate-y-1",
+                avatarMenuOpen && "opacity-100 translate-y-0"
               )}
+              style={{
+                transition: avatarMenuOpen
+                  ? `opacity 260ms cubic-bezier(0.16,1,0.3,1) 120ms, transform 260ms cubic-bezier(0.16,1,0.3,1) 120ms`
+                  : "none",
+              }}
             >
               <LogOut className="h-4 w-4 shrink-0" strokeWidth={2} />
               Cerrar sesión

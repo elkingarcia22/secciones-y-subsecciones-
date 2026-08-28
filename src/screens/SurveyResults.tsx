@@ -108,6 +108,7 @@ return (
           }}
           className="mb-0"
           variant="page"
+          fitContent
         />
       </div>
 
@@ -120,7 +121,7 @@ return (
           "top-3" on those matches this spacer's own height, so the two sit
           back-to-back with no overlap and no uncovered sliver between them.
         */}
-        <div aria-hidden className="sticky top-0 z-40 h-3 bg-background" />
+        <div aria-hidden className="sticky top-0 z-40 h-4 bg-background" />
         {activeTab === "participation" &&
           (segment ? (
             <ParticipationTab

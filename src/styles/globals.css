@@ -67,7 +67,7 @@
   }
 
   /* ── Icons — thinner stroke to match UBITS style ────────── */
-  svg.lucide,
+  svg.lucide:not(.animate-spin),
   [data-slot] svg,
   button svg,
   a svg {
@@ -121,6 +121,8 @@
     /* AI Premium Tokens */
     --ai-gradient-start: var(--color-ai-gradient-start-hsl);
     --ai-gradient-end: var(--color-ai-gradient-end-hsl);
+    --ai-gradient-start-pastel: var(--color-ai-gradient-start-pastel-hsl);
+    --ai-gradient-end-pastel: var(--color-ai-gradient-end-pastel-hsl);
 
     /* ── Favorability status scale (pale badge/cell fills) ──
        Screen-only tokens: results reports (pdf/pdfPalette.ts) keep their own
@@ -287,6 +289,12 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+  
+  @keyframes border-beam {
+    100% {
+      offset-distance: 100%;
+    }
   }
 
   .border-ai-gradient {
@@ -505,5 +513,92 @@
   [data-slot="hover-card-content"] {
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
+  }
+}
+
+@layer components {
+  /* Mac-like Dock Effect for the Action Rail */
+  .dock-item {
+    transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.15s, color 0.15s;
+    transform-origin: center;
+    will-change: transform;
+  }
+  
+  .dock-item:hover {
+    transform: scale(1.3);
+    z-index: 10;
+  }
+  
+  .dock-container:has(.dock-item:hover) .dock-item:not(:hover) {
+    /* If a child is hovered, scale all others down slightly or just keep them normal */
+  }
+
+  /* Right sibling of hovered */
+  
+  /* Support for wrapped dock items (like in sidebar) */
+  .dock-wrapper:hover > .dock-item {
+    transform: scale(1.3);
+    z-index: 10;
+  }
+  .dock-wrapper:hover + .dock-wrapper > .dock-item {
+    transform: scale(1.15);
+  }
+  .dock-wrapper:has(+ .dock-wrapper:hover) > .dock-item {
+    transform: scale(1.15);
+  }
+
+  .dock-item:hover + .dock-item {
+    transform: scale(1.15);
+  }
+  
+  /* Left sibling of hovered - Using modern :has selector */
+  .dock-item:has(+ .dock-item:hover) {
+    transform: scale(1.15);
+  }
+}
+
+@layer components {
+  /* Dock Effect specifically for vertical lists (smaller scale to avoid spilling) */
+  .dock-item-list {
+    transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.15s, color 0.15s;
+    transform-origin: center;
+    will-change: transform;
+  }
+  
+  .dock-item-list:hover {
+    transform: scale(1.05);
+    z-index: 10;
+  }
+  
+  .dock-item-list:hover + .dock-item-list {
+    transform: scale(1.02);
+  }
+  
+  .dock-item-list:has(+ .dock-item-list:hover) {
+    transform: scale(1.02);
+  }
+}
+
+@layer utilities {
+  @keyframes icon-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.2) rotate(-8deg); }
+    70% { transform: scale(1) rotate(5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  .dock-item:hover svg,
+  .dock-item-list:hover svg {
+    animation: icon-pop 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+}
+
+@layer utilities {
+  button:not(:disabled):hover svg.lucide:not(.animate-spin), 
+  a:not(:disabled):hover svg.lucide:not(.animate-spin), 
+  [role="button"]:not(:disabled):hover svg.lucide:not(.animate-spin), 
+  .cursor-pointer:hover svg.lucide:not(.animate-spin),
+  .group:hover svg.lucide:not(.animate-spin) {
+    animation: icon-pop 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   }
 }

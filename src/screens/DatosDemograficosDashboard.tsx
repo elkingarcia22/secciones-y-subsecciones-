@@ -131,7 +131,7 @@ export const DatosDemograficosDashboard: React.FC = () => {
   };
 
   return (
-    <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full flex-1 flex flex-col min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <DemographicsTable
         rows={rows}
         selectedIds={selectedIds}

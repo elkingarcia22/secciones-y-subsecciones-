@@ -94,7 +94,7 @@ export function getHeatmapData(segmentType: string): { segments: HeatmapSegment[
     segments.forEach((seg, segIdx) => {
       // Create some deterministic but varied data based on dimension and segment
       const hash = (dimIdx * 7) + (segIdx * 11) + segmentType.length;
-      let delta = (hash % 25) - 12; // -12 to +12
+      const delta = (hash % 25) - 12; // -12 to +12
       let n = 20 + (hash % 150);
       let status: 'private' | 'low_n' | undefined = undefined;
 

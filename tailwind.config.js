@@ -186,6 +186,16 @@ export default {
           from: { opacity: "1", transform: "translate3d(-50%, -50%, 0) scale(1)" },
           to: { opacity: "0", transform: "translate3d(-50%, -50%, 0) scale(0.96)" },
         },
+        "bg-pan": {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+        "border-beam": {
+          "100%": {
+            "offset-distance": "100%",
+          },
+        },
       },
       animation: {
         "highlight-row": "highlight-row 3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
@@ -206,6 +216,8 @@ export default {
         "drawer-out-bottom": "drawer-out-bottom 420ms cubic-bezier(0.4, 0, 0.2, 1) both",
         "dialog-in": "dialog-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both",
         "dialog-out": "dialog-out 160ms cubic-bezier(0.4, 0, 1, 1) both",
+        "bg-pan": "bg-pan 3s ease infinite",
+        "border-beam": "border-beam calc(var(--duration)*1s) infinite linear",
       }
     },
   },

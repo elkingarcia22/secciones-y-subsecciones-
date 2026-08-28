@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -20,29 +21,33 @@ interface ScoreChipProps {
 export function ScoreChip({ score, className }: ScoreChipProps) {
   if (score === null) {
     return (
-      <Badge
-        variant="neutral"
-        className={cn("gap-1 tabular-nums", className)}
-        title="Grupo por debajo del mínimo de respuestas"
-      >
-        <Lock className="h-3 w-3" strokeWidth={2} />
-        Reservado
-      </Badge>
+      <motion.div layout="position">
+        <Badge
+          variant="neutral"
+          className={cn("gap-1 tabular-nums rounded-full", className)}
+          title="Grupo por debajo del mínimo de respuestas"
+        >
+          <Lock className="h-3 w-3" strokeWidth={2} />
+          Reservado
+        </Badge>
+      </motion.div>
     );
   }
 
   const band = bandForScore(score);
 
   return (
-    <div 
-      className={cn("inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold tabular-nums border", className)}
+    <motion.div 
+      layout="position"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums", className)}
       style={{
         backgroundColor: band.background,
         color: band.foreground,
-        borderColor: band.color ?? band.border
       }}
     >
       {formatScore(score)}
-    </div>
+    </motion.div>
   );
 }

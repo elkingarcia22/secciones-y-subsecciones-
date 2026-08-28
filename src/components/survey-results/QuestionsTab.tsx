@@ -1,4 +1,5 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import { ChevronRight, ChevronUp, MessageSquareText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +55,12 @@ import { ResultsSubTabSwitch, type ResultsSubTab } from "./ResultsSubTabSwitch";
 import type { ResultsFiltersState } from "./useResultsFilters";
 import { levelForDepth, type ResultLevel } from "./resultLevels";
 import { ResultsSortHeader } from "./ResultsSortHeader";
+
+function getFavorabilityTierId(value: number): string {
+  if (value >= FAVORABILITY_TARGET) return "favorable";
+  if (value >= FAVORABILITY_FLOOR) return "neutral";
+  return "unfavorable";
+}
 
 interface QuestionsTabProps {
   results: SurveyResults;
@@ -243,10 +250,11 @@ function SectionBlock({
 
   const levelHidden = !highlight.visibleLevels.has("section");
   const isHighlighted = highlight.highlightedRows.has(section.id);
-  const rowDimmed = highlight.highlightedRows.size > 0 && !isHighlighted;
-  const tier = section.n > 0 ? tierForScore(section.score) : null;
-  const bandDimmed = tier !== null && !highlight.tierBands.has(tier.id);
-
+  const tierId = section.n > 0 ? getFavorabilityTierId(section.favorability) : null;
+  const isHighlightDimmed = highlight.highlightedRows.size > 0 && !isHighlighted;
+  const isTierDimmed = tierId !== null && highlight.tierBands.size > 0 && !(highlight.tierBands.has(tierId) || (highlight.tierBands.has("nsnr") && section.nsnr > 0));
+  const rowDimmed = isHighlightDimmed || isTierDimmed;
+  
   return (
     <section
       className={cn(
@@ -306,7 +314,7 @@ function SectionBlock({
           ) : section.n > 0 ? (
             <SectionFavorability
               section={section}
-              dimmed={rowDimmed || bandDimmed}
+              dimmed={rowDimmed}
               activeGroups={highlight.tierBands}
             />
           ) : (
@@ -351,23 +359,24 @@ function FavorabilityValue({
   const borderColor = isPositive ? POSITIVE : isWarning ? YELLOW : NEGATIVE;
 
   return (
-    <span className={cn("flex items-center gap-1.5", dimmed && "opacity-45 grayscale")}>
+    <motion.span layout="position" className={cn("flex items-center gap-1.5", dimmed && "opacity-45 grayscale")}>
       {labeled && (
         <span className="text-[11px] font-semibold text-muted-foreground">
           Favorabilidad:
         </span>
       )}
-      <div
-        className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold tabular-nums border"
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums"
         style={{
           backgroundColor: bgColor,
           color: textColor,
-          borderColor: borderColor
         }}
       >
         {formatPercent(value)}
-      </div>
-    </span>
+      </motion.div>
+    </motion.span>
   );
 }
 
@@ -447,10 +456,11 @@ function SubsectionBlock({
   const level = levelForDepth(section.depth);
   const levelHidden = !highlight.visibleLevels.has(level);
   const isHighlighted = highlight.highlightedRows.has(section.id);
-  const rowDimmed = highlight.highlightedRows.size > 0 && !isHighlighted;
-  const tier = section.n > 0 ? tierForScore(section.score) : null;
-  const bandDimmed = tier !== null && !highlight.tierBands.has(tier.id);
-
+  const tierId = section.n > 0 ? getFavorabilityTierId(section.favorability) : null;
+  const isHighlightDimmed = highlight.highlightedRows.size > 0 && !isHighlighted;
+  const isTierDimmed = tierId !== null && highlight.tierBands.size > 0 && !(highlight.tierBands.has(tierId) || (highlight.tierBands.has("nsnr") && section.nsnr > 0));
+  const rowDimmed = isHighlightDimmed || isTierDimmed;
+  
   return (
     <li>
       {/* Header row: the same outline entry the builder draws — chevron, level
@@ -513,7 +523,7 @@ function SubsectionBlock({
           ) : section.n > 0 ? (
             <SectionFavorability
               section={section}
-              dimmed={rowDimmed || bandDimmed}
+              dimmed={rowDimmed}
               activeGroups={highlight.tierBands}
             />
           ) : (
@@ -627,11 +637,12 @@ function QuestionTable({
       <tbody className="divide-y divide-border/25">
         {sorted.map((question, index) => {
           const isHighlighted = highlight.highlightedRows.has(question.id);
-          const rowDimmed = highlight.highlightedRows.size > 0 && !isHighlighted;
-          const tier =
-            question.scored && question.score !== null ? tierForScore(question.score) : null;
-          const bandDimmed = tier !== null && !highlight.tierBands.has(tier.id);
-
+          const tierId =
+            question.scored && question.favorability !== null ? getFavorabilityTierId(question.favorability) : null;
+          const isHighlightDimmed = highlight.highlightedRows.size > 0 && !isHighlighted;
+          const isTierDimmed = tierId !== null && highlight.tierBands.size > 0 && !(highlight.tierBands.has(tierId) || (highlight.tierBands.has("nsnr") && question.nsnr > 0));
+          const rowDimmed = isHighlightDimmed || isTierDimmed;
+          
           return (
             <tr key={question.id} className="group transition-colors hover:bg-muted/30">
               <td className="px-4 py-3 text-center text-[11px] font-extrabold tabular-nums text-muted-foreground">
@@ -652,7 +663,7 @@ function QuestionTable({
                     activeGroups={highlight.tierBands}
                     className={cn(
                       "justify-end pr-6",
-                      (rowDimmed || bandDimmed) && "opacity-45 grayscale"
+                      (rowDimmed) && "opacity-45 grayscale"
                     )}
                   />
                 ) : null}
@@ -662,7 +673,7 @@ function QuestionTable({
                   {levelHidden ? (
                     <HiddenLevelValue />
                   ) : question.scored && question.favorability !== null ? (
-                    <QuestionFavorability question={question} dimmed={rowDimmed || bandDimmed} />
+                    <QuestionFavorability question={question} dimmed={rowDimmed} />
                   ) : (
                     <NoScaleBadge />
                   )}

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ClipboardList, Users } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UbitsToaster } from "@/components/feedback";
 import { AdminShell } from "@/components/app-shell";
@@ -175,7 +176,8 @@ function App() {
       <UbitsToaster bottomOffset={TOAST_BOTTOM_OFFSET_PX[view]} />
       <AdminShell
         breadcrumb={breadcrumb}
-        scrollContent={view === "list"}
+        scrollContent={false}
+        showFooter={view === "list"}
         onNavigateHome={leaveToList}
       >
         {view === "builder" ? (
@@ -194,7 +196,7 @@ function App() {
             history={resultsHistory}
           />
         ) : (
-          <div className="pt-2">
+          <div className="px-1 pt-2 pb-6 flex-1 flex flex-col min-h-0">
             {/* Above the sticky bar on purpose: the headline numbers are an
                 orientation you read once and then scroll past, while the tabs
                 have to stay reachable the whole way down. */}
@@ -208,23 +210,23 @@ function App() {
                 setHomeTab("encuestas");
               }}
               onOpenDemographics={() => setHomeTab("datos_demograficos")}
-              className="mb-4"
+              className="mb-4 shrink-0"
             />
 
             {/* Pinned to the top of the scroll area — Encuestas can hold far
                 more rows than fit on screen, and losing the way to switch to
                 Datos Demográficos every time you scroll down defeats the tab. */}
-            <div className="sticky top-0 z-20 bg-background pb-4 pt-2">
+            <div className="sticky top-0 z-20 bg-background pb-4 pt-2 shrink-0">
               <UbitsTabs
                 tabs={[
-                  { id: "encuestas", label: "Encuestas" },
-                  { id: "datos_demograficos", label: "Datos Demográficos" },
+                  { id: "encuestas", label: "Encuestas", icon: <ClipboardList className="mr-2 h-4 w-4" /> },
+                  { id: "datos_demograficos", label: "Datos Demográficos", icon: <Users className="mr-2 h-4 w-4" /> },
                 ]}
                 activeTabId={homeTab}
                 onTabChange={(id) => setHomeTab(id as HomeTab)}
                 variant="page"
                 fitContent
-                className="mb-0"
+                className="mb-0 shrink-0"
               />
             </div>
             {homeTab === "encuestas" ? (

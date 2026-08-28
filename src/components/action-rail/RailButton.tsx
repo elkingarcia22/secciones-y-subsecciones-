@@ -35,7 +35,7 @@ export function RailButton({
           disabled={disabled}
           aria-label={label}
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:active:scale-100",
+            "dock-item hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent",
             tone === "danger"
               ? "text-status-negative hover:bg-status-negative/15 focus-visible:ring-status-negative/40 disabled:hover:text-status-negative"
               : "text-white/60 hover:bg-white/10 hover:text-white focus-visible:ring-white/30 disabled:hover:text-white/60"
@@ -67,7 +67,7 @@ export function RailCreateOption({
     <button
       type="button"
       onClick={onClick}
-      className="group flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-white/5"
+      className="hover-icon-pop group flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-white/5"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/60 transition-colors group-hover:bg-white/10 group-hover:text-white">
         {icon}

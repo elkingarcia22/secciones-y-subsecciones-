@@ -70,19 +70,19 @@ export function ActionRailShell({
           initial={false}
           transition={{ type: "spring", bounce: 0.35, duration: 0.7 }}
           className={cn(
-            "relative flex items-center justify-center overflow-hidden rounded-3xl",
+            "relative flex items-center justify-center rounded-3xl",
             isExpanded
-              ? "h-14 max-w-[800px] border border-white/10 bg-surface-nav px-3 shadow-rail"
+              ? "h-14 max-w-[800px] border border-white/10 bg-surface-nav px-3 shadow-rail overflow-visible"
               // Collapsed: a full pill rather than a half-rounded hump, so the
               // handle reads as one continuous rounded line from any angle.
-              : "h-1.5 w-[64px] max-w-[64px] translate-y-[2px] rounded-full border-transparent bg-border-strong shadow-card"
+              : "h-1.5 w-[64px] max-w-[64px] translate-y-[2px] rounded-full border-transparent bg-border-strong shadow-card overflow-hidden"
           )}
         >
           <motion.div
             layout="position"
             transition={{ type: "spring", bounce: 0.35, duration: 0.7 }}
             className={cn(
-              "flex w-max items-center gap-2",
+              "dock-container flex w-max items-center gap-2",
               isExpanded ? "scale-100 opacity-100 transition-opacity duration-300" : "pointer-events-none scale-95 opacity-0 transition-opacity duration-150"
             )}
           >
@@ -101,7 +101,7 @@ export function ActionRailShell({
                   type="button"
                   onClick={() => setAutoHide(!autoHide)}
                   aria-label={autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                  className="dock-item relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                 >
                   {autoHide ? (
                     <Pin className="h-[20px] w-[20px]" strokeWidth={2} />

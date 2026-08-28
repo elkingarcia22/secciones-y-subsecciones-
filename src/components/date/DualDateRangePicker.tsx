@@ -321,7 +321,7 @@ export const DualDateRangePicker = React.forwardRef<
           {/* Animated sliding container */}
           <div
             className={cn(
-              "w-max rounded-2xl border border-border bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] overflow-hidden origin-top",
+              "w-max rounded-2xl border border-border bg-popover shadow-[0_12px_40px_rgb(0,0,0,0.18)] overflow-hidden origin-top flex flex-col max-h-[var(--radix-popover-content-available-height)]",
               transitionEnabled && "transition-transform duration-500 ease-in-out"
             )}
             style={{
@@ -329,7 +329,7 @@ export const DualDateRangePicker = React.forwardRef<
             }}
           >
             {/* Header step switcher tabs inside the popover */}
-            <div className="flex items-center border-b border-border/60 bg-muted/30 px-4 py-2.5">
+            <div className="flex items-center border-b border-border/60 bg-muted/30 px-4 py-2.5 shrink-0">
               <div className="flex items-center gap-2 text-xs font-semibold text-text-secondary">
                 <button
                   type="button"
@@ -375,7 +375,8 @@ export const DualDateRangePicker = React.forwardRef<
 
             {/* Dual Month Calendar */}
             <div
-              className="p-3"
+              className="p-3 overflow-y-auto min-h-0"
+              style={{ paddingRight: "0.5rem" }}
               onMouseLeave={() => setHoverDate(undefined)}
             >
             <Calendar
@@ -405,7 +406,7 @@ export const DualDateRangePicker = React.forwardRef<
           </div>
 
           {/* Footer with Borrar and Aplicar buttons (Despegar / Avianca style) */}
-          <div className="flex items-center justify-between border-t border-border/60 bg-muted/30 px-5 py-3">
+          <div className="flex items-center justify-between border-t border-border/60 bg-muted/30 px-5 py-3 shrink-0">
             <button
               type="button"
               onClick={handleClear}

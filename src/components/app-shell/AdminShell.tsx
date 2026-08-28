@@ -20,6 +20,8 @@ interface AdminShellProps {
   scrollContent?: boolean;
   /** Fired when the user navigates back to Encuestas from the sidebar. */
   onNavigateHome?: () => void;
+  /** Force the footer to show even if scrollContent is false. */
+  showFooter?: boolean;
   children: React.ReactNode;
 }
 
@@ -27,6 +29,7 @@ interface AdminShellProps {
 export const AdminShell: React.FC<AdminShellProps> = ({
   breadcrumb,
   scrollContent = true,
+  showFooter,
   onNavigateHome,
   children,
 }) => {
@@ -122,13 +125,13 @@ export const AdminShell: React.FC<AdminShellProps> = ({
               {isAgent ? (
                 <AgentView />
               ) : scrollContent ? (
-                <div className="min-h-0 flex-1 overflow-y-auto">
+                <div className="min-h-0 flex-1 overflow-y-auto flex flex-col">
                   {/* Full available width, on the same gutters the app-like
                       screens use — the sidebar already narrows the column, so a
                       max-width on top of it reads as an extra pair of margins.
                       Padding matches the header's own px-1 so the content
                       column lines up with the sidebar toggle above it. */}
-                  <div className="w-full px-1 pb-6 pt-1">{children}</div>
+                  <div className="w-full flex-1 flex flex-col px-1 pb-6 pt-1">{children}</div>
                 </div>
               ) : (
                 <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
@@ -144,7 +147,7 @@ export const AdminShell: React.FC<AdminShellProps> = ({
           />
         </main>
 
-        {(scrollContent || isAgent) && (
+        {(showFooter ?? (scrollContent || isAgent)) && (
           <footer className="flex shrink-0 flex-wrap items-center justify-center gap-2 px-4 py-2.5 text-xs text-text-muted">
             <UbitsLogo size={16} color="var(--color-text-muted)" className="hover:scale-100" />
             <span className="font-bold tracking-tight">UBITS</span>

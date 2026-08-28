@@ -37,6 +37,8 @@ export interface DrawerShellProps {
   showCloseButton?: boolean
   /** Whether to disable default padding in the content area (default: false) */
   disablePadding?: boolean
+  /** Whether to disable scrollbar-gutter: stable (default: false) */
+  disableScrollbarGutter?: boolean
 }
 
 const sideSizeClasses = {
@@ -108,6 +110,7 @@ export function DrawerShell({
   className,
   showCloseButton = true,
   disablePadding = false,
+  disableScrollbarGutter = false,
 }: DrawerShellProps) {
   const sizeClass = sideSizeClasses[side][size]
 
@@ -134,7 +137,8 @@ export function DrawerShell({
             // tall enough to need a scrollbar shifts every row a few pixels
             // narrower, which can flip a borderline-length line from one
             // line to two (or back) depending on what's selected above.
-            "flex-1 overflow-y-auto flex flex-col [scrollbar-gutter:stable]",
+            "flex-1 overflow-y-auto flex flex-col",
+            !disableScrollbarGutter && "[scrollbar-gutter:stable]",
             !disablePadding && "p-4"
           )}
         >

@@ -43,6 +43,8 @@
   --color-ai-gradient-end: #e11d48;
   --color-ai-gradient-start-hsl: 226 92% 57%;
   --color-ai-gradient-end-hsl: 347 77% 50%;
+  --color-ai-gradient-start-pastel-hsl: 226 85% 66%;
+  --color-ai-gradient-end-pastel-hsl: 347 70% 62%;
   --shadow-ai-premium: 0 4px 15px rgba(45, 92, 247, 0.3), 0 2px 5px rgba(225, 29, 72, 0.2);
   
   /* AI Multi-stop Gradient (full-screen loaders, premium overlays) */

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronUp, CornerDownRight, Layers, Plus, Trash2 } from "lucide-react";
+import { ChevronUp, CornerDownRight, Layers, Plus, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -68,12 +68,20 @@ export function SectionEditor({
     textarea.style.height = `${textarea.scrollHeight}px`;
   }, [section.description]);
 
+  const isDragging = handlers.draggingSectionId === section.id;
+  const draggingParentId = handlers.draggingSectionId ? handlers.sections.find((s: any) => s.id === handlers.draggingSectionId)?.parentId : null;
+  const isValidTarget = handlers.draggingSectionId !== null && handlers.draggingSectionId !== section.id && entry.parentId === draggingParentId;
+  const isDropTarget = handlers.overSectionId === section.id && isValidTarget;
+
   return (
     <section
+      {...handlers.getSectionDropTargetProps(section.id)}
       className={cn(
-        "flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-surface shadow-card",
+        "flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-surface shadow-card transition-all relative",
         isCollapsed ? "shrink-0" : "flex-1",
-        isSelected ? "border-primary/40" : "border-border/60"
+        isSelected ? "border-primary/40" : "border-border/60",
+        isDragging && "opacity-40",
+        isDropTarget && "ring-2 ring-primary ring-offset-2"
       )}
     >
       {/* Card header: same white as the body, split off by a divider rather
@@ -96,21 +104,32 @@ export function SectionEditor({
           />
         ) : (
           <>
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onToggleCardCollapse();
-              }}
-              aria-expanded={!isCollapsed}
-              aria-label={isCollapsed ? "Expandir sección" : "Contraer sección"}
-              className="mt-1 shrink-0 rounded-lg p-1 text-muted-foreground/60 transition-all hover:bg-border/30 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-            >
-              <ChevronUp
-                className={cn("h-4 w-4 transition-transform duration-300", isCollapsed && "rotate-180")}
-                strokeWidth={2.5}
-              />
-            </button>
+            <div className="flex flex-col items-center mt-1">
+              {!readOnly && (
+                <span
+                  {...handlers.getSectionHandleProps(section.id)}
+                  aria-label={`Reordenar ${section.title}`}
+                  className="cursor-grab text-muted-foreground/30 hover:text-text-primary active:cursor-grabbing mb-1"
+                >
+                  <GripVertical className="h-4 w-4" strokeWidth={2.5} />
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleCardCollapse();
+                }}
+                aria-expanded={!isCollapsed}
+                aria-label={isCollapsed ? "Expandir sección" : "Contraer sección"}
+                className="shrink-0 rounded-lg p-1 text-muted-foreground/60 transition-all hover:bg-border/30 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <ChevronUp
+                  className={cn("h-4 w-4 transition-transform duration-300", isCollapsed && "rotate-180")}
+                  strokeWidth={2.5}
+                />
+              </button>
+            </div>
 
             {/* Solid badge — the heaviest marker in the tree, reserved for level 1. */}
             <span

@@ -42,7 +42,7 @@ export function RailSelectionChip({
             type="button"
             onClick={onClear}
             aria-label="Limpiar selección"
-            className="flex h-8 w-8 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+            className="dock-item relative flex h-8 w-8 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
           >
             <X className="h-[18px] w-[18px]" strokeWidth={2} />
           </button>

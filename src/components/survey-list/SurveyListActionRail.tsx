@@ -1,6 +1,10 @@
 import * as React from "react";
-import { Copy, Download, GitCompare, Layout, Plus, Trash2 } from "lucide-react";
+import { Copy, Download, GitCompare, Layout, Plus, Trash2, Sparkles, Upload } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { AiAgentDrawer } from "@/components/ai/AiAgentDrawer";
+import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
+import { AI_GRADIENT } from "@/components/app-shell/appShellData";
 import {
   ActionRailShell,
   AnimatedActionItem,
@@ -77,6 +81,7 @@ export function SurveyListActionRail({
   // swaps the whole action set, which is exactly the change the stagger exists
   // to announce.
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [aiDrawerOpen, setAiDrawerOpen] = React.useState(false);
   const animKey = useContextChangeKey(
     mode === "single" ? `single:${selectedSurvey?.status ?? ""}` : mode
   );
@@ -165,52 +170,110 @@ export function SurveyListActionRail({
     );
 
   return (
-    <ActionRailShell
-      keepOpen={selectedCount > 0 || isMenuOpen}
-      contextual={contextual}
-      persistent={
-        selectedCount === 0 ? (
-          <>
-            <RailButton
-              icon={<GitCompare className="h-[20px] w-[20px]" strokeWidth={2} />}
-              label="Comparar encuestas"
-              onClick={onCompare}
-            />
+    <>
+      <ActionRailShell
+        keepOpen={selectedCount > 0 || isMenuOpen || aiDrawerOpen}
+        contextual={contextual}
+        persistent={
+          selectedCount === 0 ? (
+            <>
+              <RailButton
+                icon={<GitCompare className="h-[20px] w-[20px]" strokeWidth={2} />}
+                label="Comparar encuestas"
+                onClick={onCompare}
+              />
+              
+              <RailButton
+                icon={<Upload className="h-[20px] w-[20px]" strokeWidth={2} />}
+                label="Cargar encuestas"
+                onClick={() => console.log("Cargar encuestas")}
+              />
 
-            <Popover onOpenChange={setIsMenuOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Crear encuesta"
-                  className="flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+              <svg width="0" height="0" className="absolute">
+                <defs>
+                  <linearGradient id="ai-icon-gradient-2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="hsl(var(--ai-gradient-start))" />
+                    <stop offset="100%" stopColor="hsl(var(--ai-gradient-end))" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setAiDrawerOpen(true)}
+                    aria-label="Agente IA"
+                    className="group hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl bg-transparent transition-all duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 overflow-hidden"
+                  >
+                    {/* Background animation on hover */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-ai-gradient -z-10" />
+                    
+                    <MovingBorderBeam 
+                      duration={4000}
+                      borderWidth={2}
+                      rx={12}
+                      ry={12}
+                      beamSize={60}
+                      colorFrom="hsl(var(--ai-gradient-start))"
+                      colorTo="hsl(var(--ai-gradient-end))"
+                      className="opacity-100 group-hover:opacity-0 transition-opacity duration-300"
+                    />
+                    
+                    {/* Gradient icon (default) */}
+                    <Sparkles 
+                      className="absolute z-10 h-[18px] w-[18px] drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] opacity-100 group-hover:opacity-0 transition-opacity duration-300" 
+                      stroke="url(#ai-icon-gradient-2)" 
+                      strokeWidth={2.5} 
+                    />
+                    
+                    {/* White icon (hover) */}
+                    <Sparkles 
+                      className="absolute z-10 h-[18px] w-[18px] text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
+                      strokeWidth={2.5} 
+                    />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  Agente IA
+                </TooltipContent>
+              </Tooltip>
+
+              <Popover onOpenChange={setIsMenuOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Crear encuesta"
+                    className="hover-icon-pop relative flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-[13px] font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                  >
+                    <Plus className="h-4 w-4" strokeWidth={2.5} />
+                    Crear encuesta
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="center"
+                  side="top"
+                  sideOffset={16}
+                  className="w-[280px] rounded-2xl border-white/10 bg-surface-nav p-2 text-white/60 shadow-rail"
                 >
-                  <Plus className="h-4 w-4" strokeWidth={2.5} />
-                  Crear encuesta
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="center"
-                side="top"
-                sideOffset={16}
-                className="w-[280px] rounded-2xl border-white/10 bg-surface-nav p-2 text-white/60 shadow-rail"
-              >
-                <RailCreateOption
-                  icon={<Plus className="h-5 w-5" strokeWidth={2} />}
-                  title="Crear en blanco"
-                  description="Empieza desde cero"
-                  onClick={onCreateBlank}
-                />
-                <RailCreateOption
-                  icon={<Layout className="h-5 w-5" strokeWidth={2} />}
-                  title="Crear con plantilla"
-                  description="Usa un diseño predefinido"
-                  onClick={onCreateFromTemplate}
-                />
-              </PopoverContent>
-            </Popover>
-          </>
-        ) : null
-      }
-    />
+                  <RailCreateOption
+                    icon={<Plus className="h-5 w-5" strokeWidth={2} />}
+                    title="Crear en blanco"
+                    description="Empieza desde cero"
+                    onClick={onCreateBlank}
+                  />
+                  <RailCreateOption
+                    icon={<Layout className="h-5 w-5" strokeWidth={2} />}
+                    title="Crear con plantilla"
+                    description="Usa un diseño predefinido"
+                    onClick={onCreateFromTemplate}
+                  />
+                </PopoverContent>
+              </Popover>
+            </>
+          ) : null
+        }
+      />
+      <AiAgentDrawer open={aiDrawerOpen} onOpenChange={setAiDrawerOpen} context="dashboard" />
+    </>
   );
 }

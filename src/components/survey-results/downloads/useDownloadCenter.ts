@@ -98,6 +98,7 @@ export function useDownloadCenter({ draft, results }: UseDownloadCenterInput): D
         startedAt: Date.now(),
         delivered: false,
         deliver,
+        request,
       };
       setEntries((current) => [entry, ...current]);
 

@@ -39,7 +39,7 @@ export function SelectableCard({
       disabled={isDisabled}
       onClick={() => onSelect?.(option.value)}
       className={cn(
-        'group relative flex flex-col text-left p-0 rounded-xl outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+        'hover-icon-pop group relative flex flex-col text-left p-0 rounded-xl outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         isDisabled && 'cursor-not-allowed',
         className
       )}

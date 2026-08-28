@@ -1,5 +1,7 @@
 import * as React from "react";
-import { Download, Bell, Minimize2, Pin, Info, Tag, ShieldCheck, Users, Lock, CalendarRange, type LucideIcon } from "lucide-react";
+import { Download, Bell, Minimize2, Pin, Info, Tag, ShieldCheck, Users, Lock, CalendarRange, Sparkles, type LucideIcon } from "lucide-react";
+import { AiAgentDrawer } from "@/components/ai/AiAgentDrawer";
+import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -70,7 +72,8 @@ export function ResultsActionRail({
   const isAnonymous = draft.visibility === "anonymous";
   const [autoHide, setAutoHide] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(true);
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [aiDrawerOpen, setAiDrawerOpen] = React.useState(false);
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Step-change detection (contextual actions) ──────────
   const prevSelectedRef = React.useRef(selectedCount > 0);
@@ -127,16 +130,16 @@ export function ResultsActionRail({
   };
 
   return (
-    <div className="absolute z-50 flex pointer-events-none bottom-0 left-1/2 -translate-x-1/2 flex-col items-center justify-end pb-4">
+    <div className="absolute z-50 flex pointer-events-none bottom-0 left-1/2 -translate-x-1/2 flex-col items-center justify-end pb-4 w-max">
       {/* Hit area for hover */}
       <div
-        className="pointer-events-auto flex items-center justify-end h-16 flex-col px-6 pb-0"
+        className="pointer-events-auto flex items-center justify-end h-16 flex-col px-6 pb-0 w-max"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         <div
           className={cn(
-            "relative flex items-center justify-center overflow-hidden rounded-3xl transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+            "relative flex items-center justify-center overflow-visible rounded-3xl transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
             isExpanded
               ? "h-14 max-w-[800px] bg-surface-nav px-3 shadow-rail border border-white/10"
               // Collapsed: a full pill rather than a half-rounded hump, so the
@@ -147,7 +150,7 @@ export function ResultsActionRail({
           {/* Content that fades/slides in */}
           <div 
             className={cn(
-              "flex items-center gap-2 transition-all duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] w-max",
+              "dock-container flex items-center gap-2 transition-all duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] w-max",
               isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
             )}
           >
@@ -194,7 +197,7 @@ export function ResultsActionRail({
                 <button
                   type="button"
                   aria-label="Información de la encuesta"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                  className="dock-item hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                 >
                   <Info className="h-[20px] w-[20px]" strokeWidth={2} />
                 </button>
@@ -203,10 +206,10 @@ export function ResultsActionRail({
                 align="center"
                 side="top"
                 sideOffset={16}
-                className="w-[280px] rounded-xl p-3 shadow-rail border-white/10 bg-surface-nav text-white/60"
+                className="w-[280px] rounded-xl p-3 shadow-rail border-white/10 bg-surface-nav text-white/60 gap-0"
               >
                 <div className="px-1 text-[13px] font-semibold text-white leading-none">Información</div>
-                <div className="mt-2 mb-2 h-px bg-white/10" />
+                <div className="mt-1.5 mb-2 h-px bg-white/10" />
                 <div className="flex flex-col gap-1.5 px-1 pb-0.5">
                   {draft.kind && (
                     <InfoRow icon={Tag} label="Tipo" value={SURVEY_KIND_LABELS[draft.kind]} />
@@ -222,13 +225,60 @@ export function ResultsActionRail({
               </HoverCardContent>
             </HoverCard>
 
+            <svg width="0" height="0" className="absolute">
+              <defs>
+                <linearGradient id="ai-icon-gradient-results" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="hsl(var(--ai-gradient-start))" />
+                  <stop offset="100%" stopColor="hsl(var(--ai-gradient-end))" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setAiDrawerOpen(true)}
+                  aria-label="Agente IA"
+                  className="group hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl bg-transparent transition-all duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 overflow-hidden"
+                >
+                  {/* Background animation on hover */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-ai-gradient -z-10" />
+                  
+                  <MovingBorderBeam 
+                    duration={4000}
+                    borderWidth={2}
+                    rx={12}
+                    ry={12}
+                    beamSize={60}
+                    colorFrom="hsl(var(--ai-gradient-start))"
+                    colorTo="hsl(var(--ai-gradient-end))"
+                    className="opacity-100 group-hover:opacity-0 transition-opacity duration-300"
+                  />
+                  
+                  {/* Gradient icon (default) */}
+                  <Sparkles 
+                    className="absolute z-10 h-[20px] w-[20px] drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] opacity-100 group-hover:opacity-0 transition-opacity duration-300" 
+                    stroke="url(#ai-icon-gradient-results)" 
+                    strokeWidth={2.5} 
+                  />
+                  
+                  {/* White icon (hover) */}
+                  <Sparkles 
+                    className="absolute z-10 h-[20px] w-[20px] text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
+                    strokeWidth={2.5} 
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Agente IA</TooltipContent>
+            </Tooltip>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   onClick={() => setAutoHide(!autoHide)}
                   aria-label={autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                  className="dock-item hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                 >
                   {!autoHide ? (
                     <Minimize2 className="h-[20px] w-[20px]" strokeWidth={2} />
@@ -244,6 +294,7 @@ export function ResultsActionRail({
           </div>
         </div>
       </div>
+      <AiAgentDrawer open={aiDrawerOpen} onOpenChange={setAiDrawerOpen} context="results" />
     </div>
   );
 }
@@ -264,7 +315,7 @@ function RailButton({
           type="button"
           onClick={onClick}
           aria-label={label}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+          className="dock-item hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
         >
           {icon}
         </button>

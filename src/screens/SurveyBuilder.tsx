@@ -2,6 +2,7 @@ import * as React from "react";
 import { toast } from "sonner";
 import { moveItemById } from "@/lib/reorder";
 import { useAutosave } from "@/hooks/useAutosave";
+import { useDragReorder } from "@/hooks/useDragReorder";
 import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
 
 import { createBlankSurveyDraft } from "@/mocks/surveyBuilderMocks";
@@ -614,6 +615,13 @@ export function SurveyBuilder({
     }));
   }, []);
 
+  const {
+    draggingId: draggingSectionId,
+    overId: overSectionId,
+    getHandleProps: getSectionHandleProps,
+    getDropTargetProps: getSectionDropTargetProps,
+  } = useDragReorder(handleReorderSections);
+
   /**
    * Moves a subsection (level 2/3) to sit just below another section, as its
    * sibling — the moved section adopts the destination's depth. The
@@ -861,6 +869,10 @@ export function SurveyBuilder({
     onRemoveQuestion: handleRemoveQuestion,
     onReorderQuestions: handleReorderQuestions,
     onMoveQuestion: handleMoveQuestion,
+    draggingSectionId,
+    overSectionId,
+    getSectionHandleProps,
+    getSectionDropTargetProps,
   };
 
   /**
