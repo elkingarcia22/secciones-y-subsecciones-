@@ -1,22 +1,10 @@
 import * as React from "react";
 import { motion } from "framer-motion";
-import {
- ChevronRight,
- ChevronUp,
- Gauge,
- TrendingUp,
- Minus,
- TrendingDown,
- Lock,
- LayoutGrid,
- List,
- Info,
- MessagesSquare,
-} from "lucide-react";
+import { ChevronRight, ChevronUp, Gauge, Lock, LayoutGrid, List, MessagesSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/feedback";
 import type {
  NpsBand, NpsSectionDetail, NpsSegmentCell, NpsSegmentData, NpsSegmentRow,
@@ -27,23 +15,14 @@ import { npsDepthBySection, npsDepthTotals } from "@/mocks/npsDepth";
 import type { SurveyDraft } from "@/components/survey-builder";
 import { NpsDepthView } from "./NpsDepthView";
 import { depthTheme, SECTION_HEADER_DIVIDER, SIBLING_DIVIDER } from "@/components/survey-builder/depthTheme";
-import { MiniMetricCard, AnimatedNumber } from "./MiniMetricCard";
-import {
- POSITIVE_TEXT,
- YELLOW_TEXT,
- NEGATIVE_TEXT,
- NPS_SCORE_LEGEND,
- NPS_SCORE_BANDS,
- npsBandForScore,
-} from "./favorabilityScale";
+import { MetricSummaryCard } from "./MetricSummaryCard";
+import { BarStrip, DialGauge } from "@/components/survey-analytics/pulseCharts";
+import { NPS_SCORE_LEGEND, NPS_SCORE_BANDS, npsBandForScore, toneForNps, POSITIVE, YELLOW, NEGATIVE } from "./favorabilityScale";
 import { type ResultLevel } from "./resultLevels";
 import { MeasurementScaleButton } from "./MeasurementScaleButton";
-import {
- ResultsFilterChips,
- ResultsFilterControls,
- type HighlightScale,
-} from "./ResultsFilterToolbar";
+import { ResultsFilterChips, ResultsFilterControls, type HighlightScale } from "./ResultsFilterToolbar";
 import { useResultsFilters } from "./useResultsFilters";
+import { cascadeContainer, cascadeItem, cascadeItemSettleTime, CASCADE_CONTENT_GAP } from "@/lib/cascadeAnimation";
 
 /** Stable identity: the hook keys its reset on this list. */
 const NPS_BAND_IDS = NPS_SCORE_BANDS.map((band) => band.id);
@@ -210,11 +189,15 @@ function NpsQuestionTable({
  visibleLevels,
  highlightBands,
  tierBands,
+ revealDelay = 0,
 }: {
  questions: readonly NpsSectionDetail["questions"][number][];
  visibleLevels: ReadonlySet<ResultLevel>;
  highlightBands: ReadonlySet<string>;
 tierBands: ReadonlySet<string>;
+ /** Delay before this table's rows start cascading in — set by the parent
+  * so questions only start once the subsection rows above them are done. */
+ revealDelay?: number;
 }) {
  const levelHidden = !visibleLevels.has("question");
 
@@ -231,19 +214,25 @@ tierBands: ReadonlySet<string>;
  <span className="w-10 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mr-1">eNPS</span>
  </div>
  </div>
- <ul className="flex flex-col">
+ <motion.ul
+ className="flex flex-col"
+ initial="hidden"
+ animate="show"
+ custom={revealDelay}
+ variants={cascadeContainer}
+ >
  {questions.map((q) => {
   const rowDimmed = isNpsTierDimmed(q.n > 0 ? q.score : null, tierBands);
   return (
-  <li key={q.id} className="group flex items-center justify-between gap-6 py-2 px-2 border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors">
+  <motion.li key={q.id} variants={cascadeItem} className="group flex items-center justify-between gap-6 py-2 px-2 border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors">
   <span className={cn("text-[13px] text-text-secondary max-w-[500px] leading-relaxed", rowDimmed && "opacity-55")}>{q.text}</span>
   <div className={cn("flex items-center gap-6 shrink-0", rowDimmed && "opacity-55 grayscale")}>
   {levelHidden ? <NpsHiddenLevelValue /> : <NpsScoreWithTooltip score={q.score} promoters={q.promoters} passives={q.passives} detractors={q.detractors} n={q.n} dimmed={isBandDimmed(q.score, highlightBands) || rowDimmed} activeTiers={tierBands} />}
   </div>
-  </li>
+  </motion.li>
   );
  })}
- </ul>
+ </motion.ul>
  </div>
  );
 }
@@ -255,17 +244,17 @@ function countQuestions(section: NpsSectionDetail): number {
  );
 }
 
-function NpsSubsectionRow({ section, depth, visibleLevels, highlightBands, defaultOpen, tierBands }: { section: NpsSectionDetail; depth: number; visibleLevels: ReadonlySet<ResultLevel>; highlightBands: ReadonlySet<string>; defaultOpen?: boolean; tierBands?: ReadonlySet<string>; }) {
+function NpsSubsectionRow({ section, depth, visibleLevels, highlightBands, defaultOpen, tierBands, contentDelay = 0 }: { section: NpsSectionDetail; depth: number; visibleLevels: ReadonlySet<ResultLevel>; highlightBands: ReadonlySet<string>; defaultOpen?: boolean; tierBands?: ReadonlySet<string>; /** Delay before this subsection's own questions/nested subsections start cascading in — set by the sibling list so they wait their turn. */ contentDelay?: number; }) {
  const [expanded, setExpanded] = React.useState(defaultOpen ?? false);
  const theme = depthTheme(depth);
  const questionCount = countQuestions(section);
- 
+
  const levelId = depth === 2 ? "subsection2" : "subsection3";
  const levelHidden = !visibleLevels.has(levelId);
  const rowDimmed = tierBands ? isNpsTierDimmed(section.n > 0 ? section.score : null, tierBands) : false;
 
  return (
- <li>
+ <>
  <div
  onClick={() => setExpanded(v => !v)}
  role="button"
@@ -313,21 +302,39 @@ function NpsSubsectionRow({ section, depth, visibleLevels, highlightBands, defau
  </div>
  {expanded && (
  <div className={cn("mt-2.5 flex flex-col gap-3 pb-1 animate-in fade-in slide-in-from-top-1 duration-200", theme.rail, theme.railOffset)}>
- {section.questions.length > 0 && <NpsQuestionTable questions={section.questions} visibleLevels={visibleLevels} highlightBands={highlightBands} tierBands={tierBands || new Set()} />}
- {section.children.length > 0 && <NpsSubsectionOutline sections={section.children} depth={depth + 1} visibleLevels={visibleLevels} highlightBands={highlightBands} tierBands={tierBands} />}
+ {section.questions.length > 0 && <NpsQuestionTable questions={section.questions} visibleLevels={visibleLevels} highlightBands={highlightBands} tierBands={tierBands || new Set()} revealDelay={contentDelay} />}
+ {section.children.length > 0 && <NpsSubsectionOutline sections={section.children} depth={depth + 1} visibleLevels={visibleLevels} highlightBands={highlightBands} tierBands={tierBands} baseDelay={contentDelay} />}
  </div>
  )}
- </li>
+ </>
  );
 }
 
-function NpsSubsectionOutline({ sections, depth, visibleLevels, highlightBands, tierBands }: { sections: readonly NpsSectionDetail[]; depth: number; visibleLevels: ReadonlySet<ResultLevel>; highlightBands: ReadonlySet<string>; tierBands?: ReadonlySet<string>; }) {
+function NpsSubsectionOutline({ sections, depth, visibleLevels, highlightBands, tierBands, baseDelay = 0 }: { sections: readonly NpsSectionDetail[]; depth: number; visibleLevels: ReadonlySet<ResultLevel>; highlightBands: ReadonlySet<string>; tierBands?: ReadonlySet<string>; /** When this list itself sits inside another cascade, how long to wait before its own rows start staggering in. */ baseDelay?: number; }) {
  return (
- <ul className={cn("flex flex-col", SIBLING_DIVIDER)}>
+ <motion.ul
+ className={cn("flex flex-col", SIBLING_DIVIDER)}
+ initial="hidden"
+ animate="show"
+ custom={baseDelay}
+ variants={cascadeContainer}
+ >
  {sections.map((sec, index) => (
- <NpsSubsectionRow key={sec.id} section={sec} depth={depth} visibleLevels={visibleLevels} highlightBands={highlightBands} defaultOpen={index === 0} tierBands={tierBands} />
+ <motion.li key={sec.id} variants={cascadeItem}>
+ <NpsSubsectionRow
+ section={sec}
+ depth={depth}
+ visibleLevels={visibleLevels}
+ highlightBands={highlightBands}
+ defaultOpen={index === 0}
+ tierBands={tierBands}
+ // This row's own content starts right as the row itself settles
+ // in, not after every sibling row has.
+ contentDelay={cascadeItemSettleTime(baseDelay, index) + CASCADE_CONTENT_GAP}
+ />
+ </motion.li>
  ))}
- </ul>
+ </motion.ul>
  );
 }
 
@@ -653,41 +660,71 @@ export function NpsTab({ draft, results }: NpsTabProps) {
  {/* Bare on the page, like the KPI row of every other tab: boxing it in a
  second card was what set eNPS apart, and what pushed the detail below
  it further down than anywhere else. */}
- <div className="grid pt-1 shrink-0 grid-cols-2 gap-3 sm:grid-cols-4">
- <MiniMetricCard size="compact" 
- icon={Gauge} 
- label="Puntaje eNPS" 
- value={<AnimatedNumber value={nps.score} format={(v) => (v > 0 ? "+" : "") + Math.round(v).toString() + " eNPS"} />}
- >
- <TooltipProvider>
- <Tooltip>
- <TooltipTrigger asChild>
- <button type="button" className="text-muted-foreground hover:text-text-primary transition-colors bg-muted/30 p-1 rounded-md">
- <Info className="h-3 w-3" />
- </button>
- </TooltipTrigger>
- <TooltipContent className="max-w-[400px] p-4 bg-surface-nav text-white shadow-drawer border-none">
- <div className="flex flex-col gap-3 items-start leading-relaxed">
- <p className="text-[12px]"><strong>Puntaje eNPS:</strong><br/>La fórmula del eNPS resta el porcentaje de detractores al de promotores.</p>
- <div className="flex w-full flex-col gap-1 mt-1">
- <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">Fórmula</span>
- <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
- <span className="font-semibold text-[13px]">{Math.round((counts.promoter / nps.n) * 100)}% Promotores</span>
- <span className="text-[13px] font-semibold opacity-80">−</span>
- <span className="font-semibold text-[13px]">{Math.round((counts.detractor / nps.n) * 100)}% Detractores</span>
- <span className="text-[13px] font-semibold opacity-80">=</span>
- <span className="font-semibold text-[13px]">{nps.score > 0 ? "+" : ""}{nps.score} eNPS</span>
- </div>
- </div>
- </div>
- </TooltipContent>
- </Tooltip>
- </TooltipProvider>
- </MiniMetricCard>
- <MiniMetricCard size="compact" icon={TrendingUp} label="Promotores" value={<AnimatedNumber value={nps.n > 0 ? (counts.promoter / nps.n) * 100 : 0} format={(v) => Math.round(v).toString() + "%"} />} color={POSITIVE_TEXT} onClick={() => toggleTierBand("promoter")} active={tierBands.has("promoter")} />
- <MiniMetricCard size="compact" icon={Minus} label="Neutros" value={<AnimatedNumber value={nps.n > 0 ? (counts.passive / nps.n) * 100 : 0} format={(v) => Math.round(v).toString() + "%"} />} color={YELLOW_TEXT} onClick={() => toggleTierBand("passive")} active={tierBands.has("passive")} />
- <MiniMetricCard size="compact" icon={TrendingDown} label="Detractores" value={<AnimatedNumber value={nps.n > 0 ? (counts.detractor / nps.n) * 100 : 0} format={(v) => Math.round(v).toString() + "%"} />} color={NEGATIVE_TEXT} onClick={() => toggleTierBand("detractor")} active={tierBands.has("detractor")} />
- </div>
+ <MetricSummaryCard
+  accentColor={toneForNps(nps.score) === "positive" ? "bg-status-positive" : toneForNps(nps.score) === "warning" ? "bg-status-warning" : "bg-status-negative"}
+  title="Puntaje eNPS"
+  hint={
+    <div className="flex flex-col gap-3 items-start leading-relaxed">
+      <p className="text-[12px]"><strong>Puntaje eNPS:</strong><br/>La fórmula del eNPS resta el porcentaje de detractores al de promotores.</p>
+      <div className="flex w-full flex-col gap-1 mt-1">
+        <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">Fórmula</span>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="font-semibold text-[13px]">{Math.round((counts.promoter / nps.n) * 100)}% Promotores</span>
+          <span className="text-[13px] font-semibold opacity-80">−</span>
+          <span className="font-semibold text-[13px]">{Math.round((counts.detractor / nps.n) * 100)}% Detractores</span>
+          <span className="text-[13px] font-semibold opacity-80">=</span>
+          <span className="font-semibold text-[13px]">{nps.score > 0 ? "+" : ""}{nps.score} eNPS</span>
+        </div>
+      </div>
+    </div>
+  }
+  bigValue={`${nps.score > 0 ? "+" : ""}${nps.score}`}
+  caption={`${formatCount(nps.n)} respuestas · escala de -100 a +100`}
+  ringsLabel="Distribución de respuestas"
+  ringsTotal={`${formatCount(nps.n)} en total`}
+  rings={[
+    {
+      id: "promoter",
+      label: "Promotores",
+      percentage: Math.round((counts.promoter / nps.n) * 100),
+      color: POSITIVE,
+      count: formatCount(counts.promoter),
+      active: tierBands.has("promoter"),
+      onToggle: () => toggleTierBand("promoter"),
+    },
+    {
+      id: "passive",
+      label: "Neutros",
+      percentage: Math.round((counts.passive / nps.n) * 100),
+      color: YELLOW,
+      count: formatCount(counts.passive),
+      active: tierBands.has("passive"),
+      onToggle: () => toggleTierBand("passive"),
+    },
+    {
+      id: "detractor",
+      label: "Detractores",
+      percentage: Math.round((counts.detractor / nps.n) * 100),
+      color: NEGATIVE,
+      count: formatCount(counts.detractor),
+      active: tierBands.has("detractor"),
+      onToggle: () => toggleTierBand("detractor"),
+    },
+  ]}
+  topAreasTitle="Top 3 áreas más detractoras"
+  topAreas={
+    dimensionsData
+      .filter(s => s.n > 0)
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 3)
+      .map(s => ({
+        id: s.id,
+        label: s.title,
+        value: Math.max(0, 100 + s.score),
+        displayValue: `${s.score > 0 ? "+" : ""}${Math.round(s.score)}`,
+      }))
+  }
+/>
 
  <div className="rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
  <div className="sticky top-3 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
