@@ -1,5 +1,5 @@
 import * as React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronUp, MessageSquareText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +55,13 @@ import { ResultsSubTabSwitch, type ResultsSubTab } from "./ResultsSubTabSwitch";
 import type { ResultsFiltersState } from "./useResultsFilters";
 import { levelForDepth, type ResultLevel } from "./resultLevels";
 import { ResultsSortHeader } from "./ResultsSortHeader";
+import { MetricSummaryCard } from "./MetricSummaryCard";
+import {
+  cascadeContainer,
+  cascadeItem,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+} from "@/lib/cascadeAnimation";
 
 function getFavorabilityTierId(value: number): string {
   if (value >= FAVORABILITY_TARGET) return "favorable";
@@ -108,6 +115,10 @@ interface RowHighlightProps {
  * row with a level chip and a rail hanging off the chevron — so the report
  * reads the same hierarchy the author wrote.
  */
+function flattenChildren(section: SectionResult): readonly QuestionResult[] {
+  return section.children.flatMap(child => [...child.questions, ...flattenChildren(child)]);
+}
+
 export function QuestionsTab({
   results,
   segments,
@@ -137,79 +148,159 @@ export function QuestionsTab({
   };
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
-      <div className="sticky top-3 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
-        <div className="flex flex-wrap items-center gap-4 pb-2">
-          <div className="flex items-center gap-2">
-            <h3 className="text-[13px] font-bold text-text-primary">Detalle por secciones</h3>
-            <Badge variant="neutral" className="h-5 px-1.5 text-[11px] font-semibold tabular-nums">
-              {totalQuestions}
-            </Badge>
+    <div className="flex flex-col gap-6">
+      <MetricSummaryCard
+        accentColor="bg-status-positive"
+        title="Favorabilidad por preguntas"
+        hint={
+          <div className="flex flex-col gap-3 items-start leading-relaxed">
+            <p className="text-[12px]"><strong>Favorabilidad:</strong><br/>Promedio de favorabilidad de todas las preguntas con escala 1-5.</p>
           </div>
-          <div className="flex items-center justify-end gap-3 ml-auto">
-            <ResultsFilterControls
-              segments={segments}
-              activeSegment={activeSegment}
-              onSegmentChange={filtersState.handleSegmentChange}
-              filterableSegments={segments}
-              filters={filtersState.filters}
-              onApplyFilter={filtersState.applyFilter}
-              onClearFilters={filtersState.clearFilters}
-              visibleLevels={filtersState.visibleLevels}
-              hasHiddenLevels={filtersState.hasHiddenLevels}
-              onToggleLevel={filtersState.toggleLevel}
-              onResetLevels={filtersState.resetLevels}
-              highlightBands={filtersState.tierBands}
-              hasHiddenBands={filtersState.hasHiddenTierBands}
-              onToggleBand={filtersState.toggleTierBand}
-              onResetBands={filtersState.resetTierBands}
-              highlightScale={THREE_TIER_HIGHLIGHT}
-              showViewBy={false}
-            />
-            <ResultsSubTabSwitch value="questions" onChange={onSubTabChange} />
-            <MeasurementScaleButton
-              items={THREE_TIER_FAVORABILITY_LEGEND}
-              title="Escala de favorabilidad"
-              description="Cada respuesta en escala 1 a 5 cae en uno de estos tres bloques, y el porcentaje se calcula sobre el total de respuestas en escala de la pregunta. Los NS/NR quedan fuera de ese total y se cuentan aparte."
-            />
-          </div>
-        </div>
+        }
+        bigValue={(() => {
+          const scored = sections.flatMap(s => [...s.questions, ...flattenChildren(s)]).filter(q => q.scored && q.favorability !== null);
+          const avg = scored.length > 0 ? scored.reduce((sum, q) => sum + (q.favorability ?? 0), 0) / scored.length : 0;
+          return formatPercent(avg);
+        })()}
+        caption={`${totalQuestions} preguntas con escala`}
+        ringsLabel="Distribución general"
+        ringsTotal={`${totalQuestions} preguntas`}
+        rings={[
+          {
+            id: "favorable",
+            label: "Favorables",
+            percentage: Math.round((sections.reduce((sum, s) => {
+              const allQ = [...s.questions, ...flattenChildren(s)];
+              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) >= 70).length;
+            }, 0) / Math.max(totalQuestions, 1)) * 100),
+            color: POSITIVE,
+            count: String(sections.reduce((sum, s) => {
+              const allQ = [...s.questions, ...flattenChildren(s)];
+              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) >= 70).length;
+            }, 0)),
+            active: filtersState.tierBands.has("favorable"),
+            onToggle: () => filtersState.toggleTierBand("favorable"),
+          },
+          {
+            id: "neutral",
+            label: "Neutrales",
+            percentage: Math.round((sections.reduce((sum, s) => {
+              const allQ = [...s.questions, ...flattenChildren(s)];
+              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) >= 50 && (q.favorability ?? 0) < 70).length;
+            }, 0) / Math.max(totalQuestions, 1)) * 100),
+            color: YELLOW,
+            count: String(sections.reduce((sum, s) => {
+              const allQ = [...s.questions, ...flattenChildren(s)];
+              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) >= 50 && (q.favorability ?? 0) < 70).length;
+            }, 0)),
+            active: filtersState.tierBands.has("neutral"),
+            onToggle: () => filtersState.toggleTierBand("neutral"),
+          },
+          {
+            id: "unfavorable",
+            label: "Desfavorables",
+            percentage: Math.round((sections.reduce((sum, s) => {
+              const allQ = [...s.questions, ...flattenChildren(s)];
+              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) < 50).length;
+            }, 0) / Math.max(totalQuestions, 1)) * 100),
+            color: NEGATIVE,
+            count: String(sections.reduce((sum, s) => {
+              const allQ = [...s.questions, ...flattenChildren(s)];
+              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) < 50).length;
+            }, 0)),
+            active: filtersState.tierBands.has("unfavorable"),
+            onToggle: () => filtersState.toggleTierBand("unfavorable"),
+          },
+        ]}
+        topAreasTitle="Top 3 áreas con más sentimiento negativo"
+        topAreas={
+          sections
+            .filter(s => s.n > 0)
+            .sort((a, b) => a.favorability - b.favorability)
+            .slice(0, 3)
+            .map(s => ({
+              id: s.id,
+              label: s.title,
+              value: 100 - s.favorability,
+              displayValue: formatPercent(100 - s.favorability),
+            }))
+        }
+      />
 
-        <ResultsFilterChips
-          filters={filtersState.filters}
-          segments={segments}
-          onRemoveFilter={filtersState.removeFilter}
-          onClearFilters={filtersState.clearFilters}
-        />
-      </div>
-
-      <div className="flex flex-col gap-4">
-        {sections.length === 0 ? (
-          <div className="rounded-xl border border-border/60">
-            <div className="p-8">
-              <EmptyState
-                icon={MessageSquareText}
-                title="Sin secciones con resultados"
-                description="Las secciones de esta encuesta no tienen resultados en la escala de 1 a 5."
-                className="border-none bg-transparent shadow-none"
+      <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
+        <div className="sticky top-3 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
+          <div className="flex flex-wrap items-center gap-4 pb-2">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[13px] font-bold text-text-primary">Detalle por secciones</h3>
+              <Badge variant="neutral" className="h-5 px-1.5 text-[11px] font-semibold tabular-nums">
+                {totalQuestions}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-end gap-3 ml-auto">
+              <ResultsFilterControls
+                segments={segments}
+                activeSegment={activeSegment}
+                onSegmentChange={filtersState.handleSegmentChange}
+                filterableSegments={segments}
+                filters={filtersState.filters}
+                onApplyFilter={filtersState.applyFilter}
+                onClearFilters={filtersState.clearFilters}
+                visibleLevels={filtersState.visibleLevels}
+                hasHiddenLevels={filtersState.hasHiddenLevels}
+                onToggleLevel={filtersState.toggleLevel}
+                onResetLevels={filtersState.resetLevels}
+                highlightBands={filtersState.tierBands}
+                hasHiddenBands={filtersState.hasHiddenTierBands}
+                onToggleBand={filtersState.toggleTierBand}
+                onResetBands={filtersState.resetTierBands}
+                highlightScale={THREE_TIER_HIGHLIGHT}
+                showViewBy={false}
+              />
+              <ResultsSubTabSwitch value="questions" onChange={onSubTabChange} />
+              <MeasurementScaleButton
+                items={THREE_TIER_FAVORABILITY_LEGEND}
+                title="Escala de favorabilidad"
+                description="Cada respuesta en escala 1 a 5 cae en uno de estos tres bloques, y el porcentaje se calcula sobre el total de respuestas en escala de la pregunta. Los NS/NR quedan fuera de ese total y se cuentan aparte."
               />
             </div>
           </div>
-        ) : (
-          sections.map((section) => (
-            <SectionBlock
-              key={section.id}
-              section={section}
-              isOpen={openSection === section.id}
-              onToggle={() =>
-                setOpenSection((current) =>
-                  current === section.id ? undefined : section.id
-                )
-              }
-              highlight={highlight}
-            />
-          ))
-        )}
+
+          <ResultsFilterChips
+            filters={filtersState.filters}
+            segments={segments}
+            onRemoveFilter={filtersState.removeFilter}
+            onClearFilters={filtersState.clearFilters}
+          />
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {sections.length === 0 ? (
+            <div className="rounded-xl border border-border/60">
+              <div className="p-8">
+                <EmptyState
+                  icon={MessageSquareText}
+                  title="Sin secciones con resultados"
+                  description="Las secciones de esta encuesta no tienen resultados en la escala de 1 a 5."
+                  className="border-none bg-transparent shadow-none"
+                />
+              </div>
+            </div>
+          ) : (
+            sections.map((section) => (
+              <SectionBlock
+                key={section.id}
+                section={section}
+                isOpen={openSection === section.id}
+                onToggle={() =>
+                  setOpenSection((current) =>
+                    current === section.id ? undefined : section.id
+                  )
+                }
+                highlight={highlight}
+              />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
@@ -325,16 +416,26 @@ function SectionBlock({
         </div>
       </div>
 
-      {isOpen && (
-        <div className="flex min-h-0 flex-col gap-4 px-6 py-5 animate-in fade-in slide-in-from-top-1 duration-300">
-          {section.questions.length > 0 && (
-            <QuestionTable questions={section.questions} highlight={highlight} />
-          )}
-          {subSections.length > 0 && (
-            <SubsectionOutline sections={subSections} highlight={highlight} />
-          )}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="flex min-h-0 flex-col gap-4 px-6 py-5">
+              {section.questions.length > 0 && (
+                <QuestionTable questions={section.questions} highlight={highlight} />
+              )}
+              {subSections.length > 0 && (
+                <SubsectionOutline sections={subSections} highlight={highlight} />
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
@@ -422,21 +523,36 @@ function QuestionFavorability({ question, dimmed }: { question: QuestionResult; 
 function SubsectionOutline({
   sections,
   highlight,
+  baseDelay = 0,
 }: {
   sections: readonly SectionResult[];
   highlight: RowHighlightProps;
+  /** When this list itself sits inside another cascade, how long to wait
+   * before its own rows start staggering in. */
+  baseDelay?: number;
 }) {
   return (
-    <ul className={cn("flex flex-col", SIBLING_DIVIDER)}>
+    <motion.ul
+      className={cn("flex flex-col", SIBLING_DIVIDER)}
+      initial="hidden"
+      animate="show"
+      custom={baseDelay}
+      variants={cascadeContainer}
+    >
       {sections.map((section, index) => (
-        <SubsectionBlock
-          key={section.id}
-          section={section}
-          defaultOpen={index === 0}
-          highlight={highlight}
-        />
+        <motion.li key={section.id} variants={cascadeItem}>
+          <SubsectionBlock
+            section={section}
+            defaultOpen={index === 0}
+            highlight={highlight}
+            // This row's own content starts right as the row itself settles
+            // in, not after every sibling row has — no dead air waiting on
+            // rows that have nothing to do with this one's questions.
+            contentDelay={cascadeItemSettleTime(baseDelay, index) + CASCADE_CONTENT_GAP}
+          />
+        </motion.li>
       ))}
-    </ul>
+    </motion.ul>
   );
 }
 
@@ -444,10 +560,14 @@ function SubsectionBlock({
   section,
   defaultOpen,
   highlight,
+  contentDelay = 0,
 }: {
   section: SectionResult;
   defaultOpen?: boolean;
   highlight: RowHighlightProps;
+  /** Delay before this subsection's own questions/nested subsections start
+   * cascading in — set by the sibling list so they wait their turn. */
+  contentDelay?: number;
 }) {
   const [expanded, setExpanded] = React.useState(defaultOpen ?? false);
   const subSections = section.children.filter(hasContent);
@@ -462,7 +582,7 @@ function SubsectionBlock({
   const rowDimmed = isHighlightDimmed || isTierDimmed;
   
   return (
-    <li>
+    <>
       {/* Header row: the same outline entry the builder draws — chevron, level
           chip, then the row's own questions and subsections under a rail. */}
       <div
@@ -533,23 +653,41 @@ function SubsectionBlock({
       </div>
 
       {/* Content, hanging off a rail that starts under the chevron. */}
-      {expanded && (
-        <div
-          className={cn(
-            "mt-2.5 flex flex-col gap-3 pb-1 animate-in fade-in slide-in-from-top-1 duration-200",
-            theme.rail,
-            theme.railOffset
-          )}
-        >
-          {section.questions.length > 0 && (
-            <QuestionTable questions={section.questions} highlight={highlight} />
-          )}
-          {subSections.length > 0 && (
-            <SubsectionOutline sections={subSections} highlight={highlight} />
-          )}
-        </div>
-      )}
-    </li>
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div
+              className={cn(
+                "mt-2.5 flex flex-col gap-3 pb-1",
+                theme.rail,
+                theme.railOffset
+              )}
+            >
+              {section.questions.length > 0 && (
+                <QuestionTable
+                  questions={section.questions}
+                  highlight={highlight}
+                  revealDelay={contentDelay}
+                />
+              )}
+              {subSections.length > 0 && (
+                <SubsectionOutline
+                  sections={subSections}
+                  highlight={highlight}
+                  baseDelay={contentDelay}
+                />
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -575,9 +713,13 @@ type SortKey = "label" | "favorability";
 function QuestionTable({
   questions,
   highlight,
+  revealDelay = 0,
 }: {
   questions: readonly QuestionResult[];
   highlight: RowHighlightProps;
+  /** Delay before this table's rows start cascading in — set by the parent
+   * so questions only start once the subsection rows above them are done. */
+  revealDelay?: number;
 }) {
   const [sortKey, setSortKey] = React.useState<SortKey | null>(null);
   const [ascending, setAscending] = React.useState(true);
@@ -634,7 +776,13 @@ function QuestionTable({
           </th>
         </tr>
       </thead>
-      <tbody className="divide-y divide-border/25">
+      <motion.tbody
+        className="divide-y divide-border/25"
+        initial="hidden"
+        animate="show"
+        custom={revealDelay}
+        variants={cascadeContainer}
+      >
         {sorted.map((question, index) => {
           const isHighlighted = highlight.highlightedRows.has(question.id);
           const tierId =
@@ -642,9 +790,9 @@ function QuestionTable({
           const isHighlightDimmed = highlight.highlightedRows.size > 0 && !isHighlighted;
           const isTierDimmed = tierId !== null && highlight.tierBands.size > 0 && !(highlight.tierBands.has(tierId) || (highlight.tierBands.has("nsnr") && question.nsnr > 0));
           const rowDimmed = isHighlightDimmed || isTierDimmed;
-          
+
           return (
-            <tr key={question.id} className="group transition-colors hover:bg-muted/30">
+            <motion.tr key={question.id} variants={cascadeItem} className="group transition-colors hover:bg-muted/30">
               <td className="px-4 py-3 text-center text-[11px] font-extrabold tabular-nums text-muted-foreground">
                 {index + 1}
               </td>
@@ -679,10 +827,10 @@ function QuestionTable({
                   )}
                 </div>
               </td>
-            </tr>
+            </motion.tr>
           );
         })}
-      </tbody>
+      </motion.tbody>
     </table>
   );
 }
