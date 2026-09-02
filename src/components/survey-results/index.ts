@@ -43,3 +43,4 @@ export { DownloadReportsDrawer } from "./downloads/DownloadReportsDrawer";
 export { DownloadsWidget } from "./downloads/DownloadsWidget";
 export { useDownloadCenter, type DownloadCenter } from "./downloads/useDownloadCenter";
 export * from "./downloads/downloadTypes";
+export { MetricSummaryCard } from "./MetricSummaryCard";
