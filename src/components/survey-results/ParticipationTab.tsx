@@ -1,9 +1,8 @@
 import * as React from "react";
-import { Search, Users, X, Eye, EyeOff, Bell, Info } from "lucide-react";
+import { Search, Users, X, Eye, EyeOff, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { Progress } from "@/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
