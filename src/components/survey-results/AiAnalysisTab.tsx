@@ -1,42 +1,26 @@
 import * as React from "react";
-import { AlertTriangle, Lightbulb, RefreshCw, Search, ShieldCheck, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { SurveyDraft } from "@/components/survey-builder";
+import { motion } from "framer-motion";
+import { RefreshCw, Sparkles } from "lucide-react";
+import { cascadeContainer } from "@/lib/cascadeAnimation";
+import { AiCreateChip, type SurveyDraft } from "@/components/survey-builder";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/feedback";
-import {
- buildOpenComments,
- buildRespondents,
- type Sentiment,
-} from "@/mocks/questionResponses";
+import { buildOpenComments, buildRespondents, type Sentiment } from "@/mocks/questionResponses";
 import { buildSurveyAnalysis, type InsightKind } from "@/mocks/surveyInsights";
 import type { SurveyResults } from "@/mocks/surveyResults";
 import { AiGapsSection } from "./AiGapsSection";
 import { AiPrioritiesSection } from "./AiPrioritiesSection";
 import { AiStrengthsSection } from "./AiStrengthsSection";
 import { AiVoiceSection } from "./AiVoiceSection";
-import {
- InsightConfidenceFilter,
- useConfidenceFilter,
-} from "./InsightConfidenceFilter";
-import { CONFIDENCE_LEGEND, CONFIDENCE_ORDER, type InsightConfidence } from "./insightConfidence";
+import { InsightConfidenceFilter, useConfidenceFilter } from "./InsightConfidenceFilter";
+import { CONFIDENCE_LEGEND, CONFIDENCE_ORDER, CONFIDENCE_STYLES, type InsightConfidence } from "./insightConfidence";
 import { InsightGroupList, type InsightGroup } from "./InsightGroupList";
 import { MeasurementScaleButton } from "./MeasurementScaleButton";
-import { MiniMetricCard, AnimatedNumber } from "./MiniMetricCard";
-import {
- SCOPE_ALL,
- buildPriorities,
- buildStrengths,
- defaultFindingLevel,
- findingsAtLevel,
- resolveScope,
- sentimentRollup,
- confidenceFor,
- type AlertTarget,
-} from "./summaryModel";
+import { MetricSummaryCard } from "./MetricSummaryCard";
+import { NEGATIVE, POSITIVE, formatPercent } from "./favorabilityScale";
+import { SCOPE_ALL, buildPriorities, buildStrengths, defaultFindingLevel, findingsAtLevel, resolveScope, sentimentRollup, confidenceFor, type AlertTarget } from "./summaryModel";
 
 interface AiAnalysisTabProps {
  draft: SurveyDraft;
@@ -221,40 +205,61 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
  <div className="flex h-full min-h-0 flex-col">
  {/* The same KPI row every other tab opens with. What the analysis is made
  of, so the reader knows the size of the reading before entering it. */}
- <div className="grid pt-1 shrink-0 grid-cols-2 gap-3 pb-6 sm:grid-cols-4 ">
-         <MiniMetricCard size="compact"
-          icon={Search}
-          label="Hallazgos"
-          value={<AnimatedNumber value={counts.finding} format={formatCount} />}
-          onClick={() => toggleKind("finding")}
-          active={kindFilter.has("finding")}
-        />
-         <MiniMetricCard size="compact"
-          icon={AlertTriangle}
-          label="Riesgos"
-          value={<AnimatedNumber value={counts.risk} format={formatCount} />}
-          tone={counts.risk > 0 ? "negative" : "neutral"}
-          onClick={() => toggleKind("risk")}
-          active={kindFilter.has("risk")}
-        />
-         <MiniMetricCard size="compact"
-          icon={Lightbulb}
-          label="Acciones sugeridas"
-          value={<AnimatedNumber value={counts.recommendation} format={formatCount} />}
-          onClick={() => toggleKind("recommendation")}
-          active={kindFilter.has("recommendation")}
-        />
- <MiniMetricCard size="compact"
- icon={ShieldCheck}
- label="Confiabilidad alta"
- value={
- <span className="tabular-nums">
- <AnimatedNumber value={counts.solidShare} format={(v) => `${v}%`} />
- </span>
- }
- tone="positive"
- />
+ <MetricSummaryCard
+ accentColor="bg-primary"
+ title="Lecturas de la IA"
+ hint={
+ <div className="flex flex-col gap-3 items-start leading-relaxed">
+ <p className="text-[12px]"><strong>Análisis con IA:</strong><br/>Lecturas generadas automáticamente a partir de los resultados de la medición.</p>
  </div>
+ }
+ bigValue={formatCount(counts.total)}
+ caption={`${counts.solidShare}% con confiabilidad alta`}
+ ringsLabel="Qué contiene la lectura"
+ ringsTotal={`${formatCount(counts.total)} en total`}
+ rings={[
+ {
+ id: "finding",
+ label: "Hallazgos",
+ percentage: Math.round((counts.finding / Math.max(counts.total, 1)) * 100),
+ color: "var(--color-brand)",
+ count: formatCount(counts.finding),
+ active: kindFilter.has("finding"),
+ onToggle: () => toggleKind("finding"),
+ },
+ {
+ id: "risk",
+ label: "Riesgos",
+ percentage: Math.round((counts.risk / Math.max(counts.total, 1)) * 100),
+ color: NEGATIVE,
+ count: formatCount(counts.risk),
+ active: kindFilter.has("risk"),
+ onToggle: () => toggleKind("risk"),
+ },
+ {
+ id: "recommendation",
+ label: "Acciones sugeridas",
+ percentage: Math.round((counts.recommendation / Math.max(counts.total, 1)) * 100),
+ color: POSITIVE,
+ count: formatCount(counts.recommendation),
+ active: kindFilter.has("recommendation"),
+ onToggle: () => toggleKind("recommendation"),
+ },
+ ]}
+ topAreasTitle="Top 3 secciones con mayor foco accionable"
+ topAreas={
+ results.sections
+ .filter(s => s.n > 0)
+ .sort((a, b) => a.favorability - b.favorability)
+ .slice(0, 3)
+ .map(s => ({
+ id: s.id,
+ label: s.title,
+ value: 100 - s.favorability,
+ displayValue: formatPercent(100 - s.favorability),
+ }))
+ }
+ />
 
  {/* pb-20: the screen's floating action rail hovers over the last ~80px. */}
  <div className="min-h-0 flex-1 pb-20 ">
@@ -274,41 +279,13 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
 
  <div className="ml-auto flex items-center justify-end gap-3">
  <InsightConfidenceFilter filter={confidence} counts={counts.byConfidence} />
-            <button
-              type="button"
+            <AiCreateChip
+              label={isAnalyzing ? "Analizando…" : "Re-analizar"}
               onClick={() => setIsAnalyzing(true)}
               disabled={isAnalyzing}
-              className="group relative flex h-9 items-center gap-2 rounded-lg bg-surface px-3.5 text-[13px] font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 overflow-hidden disabled:pointer-events-none disabled:opacity-50 border border-border/40"
-            >
-              {/* Background AI gradient on hover */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-ai-gradient -z-10" />
-
-              <MovingBorderBeam 
-                duration={4000}
-                borderWidth={1.5}
-                rx={8}
-                ry={8}
-                beamSize={120}
-                colorFrom="hsl(var(--ai-gradient-start))"
-                colorTo="hsl(var(--ai-gradient-end))"
-                className="opacity-100 group-hover:opacity-0 transition-opacity duration-300"
-              />
-
-              <RefreshCw 
-                className={cn(
-                  "relative z-10 h-3.5 w-3.5 text-[#2d5cf7] group-hover:text-white transition-colors duration-300", 
-                  isAnalyzing && "animate-spin"
-                )} 
-              />
-              <div className="relative z-10 flex items-center">
-                <span className="text-ai-gradient transition-opacity duration-300 group-hover:opacity-0">
-                  {isAnalyzing ? "Analizando…" : "Re-analizar"}
-                </span>
-                <span className="absolute inset-0 flex items-center text-white transition-opacity duration-300 opacity-0 group-hover:opacity-100 font-bold">
-                  {isAnalyzing ? "Analizando…" : "Re-analizar"}
-                </span>
-              </div>
-            </button>
+              icon={RefreshCw}
+              iconClassName={isAnalyzing ? "animate-spin" : undefined}
+            />
  <MeasurementScaleButton
  items={CONFIDENCE_LEGEND}
  title="Confiabilidad de la lectura"
@@ -324,6 +301,15 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
  <>
  <AnalysisSummary summary={analysis.summary} isAnalyzing={isAnalyzing} />
 
+ {/* One shared cascade: every card in the tab's stack — a group of
+ lecturas, a priority table, a strengths table — arrives in its own
+ turn instead of the whole stack appearing as one block. */}
+ <motion.div
+ className="flex flex-col gap-6"
+ initial="hidden"
+ animate="show"
+ variants={cascadeContainer}
+ >
  {visibleGroups.length === 0 ? (
  <EmptyState
  icon={Sparkles}
@@ -355,6 +341,7 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
  <AiVoiceSection sentiment={filteredSentiment} numbering={visibleGroups.length + 4} />
  </>
  )}
+ </motion.div>
  </>
  )}
  </div>
