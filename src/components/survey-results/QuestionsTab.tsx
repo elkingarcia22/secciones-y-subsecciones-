@@ -217,7 +217,6 @@ export function QuestionsTab({
             ))
           )}
         </div>
-      </div>
     </div>
   );
 }
