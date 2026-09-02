@@ -18,13 +18,9 @@ import type { TemplateSize, TemplateTone } from "./templateCatalog";
  *  on them. */
 type ClassTone = "positive" | "brand" | "warning";
 
-/** Tones whose tint is computed with `color-mix()` in a `style` prop instead.
- *  `ai` needs this because its look is one specific accent, not a token's
- *  opacity class. `neutral` needs it because `--color-text-secondary` is a
- *  plain hex value rather than an hsl triple with an alpha slot, so
- *  Tailwind's opacity modifier — `bg-text-secondary/10` — silently generates
- *  no rule at all; `color-mix()` reads the same variable and always
- *  resolves, in both themes. */
+/** Tones whose tint is computed with `color-mix()` in a `style` prop instead
+ *  of a Tailwind opacity class — both are one fixed accent rather than a
+ *  token that already carries an alpha-ready hsl triple. */
 type StyleTone = "ai" | "neutral";
 
 function isStyleTone(tone: TemplateTone): tone is StyleTone {
@@ -60,26 +56,33 @@ interface ToneMix {
   stage: React.CSSProperties;
 }
 
-function toneMix(cssVar: string, badgeAlpha: number, lineAlpha: number, stageAlpha: number): ToneMix {
+/** @param color Any valid CSS color expression — a `var(--x)` reference or a
+ *  literal hex — mixed with `transparent` at each alpha so the same accent
+ *  drives the badge, the thumbnail's title line and the gallery stage. */
+function toneMix(color: string, badgeAlpha: number, lineAlpha: number, stageAlpha: number): ToneMix {
   return {
     badge: {
-      color: `var(${cssVar})`,
-      backgroundColor: `color-mix(in srgb, var(${cssVar}) ${badgeAlpha}%, transparent)`,
+      color,
+      backgroundColor: `color-mix(in srgb, ${color} ${badgeAlpha}%, transparent)`,
     },
     line: {
-      backgroundColor: `color-mix(in srgb, var(${cssVar}) ${lineAlpha}%, transparent)`,
+      backgroundColor: `color-mix(in srgb, ${color} ${lineAlpha}%, transparent)`,
     },
     stage: {
-      backgroundColor: `color-mix(in srgb, var(${cssVar}) ${stageAlpha}%, transparent)`,
+      backgroundColor: `color-mix(in srgb, ${color} ${stageAlpha}%, transparent)`,
     },
   };
 }
 
+// NOM 035's shield icon is the "official / compliance" template family, so
+// it gets an indigo accent — distinct from brand blue, positive green,
+// warning orange and the AI tone's own blue. A flat gray tint (tried first)
+// read as "no tint at all" next to the saturated colors on the other tiles.
+const NEUTRAL_ACCENT = "#6366f1";
+
 const STYLE_TONE_MIX: Readonly<Record<StyleTone, ToneMix>> = {
-  ai: toneMix("--color-ai-gradient-start", 14, 70, 7),
-  // A gray tint needs more opacity than a saturated one to still read as a
-  // tint rather than nothing — bumped up from the colored tones' 7-9%.
-  neutral: toneMix("--color-text-secondary", 16, 55, 12),
+  ai: toneMix("var(--color-ai-gradient-start)", 14, 70, 7),
+  neutral: toneMix(NEUTRAL_ACCENT, 14, 65, 10),
 };
 
 type ThumbSize = "sm" | "md" | "lg";
