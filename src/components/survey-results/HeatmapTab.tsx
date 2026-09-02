@@ -1,4 +1,5 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import {
   ChevronDown,
   ChevronRight,
@@ -29,6 +30,15 @@ import { ResultsFilterChips, ResultsFilterControls } from "./ResultsFilterToolba
 import { ResultsSubTabSwitch, type ResultsSubTab } from "./ResultsSubTabSwitch";
 import type { ResultsFiltersState } from "./useResultsFilters";
 import { levelForDepth, type ResultLevel } from "./resultLevels";
+import {
+  cascadeItem,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+  CASCADE_DELAY_CHILDREN,
+  CASCADE_EASE,
+  CASCADE_ITEM_DURATION,
+  CASCADE_STAGGER,
+} from "@/lib/cascadeAnimation";
 
 interface HeatmapTabProps {
   results: SurveyResults;
@@ -393,6 +403,8 @@ function RowNode({
   highlightedRows,
   onRowHighlight,
   visibleLevels,
+  index,
+  baseDelay = 0,
 }: {
   row: HeatmapRow;
   columnOrder: readonly number[];
@@ -403,9 +415,23 @@ function RowNode({
   highlightedRows?: ReadonlySet<string>;
   onRowHighlight?: (id: string) => void;
   visibleLevels: ReadonlySet<HeatmapLevel>;
+  /** Position among the siblings an ancestor just revealed by expanding —
+   * set only on rows mounted through that toggle, so they can stagger in.
+   * The grid's root rows are mounted unconditionally and omit it, so they
+   * render without an entrance animation, same as before. */
+  index?: number;
+  /** When this row is itself cascading in, the point its own children are
+   * free to start — threaded down the same way QuestionsTab's SubsectionOutline
+   * threads `contentDelay`, so a row's nested rows follow right behind it
+   * instead of waiting for every sibling to finish first. */
+  baseDelay?: number;
 }) {
   const isExpanded = expanded.has(row.id);
   const expandable = row.kind === "section" && row.children.length > 0;
+  const revealDelay =
+    index === undefined ? undefined : baseDelay + CASCADE_DELAY_CHILDREN + index * CASCADE_STAGGER;
+  const childBaseDelay =
+    index === undefined ? 0 : cascadeItemSettleTime(baseDelay, index) + CASCADE_CONTENT_GAP;
 
   return (
     <React.Fragment>
@@ -419,9 +445,10 @@ function RowNode({
         highlightedRows={highlightedRows}
         onRowHighlight={onRowHighlight}
         levelHidden={!visibleLevels.has(levelOf(row))}
+        revealDelay={revealDelay}
       />
       {isExpanded &&
-        row.children.map((child) => (
+        row.children.map((child, childIndex) => (
           <RowNode
             key={child.id}
             row={child}
@@ -432,11 +459,19 @@ function RowNode({
             highlightedRows={highlightedRows}
             onRowHighlight={onRowHighlight}
             visibleLevels={visibleLevels}
+            index={childIndex}
+            baseDelay={childBaseDelay}
           />
         ))}
     </React.Fragment>
   );
 }
+
+/** Mirrors `TableRow`'s own base classes (`ui/table.tsx`) — needed because a
+ * freshly-revealed row renders as `motion.tr` directly rather than through
+ * `TableRow`, which doesn't forward a ref for framer-motion to drive. */
+const TABLE_ROW_BASE_CLASSES =
+  "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted";
 
 function GridRow({
   row,
@@ -449,6 +484,7 @@ function GridRow({
   highlightedRows = new Set(),
   onRowHighlight,
   levelHidden = false,
+  revealDelay,
 }: {
   row: HeatmapRow;
   columnOrder: readonly number[];
@@ -460,6 +496,10 @@ function GridRow({
   highlightedRows?: ReadonlySet<string>;
   onRowHighlight?: (id: string) => void;
   levelHidden?: boolean;
+  /** Cascade delay before this row fades/slides into place. `undefined` for
+   * rows mounted unconditionally (the grid's roots), which render as a
+   * plain, unanimated `TableRow` exactly as before. */
+  revealDelay?: number;
 }) {
   const isQuestion = row.kind === "question";
   // A row with nothing on the 1–5 scale: an unscored question or a section
@@ -480,8 +520,8 @@ function GridRow({
   const isHighlighted = highlightedRows.has(row.id);
   const rowDimmed = highlightedRows.size > 0 && !isHighlighted;
 
-  return (
-    <TableRow className="group border-transparent transition-colors hover:bg-muted/30">
+  const cells = (
+    <>
       <th
         scope="row"
         className={cn(
@@ -740,7 +780,28 @@ function GridRow({
           </TableCell>
         );
       })}
-    </TableRow>
+    </>
+  );
+
+  if (revealDelay === undefined) {
+    return (
+      <TableRow className="group border-transparent transition-colors hover:bg-muted/30">
+        {cells}
+      </TableRow>
+    );
+  }
+
+  return (
+    <motion.tr
+      data-slot="table-row"
+      className={cn(TABLE_ROW_BASE_CLASSES, "group border-transparent transition-colors hover:bg-muted/30")}
+      variants={cascadeItem}
+      initial="hidden"
+      animate="show"
+      transition={{ duration: CASCADE_ITEM_DURATION, ease: CASCADE_EASE, delay: revealDelay }}
+    >
+      {cells}
+    </motion.tr>
   );
 }
 

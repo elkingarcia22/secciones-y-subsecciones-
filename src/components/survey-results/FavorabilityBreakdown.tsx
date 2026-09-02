@@ -92,7 +92,7 @@ export function FavorabilityBreakdownDots({
               className={cn(
                 "flex shrink-0 cursor-default items-center py-[3px] text-[12px] font-medium tabular-nums text-text-primary transition-opacity",
                 compact ? "gap-1.5" : "w-[84px] justify-end gap-2",
-                activeGroups && !activeGroups.has(group.key) && "opacity-35 grayscale"
+                activeGroups && activeGroups.size > 0 && !activeGroups.has(group.key) && "opacity-35 grayscale"
               )}
             >
               <div

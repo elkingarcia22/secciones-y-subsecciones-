@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { MagicCard } from "@/components/ui/magic-card";
 import { 
  Search,
  RotateCw,
@@ -94,46 +95,41 @@ const TypeCard: React.FC<{
  selected: boolean, 
  onSelect: (val: string) => void 
 }> = ({ title, description, icon: Icon, selected, onSelect }) => (
- <div 
- onClick={() => onSelect(title)}
- className={cn(
- "hover-icon-pop group flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-400 cursor-pointer mb-2 relative overflow-hidden",
- selected 
- ? "border-primary bg-surface ring-2 ring-primary/20" 
- : "border-border/60 bg-surface hover:border-primary/30"
- )}
+ <MagicCard 
+  isSelected={selected}
+  onClick={() => onSelect(title)}
+  className="w-full p-2.5 mb-2 hover-icon-pop"
+  contentClassName="flex-row items-center gap-3 text-left"
  >
- {selected && (
- <div className="absolute -right-12 -top-12 w-32 h-32 bg-primary/5 rounded-full blur-[40px] pointer-events-none" />
- )}
-
- <div className={cn(
- "h-9 w-9 rounded-lg flex items-center justify-center transition-all duration-500 shrink-0 relative z-10",
- selected ? "bg-primary text-text-inverse shadow-md shadow-primary/20" : "bg-surface-muted text-text-muted"
- )}>
- <Icon className="h-4 w-4" strokeWidth={2.5} />
- </div>
- 
- <div className="flex-1 min-w-0 relative z-10">
- <h4 className={cn(
- "text-[13px] font-bold transition-colors mb-0.5 tracking-tight",
- selected ? "text-primary" : "text-text-primary"
- )}>{title}</h4>
- <p className="text-[10px] text-text-muted font-medium leading-tight line-clamp-2">
- {description}
- </p>
- </div>
-
-  <div className={cn(
-    "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all duration-500 shrink-0 relative z-10",
-    selected ? "border-primary shadow-sm shadow-primary/10" : "border-border-strong/40 bg-surface-muted"
-  )}>
+  <div className="flex w-full items-center gap-3">
     <div className={cn(
-      "h-2.5 w-2.5 rounded-full bg-primary transition-all duration-500 transform",
-      selected ? "scale-100 opacity-100" : "scale-0 opacity-0"
-    )} />
+    "h-9 w-9 rounded-lg flex items-center justify-center transition-all duration-500 shrink-0 relative z-10",
+    selected ? "bg-primary text-text-inverse shadow-md shadow-primary/20" : "bg-surface-muted text-text-muted"
+    )}>
+      <Icon className="h-4 w-4" strokeWidth={2.5} />
+    </div>
+    
+    <div className="flex-1 min-w-0 relative z-10">
+      <h4 className={cn(
+      "text-[13px] font-bold transition-colors mb-0.5 tracking-tight",
+      selected ? "text-primary" : "text-text-primary"
+      )}>{title}</h4>
+      <p className="text-[10px] text-text-muted font-medium leading-tight line-clamp-2">
+      {description}
+      </p>
+    </div>
+
+    <div className={cn(
+      "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all duration-500 shrink-0 relative z-10",
+      selected ? "border-primary shadow-sm shadow-primary/10" : "border-border-strong/40 bg-surface-muted"
+    )}>
+      <div className={cn(
+        "h-2.5 w-2.5 rounded-full bg-primary transition-all duration-500 transform",
+        selected ? "scale-100 opacity-100" : "scale-0 opacity-0"
+      )} />
+    </div>
   </div>
- </div>
+ </MagicCard>
 );
 
 const SurveySelectionItem: React.FC<{
@@ -142,80 +138,75 @@ const SurveySelectionItem: React.FC<{
  onSelect: (id: string) => void;
  isComparative?: boolean;
 }> = ({ survey, selected, onSelect, isComparative }) => (
- <div 
- onClick={() => onSelect(survey.id)}
- className={cn(
- "hover-icon-pop group flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-400 cursor-pointer bg-surface mb-2 relative overflow-hidden",
- selected 
- ? "border-primary ring-2 ring-primary/20" 
- : "border-border/60 hover:border-primary/30"
- )}
+ <MagicCard 
+  isSelected={selected}
+  onClick={() => onSelect(survey.id)}
+  className="w-full p-2.5 mb-2 hover-icon-pop"
+  contentClassName="flex-row items-center gap-3 text-left"
  >
- {selected && (
- <div className="absolute -left-12 -bottom-12 w-32 h-32 bg-primary/5 rounded-full blur-[40px] pointer-events-none" />
- )}
-
- <div className={cn(
- "h-9 w-9 rounded-lg flex items-center justify-center transition-all duration-500 shrink-0 relative z-10",
- selected ? "bg-primary text-text-inverse shadow-md shadow-primary/20" : "bg-surface-muted text-text-muted"
- )}>
- <Calendar className="h-4 w-4" strokeWidth={2} />
- </div>
- 
- <div className="flex-1 min-w-0 relative z-10">
- <div className="flex items-center gap-2 mb-1">
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <h4 className={cn(
-        "text-[13px] font-bold transition-colors tracking-tight line-clamp-1 cursor-default",
-        selected ? "text-primary" : "text-text-primary"
-      )}>{survey.name}</h4>
-    </TooltipTrigger>
-    <TooltipContent side="top" className="tooltip-premium">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-[10px] opacity-60 font-medium">Nombre de la encuesta</span>
-        <span>{survey.name}</span>
+  <div className="flex w-full items-center gap-3">
+    <div className={cn(
+    "h-9 w-9 rounded-lg flex items-center justify-center transition-all duration-500 shrink-0 relative z-10",
+    selected ? "bg-primary text-text-inverse shadow-md shadow-primary/20" : "bg-surface-muted text-text-muted"
+    )}>
+      <Calendar className="h-4 w-4" strokeWidth={2} />
+    </div>
+    
+    <div className="flex-1 min-w-0 relative z-10">
+      <div className="flex items-center gap-2 mb-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <h4 className={cn(
+              "text-[13px] font-bold transition-colors tracking-tight line-clamp-1 cursor-default",
+              selected ? "text-primary" : "text-text-primary"
+            )}>{survey.name}</h4>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="tooltip-premium">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10px] opacity-60 font-medium">Nombre de la encuesta</span>
+              <span>{survey.name}</span>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+        {survey.status === 'Finalizado' && (
+          <Badge className="bg-status-positive-bg text-status-positive border-none text-[10px] font-bold px-2 py-0 rounded-full shrink-0 pointer-events-none">
+          Finalizado
+          </Badge>
+        )}
       </div>
-    </TooltipContent>
-  </Tooltip>
- {survey.status === 'Finalizado' && (
- <Badge className="bg-status-positive-bg text-status-positive border-none text-[10px] font-bold px-2 py-0 rounded-full shrink-0 pointer-events-none">
- Finalizado
- </Badge>
- )}
- </div>
- <div className="flex items-center gap-3 text-[10px] text-text-muted font-medium tracking-tight">
- <span className="flex items-center gap-1.5">
- <RotateCw className="h-2 w-2" />
- {survey.startDate}
- </span>
- <span className="flex items-center gap-1.5">
- <LayoutGrid className="h-2 w-2" />
- {survey.participants} participantes
- </span>
- </div>
- </div>
+      <div className="flex items-center gap-3 text-[10px] text-text-muted font-medium tracking-tight">
+        <span className="flex items-center gap-1.5">
+          <RotateCw className="h-2 w-2" />
+          {survey.startDate}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <LayoutGrid className="h-2 w-2" />
+          {survey.participants} participantes
+        </span>
+      </div>
+    </div>
 
- {/* Selection Indicator */}
- <div className="relative z-10 shrink-0">
- {isComparative ? (
- <Checkbox 
- checked={selected} 
- onCheckedChange={() => onSelect(survey.id)}
- className="h-5 w-5 rounded border-2 border-border bg-muted data-[state=checked]:bg-primary data-[state=checked]:border-primary"
- />
- ) : (
- <div className={cn(
- "h-4 w-4 border-2 rounded-full flex items-center justify-center transition-all duration-400 shrink-0",
- selected ? "bg-primary border-primary shadow-sm shadow-primary/10" : "border-border-strong/40 bg-surface-muted"
- )}>
- {selected && (
- <div className="h-1.5 w-1.5 rounded-full bg-white shadow-card" />
- )}
- </div>
- )}
- </div>
- </div>
+    {/* Selection Indicator */}
+    <div className="relative z-10 shrink-0">
+      {isComparative ? (
+        <Checkbox 
+          checked={selected} 
+          onCheckedChange={() => onSelect(survey.id)}
+          className="h-5 w-5 rounded border-2 border-border bg-muted data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        />
+      ) : (
+        <div className={cn(
+          "h-4 w-4 border-2 rounded-full flex items-center justify-center transition-all duration-400 shrink-0",
+          selected ? "bg-primary border-primary shadow-sm shadow-primary/10" : "border-border-strong/40 bg-surface-muted"
+        )}>
+          {selected && (
+            <div className="h-1.5 w-1.5 rounded-full bg-white shadow-card" />
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+ </MagicCard>
 );
 
 
@@ -245,7 +236,7 @@ interface EncuestasDashboardProps {
  onChangeEndDate?: (id: string, endDate: Date) => void;
  /** Moves a running survey's start date. */
  onChangeStartDate?: (id: string, startDate: Date) => void;
- /** Column filters, owned above so the home metric cards can set them. */
+ /** Column filters, owned above so the home metric chips can set them. */
  listFilters: SurveyListFilters;
  onListFiltersChange: (filters: SurveyListFilters) => void;
 }
@@ -270,7 +261,7 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
  onChangeEndDate,
  onChangeStartDate,
  listFilters,
- onListFiltersChange
+ onListFiltersChange,
 }) => {
  const [isDrawerOpen, setIsDrawerOpen] = React.useState(initialIsDrawerOpen);
  const [isTemplateDrawerOpen, setIsTemplateDrawerOpen] = React.useState(false);
@@ -381,8 +372,13 @@ export const EncuestasDashboard: React.FC<EncuestasDashboardProps> = ({
       case "delete":
         setPendingDeleteIds([id]);
         return;
-      case "share":
+      case "shareLink":
         toast.success(`Enlace de ${nameOf(id)} copiado al portapapeles`);
+        return;
+      case "downloadQr":
+        toast.success(`Código QR de ${nameOf(id)} descargado`);
+        return;
+      case "share":
         return;
     }
   };

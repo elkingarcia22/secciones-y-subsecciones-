@@ -2,36 +2,33 @@ import * as React from "react"
 import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 
 /**
- * Falls back to the tallest bar in the app (the survey list's, which also has
- * to clear the legal footer beneath it) when nobody names a shorter one.
+ * Clears the app header (h-14, plus the shell's own p-2 outer padding) with
+ * room to spare, so the stack never starts flush against it.
  */
-const DEFAULT_BOTTOM_OFFSET_PX = 144
+const DEFAULT_TOP_OFFSET_PX = 76
 
 /**
  * UbitsToaster
  *
- * Wrapper for Sonner notifications following UBITS B2B standards.
- * Centered above the screen's bottom action bar rather than tucked in a
- * corner, so feedback about what just happened sits where they're already
- * looking instead of competing with — or hiding behind — the action bar.
- * Detects the system theme (light/dark) from documentElement classes.
+ * Wrapper for Sonner notifications following UBITS B2B standards. Stacked in
+ * the top-right corner, clear of the header, so feedback about what just
+ * happened doesn't sit on top of — or get mistaken for — the screen's own
+ * bottom action bar. Detects the system theme (light/dark) from
+ * documentElement classes.
  *
  * Mounted once, at the app level — a second instance elsewhere would render
- * every toast twice, since both would read the same toast queue. Screens
- * don't share a bottom bar height (the survey list also clears a legal
- * footer the other screens don't have), so the one mount takes an offset
- * from whichever screen is current rather than guessing a single number.
+ * every toast twice, since both would read the same toast queue.
  */
 export function UbitsToaster({
   className,
   style,
-  bottomOffset = DEFAULT_BOTTOM_OFFSET_PX,
+  topOffset = DEFAULT_TOP_OFFSET_PX,
 }: {
   className?: string
   style?: React.CSSProperties
-  /** Distance in px from the viewport bottom to the toast stack — enough to
-   * clear the current screen's own bottom bar. */
-  bottomOffset?: number
+  /** Distance in px from the viewport top to the toast stack — enough to
+   * clear the app header. */
+  topOffset?: number
 }) {
   const [theme, setTheme] = React.useState<"light" | "dark">("light")
 
@@ -61,8 +58,8 @@ export function UbitsToaster({
   return (
     <SonnerToaster
       theme={theme}
-      position="bottom-center"
-      offset={{ bottom: bottomOffset }}
+      position="top-right"
+      offset={{ top: topOffset }}
       closeButton
       richColors={false} // Keeping it sober as per UBITS rules
       expand={false}

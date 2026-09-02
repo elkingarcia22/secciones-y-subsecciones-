@@ -1,5 +1,12 @@
+import { motion } from "framer-motion";
 import { Quote, ShieldCheck, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  cascadeContainer,
+  cascadeItem,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+} from "@/lib/cascadeAnimation";
 import type { OpenComment, Sentiment } from "@/mocks/questionResponses";
 import {
   AI_DETAIL_PANEL,
@@ -48,6 +55,10 @@ export function AiVoiceSection({
     count: sentiment.counts[id],
     title: `${sentiment.counts[id]} ${SENTIMENT_STYLES[id].label.toLowerCase()}`,
   }));
+
+  // This card's own rows wait for the card itself to arrive in the tab's
+  // shared cascade, not for every other card in the stack to finish.
+  const revealDelay = cascadeItemSettleTime(0, numbering - 1) + CASCADE_CONTENT_GAP;
 
   return (
     <AiSectionCard
@@ -118,9 +129,15 @@ export function AiVoiceSection({
                     <th className="w-[100px] py-2.5 pr-4 text-right">Negativo</th>
                   </tr>
                 </thead>
-                <tbody className={AI_TBODY}>
+                <motion.tbody
+                  className={AI_TBODY}
+                  initial="hidden"
+                  animate="show"
+                  custom={revealDelay}
+                  variants={cascadeContainer}
+                >
                   {sentiment.topics.slice(0, TOPICS).map((topic, index) => (
-                    <tr key={topic.topic} className={AI_ROW_STATIC}>
+                    <motion.tr key={topic.topic} variants={cascadeItem} className={AI_ROW_STATIC}>
                       <td className={AI_RANK_CELL}>{index + 1}</td>
                       <td className={AI_TITLE_CELL}>
                         {topic.topic}
@@ -150,9 +167,9 @@ export function AiVoiceSection({
                       <td className="py-3 pr-4 text-right">
                         <SentimentShareChip value={share(topic.negative, topic.total)} />
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
-                </tbody>
+                </motion.tbody>
               </table>
             </div>
           )}

@@ -383,3 +383,35 @@ export const formatDelta = (value: number): string => {
 /** Which way a delta should read on a `DeltaPill`. */
 export const deltaTone = (value: number): "positive" | "negative" | "neutral" =>
   value > 0.5 ? "positive" : value < -0.5 ? "negative" : "neutral";
+
+// --- Card tones ---------------------------------------------------------------
+
+/** The tone a metric card takes for each reading, shared by the home pulse
+ *  and the results tabs so the same number is never green here and orange there. */
+export type MetricTone = "positive" | "warning" | "negative";
+
+/** Participation reads on the same floor/target the "Avance" column buckets use. */
+export const toneForParticipation = (rate: number): MetricTone =>
+  rate >= 80 ? "positive" : rate >= 50 ? "warning" : "negative";
+
+const VERDICT_TONE: Readonly<Record<FavorabilityVerdict, MetricTone>> = {
+  healthy: "positive",
+  watch: "warning",
+  critical: "negative",
+};
+
+export const toneForFavorability = (value: number): MetricTone =>
+  VERDICT_TONE[verdictForFavorability(value)];
+
+const NPS_BAND_TONE: Readonly<Record<string, MetricTone>> = {
+  promotores: "positive",
+  neutros: "warning",
+  detractores: "negative",
+};
+
+export const toneForNps = (score: number): MetricTone =>
+  NPS_BAND_TONE[npsBandForScore(score).id] ?? "warning";
+
+/** `+12` / `-4` / `0` — an eNPS score reads with its sign. */
+export const formatNpsScore = (value: number): string =>
+  `${value > 0 ? "+" : ""}${Math.round(value)}`;

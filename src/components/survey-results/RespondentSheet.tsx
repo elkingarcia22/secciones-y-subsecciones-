@@ -1,4 +1,5 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import { CalendarDays, CheckCircle2, Clock, Gauge, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type {
@@ -15,6 +16,7 @@ import { ResultsSectionTree } from "./ResultsSectionTree";
 import { countSectionQuestions } from "./sectionTotals";
 import { bandForScore, formatScore, tierForScore } from "./favorabilityScale";
 import { cn } from "@/lib/utils";
+import { cascadeContainer, cascadeItem } from "@/lib/cascadeAnimation";
 
 const formatCount = (value: number) => new Intl.NumberFormat("es-CO").format(value);
 
@@ -62,8 +64,14 @@ export function RespondentSheet({
   );
 
   const renderQuestions = React.useCallback(
-    (section: SectionResult) => (
-      <ul className="flex flex-col divide-y divide-border/40">
+    (section: SectionResult, revealDelay: number) => (
+      <motion.ul
+        className="flex flex-col divide-y divide-border/40"
+        initial="hidden"
+        animate="show"
+        custom={revealDelay}
+        variants={cascadeContainer}
+      >
         {section.questions.map((question, index) => {
           const answer = answers.get(question.id);
           let isDimmed = false;
@@ -82,8 +90,9 @@ export function RespondentSheet({
           }
 
           return (
-            <li
+            <motion.li
               key={question.id}
+              variants={cascadeItem}
               className="grid grid-cols-1 gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-6 transition-all duration-300"
               style={{
                 opacity: isDimmed ? 0.3 : 1,
@@ -114,10 +123,10 @@ export function RespondentSheet({
                   sentiment={sentimentByQuestion.get(question.id)}
                 />
               </div>
-            </li>
+            </motion.li>
           );
         })}
-      </ul>
+      </motion.ul>
     ),
     [answers, breakdowns, sentimentByQuestion, highlightBands, hasHiddenBands]
   );

@@ -310,7 +310,7 @@ export const DualDateRangePicker = React.forwardRef<
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] p-0 bg-transparent border-none shadow-none z-50"
+          className="w-[var(--radix-popover-trigger-width)] p-0 bg-transparent border-none shadow-none z-50 data-open:animate-in data-open:fade-in data-open:slide-in-from-top-2 data-open:zoom-in-100 data-open:duration-200 data-open:[animation-timing-function:ease-out]"
           align="start"
           sideOffset={8}
           onPointerDownOutside={() => {

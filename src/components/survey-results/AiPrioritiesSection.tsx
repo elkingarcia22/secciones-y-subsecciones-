@@ -1,6 +1,13 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import { ChevronRight, MessageSquareQuote, Quote } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  cascadeContainer,
+  cascadeItem,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+} from "@/lib/cascadeAnimation";
 import {
   AI_RANK_CELL,
   AI_ROW,
@@ -62,6 +69,10 @@ export function AiPrioritiesSection({
     }));
   }, [priorities]);
 
+  // This card's own rows wait for the card itself to arrive in the tab's
+  // shared cascade, not for every other card in the stack to finish.
+  const revealDelay = cascadeItemSettleTime(0, numbering - 1) + CASCADE_CONTENT_GAP;
+
   return (
     <AiSectionCard
       numbering={numbering}
@@ -93,7 +104,13 @@ export function AiPrioritiesSection({
               <th className="w-10 py-2.5 pr-4" aria-label="Detalle" />
             </tr>
           </thead>
-          <tbody className={AI_TBODY}>
+          <motion.tbody
+            className={AI_TBODY}
+            initial="hidden"
+            animate="show"
+            custom={revealDelay}
+            variants={cascadeContainer}
+          >
             {priorities.map((priority, index) => (
               <PriorityRows
                 key={priority.finding.id}
@@ -102,7 +119,7 @@ export function AiPrioritiesSection({
                 onNavigate={onNavigate}
               />
             ))}
-          </tbody>
+          </motion.tbody>
         </table>
       )}
     </AiSectionCard>
@@ -127,7 +144,7 @@ function PriorityRows({
 
   return (
     <>
-      <tr
+      <motion.tr
         role="button"
         tabIndex={0}
         aria-expanded={open}
@@ -138,6 +155,7 @@ function PriorityRows({
             toggle();
           }
         }}
+        variants={cascadeItem}
         className={cn(AI_ROW, open && "bg-primary/[0.03]")}
       >
         <td className={AI_RANK_CELL}>{index}</td>
@@ -173,21 +191,29 @@ function PriorityRows({
             strokeWidth={2}
           />
         </td>
-      </tr>
+      </motion.tr>
 
       {open && (
         <tr className="bg-muted/30">
           <td colSpan={6} className="px-4 py-4">
-            <div className="flex flex-col gap-3 duration-200 animate-in fade-in slide-in-from-top-1">
-              <p className="max-w-4xl text-[13px] leading-relaxed text-text-primary">{why}</p>
+            <motion.div
+              className="flex flex-col gap-3"
+              initial="hidden"
+              animate="show"
+              variants={cascadeContainer}
+            >
+              <motion.p variants={cascadeItem} className="max-w-4xl text-[13px] leading-relaxed text-text-primary">
+                {why}
+              </motion.p>
 
               {/* The factors behind the ranking, quoted the way the AI's own
                   readings quote the figure they rest on. In Resumen these hid
                   behind a "¿por qué?" tooltip; the analysis tab shows a claim's
                   evidence in the open, so they do too. */}
               {priority.evidence.map((item) => (
-                <p
+                <motion.p
                   key={item.label}
+                  variants={cascadeItem}
                   className="flex items-start gap-2 text-[11px] leading-relaxed text-text-secondary"
                 >
                   <Quote className="mt-px h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={2} />
@@ -197,10 +223,13 @@ function PriorityRows({
                     </span>{" "}
                     <span className="font-medium tabular-nums">{item.detail}</span>
                   </span>
-                </p>
+                </motion.p>
               ))}
 
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-0.5">
+              <motion.div
+                variants={cascadeItem}
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-0.5"
+              >
                 <span className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-text-secondary">
                   Confianza {confidence}
                 </span>
@@ -227,8 +256,8 @@ function PriorityRows({
                   Ver en Favorabilidad
                   <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
                 </button>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </td>
         </tr>
       )}

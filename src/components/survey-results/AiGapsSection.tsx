@@ -1,6 +1,13 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import { ChevronRight, Split, TrendingDown, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  cascadeContainer,
+  cascadeItem,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+} from "@/lib/cascadeAnimation";
 import {
   type SegmentDefinition,
   type SegmentFilter,
@@ -71,6 +78,10 @@ export function AiGapsSection({
     [segments, results, noFilters, allowedConfidence]
   );
 
+  // This card's own rows wait for the card itself to arrive in the tab's
+  // shared cascade, not for every other card in the stack to finish.
+  const revealDelay = cascadeItemSettleTime(0, numbering - 1) + CASCADE_CONTENT_GAP;
+
   return (
     <AiSectionCard
       numbering={numbering}
@@ -95,7 +106,13 @@ export function AiGapsSection({
               <th className="w-10 py-2.5 pr-4" aria-label="Detalle" />
             </tr>
           </thead>
-          <tbody className={AI_TBODY}>
+          <motion.tbody
+            className={AI_TBODY}
+            initial="hidden"
+            animate="show"
+            custom={revealDelay}
+            variants={cascadeContainer}
+          >
             {analyses.map((analysis, index) => (
               <GapRows
                 key={analysis.segment.key}
@@ -104,7 +121,7 @@ export function AiGapsSection({
                 threshold={results.threshold}
               />
             ))}
-          </tbody>
+          </motion.tbody>
         </table>
       )}
     </AiSectionCard>
@@ -128,7 +145,7 @@ function GapRows({
 
   return (
     <>
-      <tr
+      <motion.tr
         role="button"
         tabIndex={0}
         aria-expanded={open}
@@ -139,6 +156,7 @@ function GapRows({
             toggle();
           }
         }}
+        variants={cascadeItem}
         className={cn(AI_ROW, open && "bg-primary/[0.03]")}
       >
         <td className={AI_RANK_CELL}>{index}</td>
@@ -184,15 +202,24 @@ function GapRows({
             strokeWidth={2}
           />
         </td>
-      </tr>
+      </motion.tr>
 
       {open && (
         <tr className="bg-muted/30">
           <td colSpan={6} className="px-4 py-4">
-            <div className="flex flex-col gap-5 duration-200 animate-in fade-in slide-in-from-top-1">
-              {widest && <WidestGapBlock widest={widest} />}
+            <motion.div
+              className="flex flex-col gap-5"
+              initial="hidden"
+              animate="show"
+              variants={cascadeContainer}
+            >
+              {widest && (
+                <motion.div variants={cascadeItem}>
+                  <WidestGapBlock widest={widest} />
+                </motion.div>
+              )}
 
-              <div className="flex flex-col gap-2.5">
+              <motion.div variants={cascadeItem} className="flex flex-col gap-2.5">
                 <AiSubHeading
                   icon={TrendingDown}
                   trailing={
@@ -213,10 +240,11 @@ function GapRows({
                 ) : (
                   <OutlierTable outliers={outliers} />
                 )}
-              </div>
+              </motion.div>
 
               {masked.length > 0 && (
-                <div
+                <motion.div
+                  variants={cascadeItem}
                   className={cn(
                     AI_DETAIL_PANEL,
                     "flex items-start gap-3 text-[12px] leading-relaxed text-muted-foreground"
@@ -241,9 +269,9 @@ function GapRows({
                         : "Se omiten porque todavía no tienen respuestas."}
                     </span>
                   </div>
-                </div>
+                </motion.div>
               )}
-            </div>
+            </motion.div>
           </td>
         </tr>
       )}
@@ -268,9 +296,9 @@ function OutlierTable({
           <th className="w-[100px] py-2.5 pr-4 text-right">Promedio</th>
         </tr>
       </thead>
-      <tbody className={AI_TBODY}>
+      <motion.tbody className={AI_TBODY} initial="hidden" animate="show" variants={cascadeContainer}>
         {outliers.map(({ row, gap }, index) => (
-          <tr key={row.id} className={AI_ROW_STATIC}>
+          <motion.tr key={row.id} variants={cascadeItem} className={AI_ROW_STATIC}>
             <td className={AI_RANK_CELL}>{index + 1}</td>
             <td className={AI_TITLE_CELL}>{row.label}</td>
             <td className="hidden py-3 text-right text-[12px] tabular-nums text-text-secondary sm:table-cell">
@@ -282,9 +310,9 @@ function OutlierTable({
             <td className="py-3 pr-4 text-right">
               <ScoreChip score={row.score} />
             </td>
-          </tr>
+          </motion.tr>
         ))}
-      </tbody>
+      </motion.tbody>
     </table>
   );
 }

@@ -1,6 +1,9 @@
 import * as React from "react";
-import { Users, PieChart, MessageSquare, ListChecks, Target, Sparkles } from "lucide-react";
-import type { SurveyDraft } from "@/components/survey-builder";
+import { Users, PieChart, MessageSquare, ListChecks, Target, Sparkles, Tag, ShieldCheck, Lock, CalendarRange, Info } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { type SurveyDraft, SURVEY_KIND_LABELS } from "@/components/survey-builder";
 import { UbitsTabs, type TabItem } from "@/components/navigation";
 import {
   AiAnalysisTab,
@@ -16,6 +19,7 @@ import {
 import { EmptyState } from "@/components/feedback";
 import { buildSurveyResults, participationBySegment } from "@/mocks/surveyResults";
 import type { SurveyListItem } from "@/mocks/types";
+import { SurveyPreviewDrawer, formatPreviewDate } from "@/components/survey-preview";
 
 interface SurveyResultsProps {
   draft: SurveyDraft;
@@ -85,17 +89,96 @@ export function SurveyResults({ draft, item, history = [] }: SurveyResultsProps)
   const downloads = useDownloadCenter({ draft, results });
   const [downloadsOpen, setDownloadsOpen] = React.useState(false);
   const [widgetDismissed, setWidgetDismissed] = React.useState(false);
+  const [previewOpen, setPreviewOpen] = React.useState(false);
+  const [infoExpanded, setInfoExpanded] = React.useState(false);
 
   const openDownloads = React.useCallback(() => {
     setDownloadsOpen(true);
     setWidgetDismissed(false);
   }, []);
 
+  const start = formatPreviewDate(draft.startDate);
+  const end = formatPreviewDate(draft.endDate);
+  const isAnonymous = draft.visibility === "anonymous";
+
 return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-background">
       {/* The measurement's name, status and way back all live in the app shell's
           header now, so this screen starts straight at its tabs. */}
-      <div className="flex shrink-0 flex-col bg-background px-1 pt-4">
+      <div className="flex shrink-0 flex-col bg-background px-1 pt-6 pb-6 gap-4 border-b border-transparent">
+        <div className="flex flex-wrap items-center gap-4">
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">
+            Resultados de la encuesta
+          </h1>
+
+          <div
+            className="flex items-center gap-3"
+            onMouseEnter={() => setInfoExpanded(true)}
+            onMouseLeave={() => setInfoExpanded(false)}
+          >
+            <button
+              type="button"
+              aria-label="Información de la encuesta"
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-surface text-text-muted shadow-sm transition-colors hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                infoExpanded && "bg-surface-muted text-text-primary border-border"
+              )}
+            >
+              <Info className="h-4 w-4" strokeWidth={2} />
+            </button>
+
+            <AnimatePresence>
+              {infoExpanded && (
+                <motion.div
+                  initial="hidden"
+                  animate="show"
+                  exit="hidden"
+                  variants={{
+                    hidden: { opacity: 0, width: 0, transition: { staggerChildren: 0.05, staggerDirection: -1, when: "afterChildren" } },
+                    show: { opacity: 1, width: "auto", transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
+                  }}
+                  className="flex items-center gap-2.5 overflow-hidden whitespace-nowrap"
+                >
+                  {draft.kind && (
+                    <motion.div variants={{ hidden: { opacity: 0, y: 15, scale: 0.8, filter: "blur(2px)" }, show: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } }} transition={{ type: "spring", bounce: 0.5 }} className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-surface px-2.5 py-1 text-xs font-semibold text-text-secondary shadow-sm">
+                      <Tag className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
+                      <span>{SURVEY_KIND_LABELS[draft.kind]}</span>
+                    </motion.div>
+                  )}
+                  <motion.div variants={{ hidden: { opacity: 0, y: 15, scale: 0.8, filter: "blur(2px)" }, show: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } }} transition={{ type: "spring", bounce: 0.5 }} className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-surface px-2.5 py-1 text-xs font-semibold text-text-secondary shadow-sm">
+                    {isAnonymous ? (
+                      <ShieldCheck className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
+                    ) : (
+                      <Users className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
+                    )}
+                    <span>{isAnonymous ? "Anónima" : "Pública"}</span>
+                  </motion.div>
+                  {isAnonymous && (
+                    <motion.div variants={{ hidden: { opacity: 0, y: 15, scale: 0.8, filter: "blur(2px)" }, show: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } }} transition={{ type: "spring", bounce: 0.5 }} className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-surface px-2.5 py-1 text-xs font-semibold text-text-secondary shadow-sm">
+                      <Lock className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
+                      <span>
+                        Mín. <span className="font-bold text-text-primary">{results.threshold}</span> respuestas
+                      </span>
+                    </motion.div>
+                  )}
+                  <motion.div variants={{ hidden: { opacity: 0, y: 15, scale: 0.8, filter: "blur(2px)" }, show: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } }} transition={{ type: "spring", bounce: 0.5 }} className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-surface px-2.5 py-1 text-xs font-semibold text-text-secondary shadow-sm">
+                    <Users className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
+                    <span>
+                      <span className="font-bold text-text-primary">{results.participation.invited.toLocaleString("es-CO")}</span> invitados
+                    </span>
+                  </motion.div>
+                  <motion.div variants={{ hidden: { opacity: 0, y: 15, scale: 0.8, filter: "blur(2px)" }, show: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } }} transition={{ type: "spring", bounce: 0.5 }} className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-surface px-2.5 py-1 text-xs font-semibold text-text-secondary shadow-sm">
+                    <CalendarRange className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
+                    <span>{start ?? "—"} al {end ?? "—"}</span>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex shrink-0 px-1 pb-4">
         <UbitsTabs
           tabs={[...TABS]}
           activeTabId={activeTab}
@@ -122,50 +205,55 @@ return (
           back-to-back with no overlap and no uncovered sliver between them.
         */}
         <div aria-hidden className="sticky top-0 z-40 h-4 bg-background" />
-        {activeTab === "participation" &&
-          (segment ? (
-            <ParticipationTab
-              results={results}
-              segment={segment}
-              onSegmentChange={setSegmentKey}
-              selectedIds={selectedGroupIds}
-              onSelectionChange={setSelectedGroupIds}
-            />
-          ) : (
-            <NoSegments />
-          ))}
+        {/* Keyed on the active tab so switching tabs remounts this wrapper and
+            replays the entrance cascade — same language as the survey preview
+            and the builder steps. `contents` keeps it a layout passthrough. */}
+        <div key={activeTab} className="contents cascade-enter">
+          {activeTab === "participation" &&
+            (segment ? (
+              <ParticipationTab
+                results={results}
+                segment={segment}
+                onSegmentChange={setSegmentKey}
+                selectedIds={selectedGroupIds}
+                onSelectionChange={setSelectedGroupIds}
+              />
+            ) : (
+              <NoSegments />
+            ))}
 
-        {activeTab === "favorability" &&
-          (segment ? (
-            <FavorabilityTab
-              results={results}
-              segment={segment}
-              onSegmentChange={setSegmentKey}
-            />
-          ) : (
-            <NoSegments />
-          ))}
+          {activeTab === "favorability" &&
+            (segment ? (
+              <FavorabilityTab
+                results={results}
+                segment={segment}
+                onSegmentChange={setSegmentKey}
+              />
+            ) : (
+              <NoSegments />
+            ))}
 
-        {activeTab === "questions" &&
-          (segment ? (
-            <QuestionDetailTab
+          {activeTab === "questions" &&
+            (segment ? (
+              <QuestionDetailTab
+                draft={draft}
+                results={results}
+                segment={segment}
+                onSegmentChange={setSegmentKey}
+              />
+            ) : (
+              <NoSegments />
+            ))}
+
+          {activeTab === "nps" && <NpsTab draft={draft} results={results} />}
+          {activeTab === "ai" && (
+            <AiAnalysisTab
               draft={draft}
               results={results}
-              segment={segment}
-              onSegmentChange={setSegmentKey}
+              onNavigate={(target) => setActiveTab(target as TabId)}
             />
-          ) : (
-            <NoSegments />
-          ))}
-
-        {activeTab === "nps" && <NpsTab draft={draft} results={results} />}
-        {activeTab === "ai" && (
-          <AiAnalysisTab
-            draft={draft}
-            results={results}
-            onNavigate={(target) => setActiveTab(target as TabId)}
-          />
-        )}
+          )}
+        </div>
       </main>
 
       <ResultsActionRail
@@ -177,6 +265,13 @@ return (
         onClearSelection={() => setSelectedGroupIds(new Set())}
         onDownload={openDownloads}
         onSendReminders={() => {}}
+        onPreview={() => setPreviewOpen(true)}
+      />
+
+      <SurveyPreviewDrawer
+        draft={draft}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
       />
 
       <DownloadReportsDrawer

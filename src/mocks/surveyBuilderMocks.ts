@@ -16,7 +16,7 @@ export const createBlankSurveyDraft = (): SurveyDraft => ({
   description: "",
   startDate: "",
   endDate: "",
-  kind: null,
+  kind: "clima",
   visibility: "public",
   anonymityThreshold: DEFAULT_ANONYMITY_THRESHOLD,
   sections: [],

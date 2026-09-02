@@ -31,6 +31,7 @@ interface PreviewContentsProps {
   onJumpTo: (pageId: string) => void;
   /** Denser rows and no fixed-page entries — the header popover variant. */
   compact?: boolean;
+  baseDelayMs?: number;
 }
 
 export function PreviewContents({
@@ -40,6 +41,7 @@ export function PreviewContents({
   progressByPage = {},
   onJumpTo,
   compact = false,
+  baseDelayMs = 0,
 }: PreviewContentsProps) {
   const groups = React.useMemo(() => groupOutline(outline), [outline]);
   const pageIds = React.useMemo(() => new Set(pages.map((page) => page.id)), [pages]);
@@ -71,7 +73,7 @@ export function PreviewContents({
       )}
 
       {pageIds.has(DEMOGRAPHICS_PAGE_ID) && (
-        <li>
+        <li className={!compact ? "animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out fill-mode-both" : ""} style={!compact ? { animationDelay: `${baseDelayMs}ms` } : undefined}>
           <ContentsRow
             icon={UsersRound}
             label="Datos demográficos"
@@ -84,8 +86,12 @@ export function PreviewContents({
         </li>
       )}
 
-      {groups.map((group) => (
-        <li key={group.root.sectionId} className="flex flex-col gap-0.5">
+      {groups.map((group, index) => (
+        <li
+          key={group.root.sectionId}
+          className={!compact ? "flex flex-col gap-0.5 animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out fill-mode-both" : "flex flex-col gap-0.5"}
+          style={!compact ? { animationDelay: `${baseDelayMs + (index + 1) * 75}ms` } : undefined}
+        >
           <ContentsRow
             numbering={group.root.numbering}
             label={group.root.label}
@@ -98,8 +104,12 @@ export function PreviewContents({
 
           {group.children.length > 0 && (
             <ul className="ml-3 flex flex-col gap-0.5 border-l border-border/60 pl-2.5">
-              {group.children.map((child) => (
-                <li key={child.sectionId}>
+              {group.children.map((child, childIndex) => (
+                <li
+                  key={child.sectionId}
+                  className={!compact ? "animate-in fade-in slide-in-from-left-2 duration-500 ease-out fill-mode-both" : ""}
+                  style={!compact ? { animationDelay: `${baseDelayMs + (index + 1) * 75 + (childIndex + 1) * 40}ms` } : undefined}
+                >
                   <ContentsRow
                     numbering={child.numbering}
                     label={child.label}

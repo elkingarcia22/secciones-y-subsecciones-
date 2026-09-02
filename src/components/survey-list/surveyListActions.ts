@@ -4,7 +4,9 @@ import {
   CircleCheckBig,
   Copy,
   Eye,
+  Link2,
   Pencil,
+  QrCode,
   RotateCcw,
   Share2,
   Trash2,
@@ -22,6 +24,8 @@ export type SurveyActionId =
   | "editDates"
   | "editParticipants"
   | "share"
+  | "shareLink"
+  | "downloadQr"
   | "reopen"
   | "delete";
 
@@ -29,6 +33,10 @@ export interface SurveyActionSpec {
   label: string;
   icon: LucideIcon;
   tone?: "default" | "danger";
+  /** Sub-actions folded under this one in the overflow menu — "Compartir"
+   *  doesn't run anything itself, it opens onto "Compartir enlace" /
+   *  "Descargar QR" the way a bar icon never could. */
+  subActions?: readonly SurveyActionId[];
 }
 
 export const SURVEY_ACTIONS: Readonly<Record<SurveyActionId, SurveyActionSpec>> = {
@@ -39,7 +47,9 @@ export const SURVEY_ACTIONS: Readonly<Record<SurveyActionId, SurveyActionSpec>> 
   finish: { label: "Finalizar encuesta", icon: CircleCheckBig },
   editDates: { label: "Editar fechas", icon: CalendarClock },
   editParticipants: { label: "Editar participantes", icon: Users },
-  share: { label: "Compartir encuesta", icon: Share2 },
+  share: { label: "Compartir", icon: Share2, subActions: ["shareLink", "downloadQr"] },
+  shareLink: { label: "Compartir enlace", icon: Link2 },
+  downloadQr: { label: "Descargar QR", icon: QrCode },
   reopen: { label: "Reabrir encuesta", icon: RotateCcw },
   delete: { label: "Eliminar", icon: Trash2, tone: "danger" },
 };
@@ -54,7 +64,7 @@ export const SURVEY_ACTIONS: Readonly<Record<SurveyActionId, SurveyActionSpec>> 
  */
 export const SURVEY_ACTIONS_BY_STATUS: Readonly<Record<string, readonly SurveyActionId[]>> = {
   Borrador: ["edit", "preview", "delete"],
-  "Por iniciar": ["edit", "preview", "duplicate", "delete"],
+  "Por iniciar": ["edit", "preview", "duplicate", "share", "delete"],
   "En curso": [
     "results",
     "preview",
@@ -82,11 +92,19 @@ export function splitSurveyActions(status: string): {
   overflow: readonly SurveyActionId[];
 } {
   const all = SURVEY_ACTIONS_BY_STATUS[status] ?? [];
+  // An action with sub-actions needs the overflow menu's popover to expose
+  // them — a lone bar icon can only ever run one immediate action — so it
+  // always folds away, independent of how many actions there are in total.
+  const barable = all.filter((id) => !SURVEY_ACTIONS[id].subActions);
+  const forcedOverflow = all.filter((id) => SURVEY_ACTIONS[id].subActions);
+
   // One lone action in the menu is a worse trade than a sixth icon: the menu
   // costs a click and a label to say what an icon already said.
-  if (all.length <= INLINE_ACTION_LIMIT + 1) return { inline: all, overflow: [] };
-  return {
-    inline: all.slice(0, INLINE_ACTION_LIMIT),
-    overflow: all.slice(INLINE_ACTION_LIMIT),
-  };
+  if (forcedOverflow.length === 0 && all.length <= INLINE_ACTION_LIMIT + 1) {
+    return { inline: all, overflow: [] };
+  }
+
+  const inline = barable.slice(0, INLINE_ACTION_LIMIT);
+  const overflowIds = new Set([...barable.slice(INLINE_ACTION_LIMIT), ...forcedOverflow]);
+  return { inline, overflow: all.filter((id) => overflowIds.has(id)) };
 }

@@ -1,9 +1,9 @@
 import { AnimatePresence, motion, type Variants } from "framer-motion";
-import { CheckCircle, Loader, XCircle } from "lucide-react";
+import { CheckCircle, Circle, Loader, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export type StatusState = "pending" | "failed" | "success";
+export type StatusState = "pending" | "failed" | "success" | "draft";
 
 export interface StatusBadgeProps {
   state?: StatusState;
@@ -15,6 +15,7 @@ const DEFAULT_LABELS: Record<StatusState, string> = {
   pending: "Pending",
   failed: "Failed",
   success: "Success",
+  draft: "Draft",
 };
 
 const STATE_CLASSES: Record<StatusState, { icon: string; bg: string; text: string }> = {
@@ -32,6 +33,11 @@ const STATE_CLASSES: Record<StatusState, { icon: string; bg: string; text: strin
     icon: "text-emerald-600 dark:text-emerald-400",
     bg: "bg-emerald-100/50 dark:bg-emerald-500/15 border-transparent",
     text: "text-emerald-800 dark:text-emerald-300",
+  },
+  draft: {
+    icon: "text-muted-foreground",
+    bg: "bg-muted/50 border-transparent",
+    text: "text-muted-foreground",
   },
 };
 
@@ -60,6 +66,8 @@ function StateIcon({ state }: { state: StatusState }) {
   }
   if (state === "failed")
     return <XCircle size={12} strokeWidth={2.5} className={cls} />;
+  if (state === "draft")
+    return <Circle size={12} strokeWidth={2.5} className={cls} />;
   return <CheckCircle size={12} strokeWidth={2.5} className={cls} />;
 }
 

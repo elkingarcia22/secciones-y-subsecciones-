@@ -296,102 +296,200 @@ export function SectionsPanel({
   const hasError = (step: StepperStepId) =>
     errorSteps?.has(step) === true && !isStepComplete(step, stepInput);
 
-  if (isCollapsed) {
-    return (
-      <aside className="flex w-[52px] shrink-0 flex-col items-center gap-3 self-start overflow-y-auto overflow-x-hidden rounded-2xl border border-border/60 bg-surface p-2 py-3 shadow-card max-h-full scrollbar-none">
+  return (
+    <aside
+      className={cn(
+        "flex shrink-0 flex-col self-start overflow-y-auto overflow-x-hidden rounded-2xl border border-border/60 bg-surface shadow-card max-h-full",
+        "transition-[width] duration-500 ease-in-out",
+        isCollapsed ? "w-[54px] p-2 py-3 scrollbar-none" : "w-[288px] p-2"
+      )}
+    >
+      {/* ── Header: title collapses its own width, button stays centered ── */}
+      <div className="mb-2 flex h-9 shrink-0 items-center justify-between pr-1 pt-1.5">
+        {/* h2 collapses to width:0 — no flex-1, so button stays centered */}
+        <h2
+          className="overflow-hidden whitespace-nowrap text-[13px] font-semibold text-text-secondary"
+          style={{
+            maxWidth: isCollapsed ? 0 : "200px",
+            opacity: isCollapsed ? 0 : 1,
+            transition: "max-width 0.5s ease-in-out, opacity 0.25s ease-in-out",
+            pointerEvents: isCollapsed ? "none" : undefined,
+          }}
+        >
+          Pasos de creación
+        </h2>
+
+        {/* Toggle button — always visible, centered when collapsed */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               type="button"
               onClick={onToggleCollapsed}
-              aria-label="Expandir menú"
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground/70 transition-all hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95"
+              aria-label={isCollapsed ? "Expandir menú" : "Contraer menú"}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-muted-foreground/70 transition-all hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95"
             >
-              <PanelLeftOpen className="h-[18px] w-[18px]" strokeWidth={2} />
+              <motion.span
+                animate={{ rotate: isCollapsed ? 0 : 180 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="flex items-center justify-center"
+              >
+                <PanelLeftOpen className="h-[18px] w-[18px]" strokeWidth={2} />
+              </motion.span>
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right">Expandir menú</TooltipContent>
+          <TooltipContent side="right">
+            {isCollapsed ? "Expandir menú" : "Contraer menú"}
+          </TooltipContent>
         </Tooltip>
-
-        <div className="flex w-full flex-col gap-3">
-          {STEPPER_ORDER.map((step, index) => (
-            <RailStep
-              key={step}
-              step={step}
-              state={stateOf(step)}
-              hasError={hasError(step)}
-              hasNext={index < STEPPER_ORDER.length - 1}
-              onSelect={() => onSelectStep(step)}
-            />
-          ))}
-        </div>
-      </aside>
-    );
-  }
-
-  return (
-    <aside className="flex w-[288px] shrink-0 flex-col self-start overflow-y-auto overflow-x-hidden rounded-2xl border border-border/60 bg-surface p-2 shadow-card max-h-full">
-      <div className="mb-2 flex items-center justify-between pl-3 pr-1 pt-1.5">
-        <h2 className="text-[13px] font-semibold text-text-secondary">
-          Pasos de creación
-        </h2>
-        <button
-          type="button"
-          onClick={onToggleCollapsed}
-          aria-label="Contraer menú"
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground/70 transition-all hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95"
-        >
-          <PanelLeftClose className="h-[18px] w-[18px]" strokeWidth={2} />
-        </button>
       </div>
 
+      {/* ── Stepper rows — single DOM tree, always rendered ── */}
       <ul className="flex flex-col gap-1">
-        {STEPPER_ORDER.map((step, index) => (
-          <React.Fragment key={step}>
-            <StepperRow
-              step={step}
-              state={stateOf(step)}
-              hasError={hasError(step)}
-              hasNext={index < STEPPER_ORDER.length - 1 && !(step === "sections" && activeStep === "sections")}
-              onSelect={() => onSelectStep(step)}
-            />
+        {STEPPER_ORDER.map((step, index) => {
+          const state = stateOf(step);
+          const err = hasError(step);
+          const isLocked = state === "locked";
 
-            {step === "sections" && activeStep === "sections" && (
-              <li className="ml-[22px] border-l border-border pl-3">
-                <ul className="flex flex-col gap-0.5 py-1">
-                  {visibleEntries.map((entry) => {
-                    const { id } = entry.section;
-                    const isValidTarget =
-                      draggingId !== null && draggingId !== id && entry.parentId === draggingParentId;
+          return (
+            <React.Fragment key={step}>
+              <li className="relative w-full">
+                {/* Connector line */}
+                {index < STEPPER_ORDER.length - 1 &&
+                  !(step === "sections" && activeStep === "sections" && !isCollapsed) && (
+                    <span
+                      aria-hidden
+                      className="absolute top-8 h-[calc(100%-1rem)] w-px bg-border"
+                      style={{
+                        // Marker center: collapsed has no button padding, so it's
+                        // just the marker's own half-width (14px); expanded adds
+                        // the button's 8px left padding on top of that (8+14=22px).
+                        left: isCollapsed ? "14px" : "22px",
+                        transition: "left 0.5s ease-in-out",
+                      }}
+                    />
+                  )}
 
-                    return (
-                      <SectionTreeItem
-                        key={id}
-                        entry={entry}
-                        readOnly={readOnly}
-                        isActive={selection.kind === "section" && selection.id === id}
-                        isCollapsed={!expandedIds.has(id)}
-                        isDragging={draggingId === id}
-                        isDropTarget={overId === id && isValidTarget}
-                        isRenaming={renamingId === id}
-                        canDelete={entry.depth > 1 || canDeleteRoot}
-                        onSelect={() => onSelect({ kind: "section", id })}
-                        onToggleCollapse={() => onToggleExpanded(id)}
-                        onStartRename={() => onStartRename(id)}
-                        onRename={(title) => onRename(id, title)}
-                        onCancelRename={onCancelRename}
-                        onAddSubsection={() => onAddSubsection(id)}
-                        onDelete={() => onDeleteSection(id)}
-                        handleProps={getHandleProps(id)}
-                        dropTargetProps={getDropTargetProps(id)}
-                      />
-                    );
-                  })}
-                </ul>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={isLocked ? undefined : () => onSelectStep(step)}
+                      disabled={isLocked}
+                      aria-current={state === "active" ? "step" : undefined}
+                      className={cn(
+                        "group relative flex w-full items-center rounded-xl py-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                        // Collapsed: hover lands on the marker itself (below),
+                        // not this whole row — a rounded-xl box behind a lone
+                        // circle reads as a stray highlight, not a hover.
+                        !isLocked && state !== "active" && !isCollapsed && "hover:bg-surface-muted",
+                        isLocked && "cursor-not-allowed"
+                      )}
+                      style={{
+                        paddingLeft: isCollapsed ? 0 : "8px",
+                        paddingRight: isCollapsed ? 0 : "8px",
+                        transition: "padding 0.5s ease-in-out",
+                      }}
+                    >
+                      {state === "active" && !isCollapsed && (
+                        <motion.div
+                          layoutId="active-stepper-bg"
+                          className="absolute inset-0 rounded-xl bg-primary/10"
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+
+                      {/* Collapsed hover: a halo centered on the marker
+                          (left: 14px = the marker's own center, same math as
+                          the connector line) instead of the row background. */}
+                      {isCollapsed && !isLocked && state !== "active" && (
+                        <span
+                          aria-hidden
+                          className="absolute top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors group-hover:bg-surface-muted"
+                          style={{ left: "14px" }}
+                        />
+                      )}
+
+                      <StepMarker step={step} state={state} hasError={err} />
+
+                      {/* Label — collapses max-width to 0 so marker stays at left:8px centered */}
+                      <span
+                        className={cn(
+                          "relative z-10 overflow-hidden whitespace-nowrap text-[13px] tracking-tight",
+                          state === "active" && "font-semibold text-primary",
+                          state === "complete" && "font-medium text-text-primary",
+                          err && "font-medium text-destructive",
+                          state === "available" && "font-medium text-text-primary",
+                          state === "locked" && "font-medium text-muted-foreground/70"
+                        )}
+                        style={{
+                          maxWidth: isCollapsed ? 0 : "200px",
+                          opacity: isCollapsed ? 0 : 1,
+                          marginLeft: isCollapsed ? 0 : "12px",
+                          transition:
+                            "max-width 0.5s ease-in-out, opacity 0.2s ease-in-out, margin-left 0.5s ease-in-out",
+                          pointerEvents: isCollapsed ? "none" : undefined,
+                        }}
+                      >
+                        {STEP_LABELS[step]}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  {isCollapsed && (
+                    <TooltipContent side="right" className="max-w-[220px]">
+                      {STEP_LABELS[step]}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
               </li>
-            )}
-          </React.Fragment>
-        ))}
+
+              {/* Section tree — CSS height transition */}
+              <AnimatePresence initial={false}>
+                {!isCollapsed && step === "sections" && activeStep === "sections" && (
+                  <motion.li
+                    key="section-tree"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="ml-[22px] overflow-hidden border-l border-border pl-3"
+                  >
+                    <ul className="flex flex-col gap-0.5 py-1">
+                      {visibleEntries.map((entry) => {
+                        const { id } = entry.section;
+                        const isValidTarget =
+                          draggingId !== null &&
+                          draggingId !== id &&
+                          entry.parentId === draggingParentId;
+                        return (
+                          <SectionTreeItem
+                            key={id}
+                            entry={entry}
+                            readOnly={readOnly}
+                            isActive={selection.kind === "section" && selection.id === id}
+                            isCollapsed={!expandedIds.has(id)}
+                            isDragging={draggingId === id}
+                            isDropTarget={overId === id && isValidTarget}
+                            isRenaming={renamingId === id}
+                            canDelete={entry.depth > 1 || canDeleteRoot}
+                            onSelect={() => onSelect({ kind: "section", id })}
+                            onToggleCollapse={() => onToggleExpanded(id)}
+                            onStartRename={() => onStartRename(id)}
+                            onRename={(title) => onRename(id, title)}
+                            onCancelRename={onCancelRename}
+                            onAddSubsection={() => onAddSubsection(id)}
+                            onDelete={() => onDeleteSection(id)}
+                            handleProps={getHandleProps(id)}
+                            dropTargetProps={getDropTargetProps(id)}
+                          />
+                        );
+                      })}
+                    </ul>
+                  </motion.li>
+                )}
+              </AnimatePresence>
+            </React.Fragment>
+          );
+        })}
       </ul>
     </aside>
   );

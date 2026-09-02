@@ -55,7 +55,6 @@ import { ResultsSubTabSwitch, type ResultsSubTab } from "./ResultsSubTabSwitch";
 import type { ResultsFiltersState } from "./useResultsFilters";
 import { levelForDepth, type ResultLevel } from "./resultLevels";
 import { ResultsSortHeader } from "./ResultsSortHeader";
-import { MetricSummaryCard } from "./MetricSummaryCard";
 import {
   cascadeContainer,
   cascadeItem,
@@ -115,10 +114,6 @@ interface RowHighlightProps {
  * row with a level chip and a rail hanging off the chevron — so the report
  * reads the same hierarchy the author wrote.
  */
-function flattenChildren(section: SectionResult): readonly QuestionResult[] {
-  return section.children.flatMap(child => [...child.questions, ...flattenChildren(child)]);
-}
-
 export function QuestionsTab({
   results,
   segments,
@@ -148,87 +143,8 @@ export function QuestionsTab({
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <MetricSummaryCard
-        accentColor="bg-status-positive"
-        title="Favorabilidad por preguntas"
-        hint={
-          <div className="flex flex-col gap-3 items-start leading-relaxed">
-            <p className="text-[12px]"><strong>Favorabilidad:</strong><br/>Promedio de favorabilidad de todas las preguntas con escala 1-5.</p>
-          </div>
-        }
-        bigValue={(() => {
-          const scored = sections.flatMap(s => [...s.questions, ...flattenChildren(s)]).filter(q => q.scored && q.favorability !== null);
-          const avg = scored.length > 0 ? scored.reduce((sum, q) => sum + (q.favorability ?? 0), 0) / scored.length : 0;
-          return formatPercent(avg);
-        })()}
-        caption={`${totalQuestions} preguntas con escala`}
-        ringsLabel="Distribución general"
-        ringsTotal={`${totalQuestions} preguntas`}
-        rings={[
-          {
-            id: "favorable",
-            label: "Favorables",
-            percentage: Math.round((sections.reduce((sum, s) => {
-              const allQ = [...s.questions, ...flattenChildren(s)];
-              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) >= 70).length;
-            }, 0) / Math.max(totalQuestions, 1)) * 100),
-            color: POSITIVE,
-            count: String(sections.reduce((sum, s) => {
-              const allQ = [...s.questions, ...flattenChildren(s)];
-              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) >= 70).length;
-            }, 0)),
-            active: filtersState.tierBands.has("favorable"),
-            onToggle: () => filtersState.toggleTierBand("favorable"),
-          },
-          {
-            id: "neutral",
-            label: "Neutrales",
-            percentage: Math.round((sections.reduce((sum, s) => {
-              const allQ = [...s.questions, ...flattenChildren(s)];
-              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) >= 50 && (q.favorability ?? 0) < 70).length;
-            }, 0) / Math.max(totalQuestions, 1)) * 100),
-            color: YELLOW,
-            count: String(sections.reduce((sum, s) => {
-              const allQ = [...s.questions, ...flattenChildren(s)];
-              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) >= 50 && (q.favorability ?? 0) < 70).length;
-            }, 0)),
-            active: filtersState.tierBands.has("neutral"),
-            onToggle: () => filtersState.toggleTierBand("neutral"),
-          },
-          {
-            id: "unfavorable",
-            label: "Desfavorables",
-            percentage: Math.round((sections.reduce((sum, s) => {
-              const allQ = [...s.questions, ...flattenChildren(s)];
-              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) < 50).length;
-            }, 0) / Math.max(totalQuestions, 1)) * 100),
-            color: NEGATIVE,
-            count: String(sections.reduce((sum, s) => {
-              const allQ = [...s.questions, ...flattenChildren(s)];
-              return sum + allQ.filter(q => q.scored && (q.favorability ?? 0) < 50).length;
-            }, 0)),
-            active: filtersState.tierBands.has("unfavorable"),
-            onToggle: () => filtersState.toggleTierBand("unfavorable"),
-          },
-        ]}
-        topAreasTitle="Top 3 áreas con más sentimiento negativo"
-        topAreas={
-          sections
-            .filter(s => s.n > 0)
-            .sort((a, b) => a.favorability - b.favorability)
-            .slice(0, 3)
-            .map(s => ({
-              id: s.id,
-              label: s.title,
-              value: 100 - s.favorability,
-              displayValue: formatPercent(100 - s.favorability),
-            }))
-        }
-      />
-
-      <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
-        <div className="sticky top-3 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
+    <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
+      <div className="sticky top-3 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
           <div className="flex flex-wrap items-center gap-4 pb-2">
             <div className="flex items-center gap-2">
               <h3 className="text-[13px] font-bold text-text-primary">Detalle por secciones</h3>

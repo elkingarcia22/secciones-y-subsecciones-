@@ -1,8 +1,15 @@
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { countQuestions } from "@/components/survey-builder/sectionTree";
 import { questionTypeLabel, scaleTypeLabel } from "@/components/survey-builder/questionCatalog";
 import type { SurveyQuestion, SurveySection } from "@/components/survey-builder/surveyBuilderTypes";
+import {
+  cascadeContainer,
+  cascadeItem,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+} from "@/lib/cascadeAnimation";
 
 /**
  * A template's structure, as a collapsible outline: how many sections, how they
@@ -106,6 +113,9 @@ interface SectionContentsProps {
   /** Absolute position of `section` itself, e.g. "1.2". */
   numbering: string;
   depth: number;
+  /** When this content sits inside another cascade, the point at which it's
+   * free to start revealing — set by the row that owns it. */
+  baseDelay?: number;
 }
 
 /**
@@ -115,7 +125,7 @@ interface SectionContentsProps {
  * here" case is stated instead of rendering a blank body — a section that asks
  * nothing is a fact about the template, and a silent gap reads as a bug.
  */
-function SectionContents({ section, numbering, depth }: SectionContentsProps) {
+function SectionContents({ section, numbering, depth, baseDelay = 0 }: SectionContentsProps) {
   const hasQuestions = section.questions.length > 0;
   const hasChildren = section.children.length > 0;
 
@@ -129,14 +139,19 @@ function SectionContents({ section, numbering, depth }: SectionContentsProps) {
 
   return (
     <div className={cn("flex flex-col", depth === 1 ? "gap-1 pb-2 pt-1" : "gap-0.5")}>
-      {hasQuestions && <QuestionList questions={section.questions} />}
-      {hasChildren && <SubsectionList section={section} numberingPrefix={numbering} depth={depth} />}
+      {hasQuestions && <QuestionList questions={section.questions} revealDelay={baseDelay} />}
+      {hasChildren && (
+        <SubsectionList section={section} numberingPrefix={numbering} depth={depth} baseDelay={baseDelay} />
+      )}
     </div>
   );
 }
 
 interface QuestionListProps {
   questions: readonly SurveyQuestion[];
+  /** Delay before this list's rows start cascading in — set by the parent so
+   * questions only start once whatever precedes them has settled. */
+  revealDelay?: number;
 }
 
 /**
@@ -145,15 +160,22 @@ interface QuestionListProps {
  * numbering that belongs to sections — the same split the builder uses, and the
  * reason "1.1" can never mean both a subsection and a question.
  */
-function QuestionList({ questions }: QuestionListProps) {
+function QuestionList({ questions, revealDelay = 0 }: QuestionListProps) {
   return (
-    <ol className="flex flex-col">
+    <motion.ol
+      initial="hidden"
+      animate="show"
+      custom={revealDelay}
+      variants={cascadeContainer}
+      className="flex flex-col"
+    >
       {questions.map((question, index) => {
         const statement = plainStatement(question.statement);
 
         return (
-          <li
+          <motion.li
             key={question.id}
+            variants={cascadeItem}
             className="flex items-start gap-2.5 rounded-lg px-2.5 py-2 transition-colors hover:bg-surface-muted/50"
           >
             <span
@@ -176,10 +198,10 @@ function QuestionList({ questions }: QuestionListProps) {
                 {!question.required && <span className="font-normal"> · Opcional</span>}
               </p>
             </div>
-          </li>
+          </motion.li>
         );
       })}
-    </ol>
+    </motion.ol>
   );
 }
 
@@ -188,20 +210,33 @@ interface SubsectionListProps {
   /** Absolute position of `section` itself, e.g. "1.2" — its children extend it. */
   numberingPrefix: string;
   depth: number;
+  /** When this list itself sits inside another cascade, how long to wait
+   * before its own rows start staggering in. */
+  baseDelay?: number;
 }
 
 /** The section's own subsections, nested, each one expanded into its contents. */
-function SubsectionList({ section, numberingPrefix, depth }: SubsectionListProps) {
+function SubsectionList({ section, numberingPrefix, depth, baseDelay = 0 }: SubsectionListProps) {
   if (section.children.length === 0) return null;
 
   return (
-    <ul className={cn("flex flex-col gap-0.5", depth === 1 ? "pt-1" : "mt-0.5")}>
+    <motion.ul
+      initial="hidden"
+      animate="show"
+      custom={baseDelay}
+      variants={cascadeContainer}
+      className={cn("flex flex-col gap-0.5", depth === 1 ? "pt-1" : "mt-0.5")}
+    >
       {section.children.map((child, index) => {
         const numbering = `${numberingPrefix}.${index + 1}`;
         const questionCount = countQuestions([child]);
 
         return (
-          <li key={child.id} className={depth > 1 ? "ml-3.5 border-l border-border/60 pl-3" : undefined}>
+          <motion.li
+            key={child.id}
+            variants={cascadeItem}
+            className={depth > 1 ? "ml-3.5 border-l border-border/60 pl-3" : undefined}
+          >
             <div className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors hover:bg-surface-muted/50">
               <span className="shrink-0 text-[11px] font-semibold tabular-nums text-text-muted">
                 {numbering}
@@ -218,11 +253,16 @@ function SubsectionList({ section, numberingPrefix, depth }: SubsectionListProps
             {/* Indented under its own heading, so a "Dimensión" row and the
                 questions it asks read as one unit at every depth. */}
             <div className="ml-3.5 border-l border-border/60 pl-3">
-              <SectionContents section={child} numbering={numbering} depth={depth + 1} />
+              <SectionContents
+                section={child}
+                numbering={numbering}
+                depth={depth + 1}
+                baseDelay={cascadeItemSettleTime(baseDelay, index) + CASCADE_CONTENT_GAP}
+              />
             </div>
-          </li>
+          </motion.li>
         );
       })}
-    </ul>
+    </motion.ul>
   );
 }

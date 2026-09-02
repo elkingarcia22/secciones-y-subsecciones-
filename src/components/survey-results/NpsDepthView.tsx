@@ -1,4 +1,5 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import { ChevronRight, ChevronUp, MessageSquareQuote, MessagesSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,12 @@ import {
   type NpsDepthSection,
 } from "@/mocks/npsDepth";
 import type { NpsBand, SegmentFilter, SurveyResults } from "@/mocks/surveyResults";
+import {
+  cascadeContainer,
+  cascadeItem,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+} from "@/lib/cascadeAnimation";
 
 const formatCount = (value: number) => new Intl.NumberFormat("es-CO").format(value);
 
@@ -167,9 +174,9 @@ function DepthSectionRoot({
 
       {isOpen && (
         <div className="flex min-h-0 flex-col gap-5 px-6 py-5 duration-300 animate-in fade-in slide-in-from-top-1">
-          {section.questions.map((question) => (
-            <DepthQuestionBlock key={question.id} question={question} tierBands={tierBands} />
-          ))}
+          {section.questions.length > 0 && (
+            <DepthQuestionList questions={section.questions} tierBands={tierBands} />
+          )}
           {section.children.length > 0 && (
             <DepthSubsectionOutline sections={section.children} depth={2} tierBands={tierBands} />
           )}
@@ -184,13 +191,23 @@ function DepthSubsectionOutline({
   sections,
   depth,
   tierBands,
+  baseDelay = 0,
 }: {
   sections: readonly NpsDepthSection[];
   depth: number;
   tierBands?: ReadonlySet<string>;
+  /** When this list itself sits inside another cascade, how long to wait
+   * before its own rows start staggering in. */
+  baseDelay?: number;
 }) {
   return (
-    <ul className={cn("flex flex-col", SIBLING_DIVIDER)}>
+    <motion.ul
+      className={cn("flex flex-col", SIBLING_DIVIDER)}
+      initial="hidden"
+      animate="show"
+      custom={baseDelay}
+      variants={cascadeContainer}
+    >
       {sections.map((section, index) => (
         <DepthSubsectionRow
           key={section.id}
@@ -198,9 +215,12 @@ function DepthSubsectionOutline({
           depth={depth}
           defaultOpen={index === 0}
           tierBands={tierBands}
+          // This row's own content starts right as the row itself settles
+          // in, not after every sibling row has.
+          contentDelay={cascadeItemSettleTime(baseDelay, index) + CASCADE_CONTENT_GAP}
         />
       ))}
-    </ul>
+    </motion.ul>
   );
 }
 
@@ -209,17 +229,21 @@ function DepthSubsectionRow({
   depth,
   defaultOpen,
   tierBands,
+  contentDelay = 0,
 }: {
   section: NpsDepthSection;
   depth: number;
   defaultOpen?: boolean;
   tierBands?: ReadonlySet<string>;
+  /** Delay before this subsection's own questions/nested subsections start
+   * cascading in — set by the sibling list so they wait their turn. */
+  contentDelay?: number;
 }) {
   const [expanded, setExpanded] = React.useState(defaultOpen ?? false);
   const theme = depthTheme(depth);
 
   return (
-    <li>
+    <motion.li variants={cascadeItem}>
       <div
         onClick={() => setExpanded((value) => !value)}
         role="button"
@@ -274,21 +298,79 @@ function DepthSubsectionRow({
             theme.railOffset
           )}
         >
-          {section.questions.map((question) => (
-            <DepthQuestionBlock key={question.id} question={question} tierBands={tierBands} />
-          ))}
+          {section.questions.length > 0 && (
+            <DepthQuestionList
+              questions={section.questions}
+              tierBands={tierBands}
+              revealDelay={contentDelay}
+            />
+          )}
           {section.children.length > 0 && (
-            <DepthSubsectionOutline sections={section.children} depth={depth + 1} tierBands={tierBands} />
+            <DepthSubsectionOutline
+              sections={section.children}
+              depth={depth + 1}
+              tierBands={tierBands}
+              baseDelay={contentDelay}
+            />
           )}
         </div>
       )}
-    </li>
+    </motion.li>
   );
 }
 
 /* ----------------------------------------------------------------- pregunta */
 
-function DepthQuestionBlock({ question, tierBands }: { question: NpsDepthQuestion; tierBands?: ReadonlySet<string> }) {
+/**
+ * The depth questions under one section/subsection row, cascading in the
+ * same way `QuestionTable`'s rows do — each block settles in turn, and its
+ * own band verbatim-answer lists (see `DepthBandRow`) are free to start
+ * revealing right after.
+ */
+function DepthQuestionList({
+  questions,
+  tierBands,
+  revealDelay = 0,
+}: {
+  questions: readonly NpsDepthQuestion[];
+  tierBands?: ReadonlySet<string>;
+  /** Delay before this list's rows start cascading in — set by the parent
+   * so questions only start once the row above them is done. */
+  revealDelay?: number;
+}) {
+  return (
+    <motion.ul
+      className="flex flex-col gap-5"
+      initial="hidden"
+      animate="show"
+      custom={revealDelay}
+      variants={cascadeContainer}
+    >
+      {questions.map((question, index) => (
+        <motion.li key={question.id} variants={cascadeItem}>
+          <DepthQuestionBlock
+            question={question}
+            tierBands={tierBands}
+            answersRevealDelay={cascadeItemSettleTime(revealDelay, index) + CASCADE_CONTENT_GAP}
+          />
+        </motion.li>
+      ))}
+    </motion.ul>
+  );
+}
+
+function DepthQuestionBlock({
+  question,
+  tierBands,
+  answersRevealDelay = 0,
+}: {
+  question: NpsDepthQuestion;
+  tierBands?: ReadonlySet<string>;
+  /** Delay before this question's own band verbatim-answer lists start
+   * cascading in when expanded — set by `DepthQuestionList` so they wait
+   * for this question's row to settle first. */
+  answersRevealDelay?: number;
+}) {
   const answered = question.bands.reduce((sum, band) => sum + band.answered, 0);
 
   return (
@@ -335,14 +417,30 @@ function DepthQuestionBlock({ question, tierBands }: { question: NpsDepthQuestio
           the same look "comentarios de preguntas" moved away from. */}
       <ul className="flex flex-col divide-y divide-border/40">
         {question.bands.map((band) => (
-          <DepthBandRow key={band.band} band={band} tierBands={tierBands} />
+          <DepthBandRow
+            key={band.band}
+            band={band}
+            tierBands={tierBands}
+            revealDelay={answersRevealDelay}
+          />
         ))}
       </ul>
     </div>
   );
 }
 
-function DepthBandRow({ band, tierBands }: { band: NpsDepthBand; tierBands?: ReadonlySet<string> }) {
+function DepthBandRow({
+  band,
+  tierBands,
+  revealDelay = 0,
+}: {
+  band: NpsDepthBand;
+  tierBands?: ReadonlySet<string>;
+  /** Delay before this band's verbatim-answer cards start cascading in when
+   * expanded — set by the depth question above so the list starts right as
+   * that row settles, regardless of how deep it's nested. */
+  revealDelay?: number;
+}) {
   const [expanded, setExpanded] = React.useState(false);
   const palette = BAND_PALETTE[band.band];
   const wording = band.question.trim();
@@ -414,27 +512,39 @@ function DepthBandRow({ band, tierBands }: { band: NpsDepthBand; tierBands?: Rea
       </div>
 
       {expanded && hasAnswers && (
-        <ul className="flex flex-col gap-2 px-1 pb-3 pt-1 duration-200 animate-in fade-in slide-in-from-top-1">
-          {visible.map((answer) => (
-            <li
-              key={answer.id}
-              className="flex flex-col gap-1 rounded-lg bg-muted/30 px-3 py-2"
-            >
-              <p className="text-[13px] leading-relaxed text-text-primary">“{answer.text}”</p>
-              <span className="text-[11px] font-medium text-muted-foreground">
-                {answer.segment}
-              </span>
-            </li>
-          ))}
-          {remaining > 0 && (
-            // Never a silent trim: the row says what it is not drawing and
-            // where the rest of it lives.
-            <li className="px-1 pt-0.5 text-[12px] font-medium text-muted-foreground">
-              y {formatCount(remaining)} respuestas más — las {formatCount(band.answers.length)}{" "}
-              completas viajan en el reporte descargable
-            </li>
-          )}
-        </ul>
+        <div className="duration-200 animate-in fade-in slide-in-from-top-1">
+          <motion.ul
+            className="flex flex-col gap-2 px-1 pb-3 pt-1"
+            initial="hidden"
+            animate="show"
+            custom={revealDelay}
+            variants={cascadeContainer}
+          >
+            {visible.map((answer) => (
+              <motion.li
+                key={answer.id}
+                variants={cascadeItem}
+                className="flex flex-col gap-1 rounded-lg bg-muted/30 px-3 py-2"
+              >
+                <p className="text-[13px] leading-relaxed text-text-primary">“{answer.text}”</p>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  {answer.segment}
+                </span>
+              </motion.li>
+            ))}
+            {remaining > 0 && (
+              // Never a silent trim: the row says what it is not drawing and
+              // where the rest of it lives.
+              <motion.li
+                variants={cascadeItem}
+                className="px-1 pt-0.5 text-[12px] font-medium text-muted-foreground"
+              >
+                y {formatCount(remaining)} respuestas más — las {formatCount(band.answers.length)}{" "}
+                completas viajan en el reporte descargable
+              </motion.li>
+            )}
+          </motion.ul>
+        </div>
       )}
     </li>
   );

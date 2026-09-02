@@ -1,4 +1,5 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import {
   ChevronRight,
   MessageSquareQuote,
@@ -30,6 +31,7 @@ import {
 } from "./SentimentBreakdown";
 import { ConfidenceMeter, SentimentSegmentedControl } from "./SentimentControls";
 import { AI_CONFIDENCE_FLOOR, SENTIMENT_STYLES } from "./sentimentScale";
+import { cascadeContainer, cascadeItem } from "@/lib/cascadeAnimation";
 
 const formatCount = (value: number) => new Intl.NumberFormat("es-CO").format(value);
 
@@ -197,7 +199,7 @@ export function CommentsSentimentView({
               <HiddenValue />
             )
           }
-          renderQuestions={(section) => (
+          renderQuestions={(section, revealDelay) => (
             <CommentedQuestionTable
               section={section}
               byQuestion={byQuestion}
@@ -207,6 +209,7 @@ export function CommentsSentimentView({
               openByDefault={filtersActive || firstBranch.has(section.id)}
               onOverride={onOverride}
               onResetOverride={onResetOverride}
+              revealDelay={revealDelay}
             />
           )}
         />
@@ -343,6 +346,7 @@ function CommentedQuestionTable({
   openByDefault,
   onOverride,
   onResetOverride,
+  revealDelay = 0,
 }: {
   section: SectionResult;
   byQuestion: ReadonlyMap<string, readonly OpenComment[]>;
@@ -352,6 +356,9 @@ function CommentedQuestionTable({
   openByDefault: boolean;
   onOverride: (commentId: string, sentiment: Sentiment) => void;
   onResetOverride: (commentId: string) => void;
+  /** Delay before this table's rows start cascading in — set by the section
+   * tree so questions only start once the row above them has settled. */
+  revealDelay?: number;
 }) {
   return (
     <table className="w-full border-collapse text-left">
@@ -368,7 +375,13 @@ function CommentedQuestionTable({
           <th className="w-10 py-2.5 pr-4" aria-label="Detalle" />
         </tr>
       </thead>
-      <tbody className="divide-y divide-border/25">
+      <motion.tbody
+        className="divide-y divide-border/25"
+        initial="hidden"
+        animate="show"
+        custom={revealDelay}
+        variants={cascadeContainer}
+      >
         {section.questions.map((question, index) => (
           <QuestionCommentRows
             key={question.id}
@@ -382,7 +395,7 @@ function CommentedQuestionTable({
             onResetOverride={onResetOverride}
           />
         ))}
-      </tbody>
+      </motion.tbody>
     </table>
   );
 }
@@ -415,7 +428,8 @@ function QuestionCommentRows({
 
   return (
     <>
-      <tr
+      <motion.tr
+        variants={cascadeItem}
         role="button"
         tabIndex={0}
         aria-expanded={open}
@@ -478,7 +492,7 @@ function QuestionCommentRows({
             strokeWidth={2}
           />
         </td>
-      </tr>
+      </motion.tr>
 
       {open && (
         <tr className="bg-muted/30">
@@ -488,7 +502,12 @@ function QuestionCommentRows({
                   question, inside the section card — a third outline around it
                   read as a container by mistake rather than as one column of
                   text to go down. */}
-              <ul className="divide-y divide-border/40">
+              <motion.ul
+                className="divide-y divide-border/40"
+                initial="hidden"
+                animate="show"
+                variants={cascadeContainer}
+              >
                 {comments.slice(0, limit).map((comment) => (
                   <CommentRow
                     key={comment.id}
@@ -499,7 +518,7 @@ function QuestionCommentRows({
                     onReset={() => onResetOverride(comment.id)}
                   />
                 ))}
-              </ul>
+              </motion.ul>
               {comments.length > limit && (
                 <button
                   type="button"
@@ -542,7 +561,8 @@ function CommentRow({
   const low = comment.aiConfidence < AI_CONFIDENCE_FLOOR && !corrected;
 
   return (
-    <li
+    <motion.li
+      variants={cascadeItem}
       className={cn(
         "flex flex-wrap items-start justify-between gap-x-6 gap-y-2 px-1 py-3 transition-colors",
         // The row sits on the section's muted ground, so hover lifts to the
@@ -584,6 +604,6 @@ function CommentRow({
         onChange={onOverride}
         onReset={onReset}
       />
-    </li>
+    </motion.li>
   );
 }

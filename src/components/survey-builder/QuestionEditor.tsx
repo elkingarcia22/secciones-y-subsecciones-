@@ -1,10 +1,11 @@
 import * as React from "react";
-import { Copy, Trash2 } from "lucide-react";
+import { ChevronUp, Copy, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useClickOutside } from "@/hooks/useClickOutside";
+import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AiStatementField } from "./AiStatementField";
 import { QuestionOptionsEditor } from "./QuestionOptionsEditor";
 import { ScalePreview } from "./ScalePreview";
 import {
@@ -50,6 +52,9 @@ interface QuestionEditorProps {
   onClose: () => void;
   onDuplicate: () => void;
   onRemove: () => void;
+  /** La pregunta nació de "crear pregunta con IA": el enunciado se abre ya
+   * pidiendo contexto en vez de en blanco. */
+  startWithAi?: boolean;
 }
 
 const REQUIRED_FIELD_HINT = "Este campo es obligatorio";
@@ -71,6 +76,7 @@ export function QuestionEditor({
   onClose,
   onDuplicate,
   onRemove,
+  startWithAi = false,
 }: QuestionEditorProps) {
   const [isConfirmingRemove, setIsConfirmingRemove] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
@@ -114,7 +120,12 @@ export function QuestionEditor({
   };
 
   return (
-    <div ref={rootRef} className="flex flex-col gap-4" onKeyDown={handleKeyDown}>
+    <div
+      ref={rootRef}
+      {...{ [ANCHOR_ATTRIBUTE]: true }}
+      className="flex flex-col gap-4 rounded-xl border border-primary bg-surface p-4 shadow-card ring-2 ring-primary/20 animate-in fade-in zoom-in-[0.99] duration-200"
+      onKeyDown={handleKeyDown}
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold tracking-tight text-primary">
@@ -124,75 +135,85 @@ export function QuestionEditor({
           </span>
         </p>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={() => setIsConfirmingRemove(true)}
-              aria-label={`Eliminar pregunta ${index + 1}`}
-              className="shrink-0 rounded-md border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-status-negative/30 hover:bg-status-negative/5 hover:text-status-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="left">Eliminar pregunta</TooltipContent>
-        </Tooltip>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setIsConfirmingRemove(true)}
+                aria-label={`Eliminar pregunta ${index + 1}`}
+                className="shrink-0 rounded-md border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-status-negative/30 hover:bg-status-negative/5 hover:text-status-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">Eliminar pregunta</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Contraer edición de la pregunta"
+                className="shrink-0 rounded-md border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <ChevronUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">Contraer edición</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
-      {/* Type selectors. Full width on its own — only "Escala de valoración"
-          has variations to configure, so only it splits into two columns. */}
-      <div className={cn("grid gap-3", isScale && "sm:grid-cols-2")}>
+      {/* Statement. Lleva la IA al lado: con texto escrito mejora la
+          redacción, y en blanco pide una frase de contexto y escribe la
+          pregunta entera —incluido su tipo de respuesta—. */}
+      <AiStatementField
+        value={question.statement}
+        onChange={(statement) => onChange({ ...question, statement })}
+        onGenerated={({ statement, type }) =>
+          onChange(changeQuestionType({ ...question, statement }, type))
+        }
+        error={statementError}
+        autoStart={startWithAi}
+      />
+      {/* Type selectors as Cards. */}
+      <div className="flex flex-col gap-4">
         <Field label="Tipo de pregunta">
-          <CatalogSelect
+          <CatalogCards
             entries={QUESTION_TYPES}
             value={question.type}
-            placeholder="Tipo de pregunta"
-            ariaLabel="Tipo de pregunta"
             onChange={(type: QuestionType) => onChange(changeQuestionType(question, type))}
           />
         </Field>
 
         {isScale && (
-          <Field label="Tipo de escala">
-            <CatalogSelect
-              entries={SCALE_TYPES}
-              value={scale.kind}
-              placeholder="Tipo de escala"
-              ariaLabel="Tipo de escala"
-              onChange={(kind: ScaleType) => onChange(changeScaleType(question, kind))}
-            />
-          </Field>
-        )}
+          <div className={cn("grid gap-3", needsRatingType(scale.kind) && "sm:grid-cols-2")}>
+            <Field label="Tipo de escala">
+              <CatalogSelect
+                entries={SCALE_TYPES}
+                value={scale.kind}
+                placeholder="Tipo de escala"
+                ariaLabel="Tipo de escala"
+                onChange={(kind: ScaleType) => onChange(changeScaleType(question, kind))}
+              />
+            </Field>
 
-        {isScale && needsRatingType(scale.kind) && (
-          <Field label="Tipo de valoración">
-            <CatalogSelect
-              entries={RATING_TYPES}
-              value={scale.ratingType}
-              placeholder="Tipo de valoración"
-              ariaLabel="Tipo de valoración"
-              onChange={(ratingType: RatingType) => patchScale({ ratingType })}
-            />
-          </Field>
+            {needsRatingType(scale.kind) && (
+              <Field label="Tipo de valoración">
+                <CatalogSelect
+                  entries={RATING_TYPES}
+                  value={scale.ratingType}
+                  placeholder="Tipo de valoración"
+                  ariaLabel="Tipo de valoración"
+                  onChange={(ratingType: RatingType) => patchScale({ ratingType })}
+                />
+              </Field>
+            )}
+          </div>
         )}
       </div>
-
-      {/* Statement */}
-      <Field label="Pregunta o enunciado" error={statementError}>
-        <textarea
-          value={question.statement}
-          onChange={(event) => onChange({ ...question, statement: event.target.value })}
-          placeholder="Escribe aquí la pregunta o enunciado"
-          aria-label="Pregunta o enunciado"
-          rows={2}
-          className={cn(
-            "w-full resize-y rounded-md border bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-text-primary outline-none transition-all focus:ring-2 placeholder:text-muted-foreground/70",
-            statementError
-              ? "border-destructive focus:border-destructive focus:ring-destructive/25"
-              : "border-border focus:border-primary focus:ring-primary/25"
-          )}
-        />
-      </Field>
 
       {isScale && <ScalePreview question={question} />}
 
@@ -386,6 +407,54 @@ function ToggleField({
 }
 
 /**
+ * Render catalog options as small cards to save vertical space.
+ * Generic over the value so the caller keeps its narrow union type.
+ */
+function CatalogCards<T extends string>({
+  entries,
+  value,
+  onChange,
+}: {
+  entries: readonly CatalogEntry<T>[];
+  value: T | null;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Seleccionar opción">
+      {entries.map(({ value: entryValue, label, icon: Icon }) => {
+        const isSelected = value === entryValue;
+        return (
+          <button
+            key={entryValue}
+            type="button"
+            role="radio"
+            aria-checked={isSelected}
+            onClick={() => onChange(entryValue as T)}
+            className={cn(
+              "relative flex flex-1 min-w-[100px] flex-col items-center justify-center gap-1.5 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+              isSelected
+                ? "border-primary bg-primary/10 text-primary shadow-sm"
+                : "border-border bg-surface text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+            )}
+          >
+            <div
+              className={cn(
+                "absolute right-2 top-2 flex size-3.5 items-center justify-center rounded-full border transition-colors",
+                isSelected ? "border-primary" : "border-border/60"
+              )}
+            >
+              {isSelected && <div className="size-1.5 rounded-full bg-primary" />}
+            </div>
+            <Icon className="h-4 w-4 mt-1" strokeWidth={isSelected ? 2.5 : 2} />
+            <span className="text-[10px] font-semibold leading-tight">{label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
  * A select backed by one of the catalogs. Generic over the value so the caller
  * keeps its narrow union type instead of falling back to `string`.
  */
@@ -410,8 +479,6 @@ function CatalogSelect<T extends string>({
       >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      {/* Opens below the trigger instead of over it (Radix's item-aligned
-          default), so the field you are changing stays visible while you pick. */}
       <SelectContent position="popper" sideOffset={6} className="w-[var(--radix-select-trigger-width)]">
         {entries.map(({ value: entryValue, label, icon: Icon }) => (
           <SelectItem key={entryValue} value={entryValue} className="text-[13px]">

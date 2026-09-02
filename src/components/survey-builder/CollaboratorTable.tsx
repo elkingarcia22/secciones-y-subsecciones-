@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { TableSelectionActions } from "@/components/action-rail";
-import { CheckIcon, ChevronDown, Eye, EyeOff, MinusIcon, Search, Trash2, UserRoundX, X } from "lucide-react";
+import { CheckIcon, ChevronDown, Eye, EyeOff, MinusIcon, Search, TriangleAlert, Trash2, UserRoundX, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -9,7 +9,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -39,9 +48,34 @@ import { NO_LEADER } from "./collaboratorTableShared";
 
 interface CollaboratorTableProps {
   collaborators: readonly Collaborator[];
+  /** The effective checked set: ad-hoc picks plus anyone a selected "Por
+   * grupos" group brings in. */
   selectedIds: readonly string[];
+  /** Bulk edits only (select/deselect page or all, "eliminar seleccionados"
+   * from the header menu): from here the table's own ticks become the whole
+   * audience, so the parent is expected to drop any group selection feeding
+   * in. A plain row's own checkbox goes through `onToggleIndividual` instead,
+   * which touches only that one person and leaves any selected group alone. */
   onChange: (ids: readonly string[]) => void;
+  /** A single row's own checkbox, for a person not covered by a selected
+   * group — an ad-hoc pick that must not disturb any group selection sitting
+   * alongside it. */
+  onToggleIndividual: (personId: string) => void;
   onSelectionChange?: (count: number, actions: TableSelectionActions) => void;
+  /** Checked *because* a selected group brings them in. A selected group is
+   * all-or-nothing, so unchecking one of these can't be a silent single-row
+   * toggle — it would quietly shrink a group the author explicitly picked
+   * whole — so it opens a popover instead, offering to either drop the whole
+   * group or keep everyone else in it individually selected. */
+  groupProtectedIds?: ReadonlySet<string>;
+  /** The selected-group value a protected person belongs to (e.g. "Ventas"),
+   * for the popover's wording. */
+  groupLabelFor?: (personId: string) => string | null;
+  onDeselectGroup?: (groupValue: string) => void;
+  /** Drops the group's "selected as a whole" status but keeps every member
+   * except `personId` individually picked — the group stops being tracked as
+   * a unit, but nobody besides that one person loses their spot. */
+  onKeepGroupRestIndividually?: (groupValue: string, personId: string) => void;
 }
 
 const PAGE_SIZES = [10, 25, 50] as const;
@@ -100,7 +134,12 @@ export function CollaboratorTable({
   collaborators,
   selectedIds,
   onChange,
+  onToggleIndividual,
   onSelectionChange,
+  groupProtectedIds,
+  groupLabelFor,
+  onDeselectGroup,
+  onKeepGroupRestIndividually,
 }: CollaboratorTableProps) {
   const [query, setQuery] = React.useState("");
   const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
@@ -114,6 +153,9 @@ export function CollaboratorTable({
   // Column filters: empty set means no filter. Multi-select per column.
   const [areaFilter, setAreaFilter] = React.useState<ReadonlySet<string>>(() => new Set());
   const [leaderFilter, setLeaderFilter] = React.useState<ReadonlySet<string>>(() => new Set());
+  // The one row currently asking to confirm dropping its whole group — at
+  // most one at a time, since answering it is the only way to open another.
+  const [pendingGroupConfirmId, setPendingGroupConfirmId] = React.useState<string | null>(null);
 
   const selected = React.useMemo(() => new Set(selectedIds), [selectedIds]);
 
@@ -192,10 +234,28 @@ export function CollaboratorTable({
   const setSelection = (ids: Iterable<string>) => onChange([...new Set(ids)]);
 
   const toggleOne = (id: string) => {
-    const next = new Set(selected);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelection(next);
+    // Checked because a selected group brings them in — a selected group is
+    // all-or-nothing, so unchecking one member can't be a silent toggle. Ask
+    // before touching the group instead of guessing.
+    if (groupProtectedIds?.has(id)) {
+      setPendingGroupConfirmId(id);
+      return;
+    }
+    // A plain pick — routed separately from bulk `onChange` so it never
+    // disturbs a group selection sitting alongside it (see the prop doc).
+    onToggleIndividual(id);
+  };
+
+  const confirmDeselectGroup = (personId: string) => {
+    const groupValue = groupLabelFor?.(personId);
+    if (groupValue) onDeselectGroup?.(groupValue);
+    setPendingGroupConfirmId(null);
+  };
+
+  const confirmKeepGroupRest = (personId: string) => {
+    const groupValue = groupLabelFor?.(personId);
+    if (groupValue) onKeepGroupRestIndividually?.(groupValue, personId);
+    setPendingGroupConfirmId(null);
   };
 
   const selectPage = () => setSelection([...selected, ...rows.map((p) => p.id)]);
@@ -471,6 +531,7 @@ export function CollaboratorTable({
           <TableBody>
             {rows.map((person) => {
               const isSelected = selected.has(person.id);
+              const groupValue = groupProtectedIds?.has(person.id) ? groupLabelFor?.(person.id) ?? null : null;
               return (
                 <TableRow
                   key={person.id}
@@ -479,16 +540,78 @@ export function CollaboratorTable({
                   className="cursor-pointer border-border/60"
                 >
                   <TableCell className="px-0">
-                    <div className="flex items-center justify-center">
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => toggleOne(person.id)}
-                        // The row already handles the click; letting it through
-                        // would toggle twice and cancel itself out.
-                        onClick={(event) => event.stopPropagation()}
-                        aria-label={`Seleccionar a ${person.name}`}
-                      />
-                    </div>
+                    <Popover
+                      open={pendingGroupConfirmId === person.id}
+                      onOpenChange={(open) => {
+                        if (!open) setPendingGroupConfirmId(null);
+                      }}
+                    >
+                      <PopoverAnchor asChild>
+                        <div className="flex items-center justify-center">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleOne(person.id)}
+                            // The row already handles the click; letting it through
+                            // would toggle twice and cancel itself out.
+                            onClick={(event) => event.stopPropagation()}
+                            aria-label={`Seleccionar a ${person.name}`}
+                          />
+                        </div>
+                      </PopoverAnchor>
+                      {groupValue && (
+                        <PopoverContent
+                          align="start"
+                          className="w-[336px] gap-0 overflow-hidden p-0"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <div className="flex items-start gap-3 p-4">
+                            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-status-negative/10 text-status-negative ring-4 ring-status-negative/5">
+                              <TriangleAlert className="h-[18px] w-[18px]" strokeWidth={2.25} />
+                            </span>
+                            <PopoverHeader className="gap-1 pt-1">
+                              <PopoverTitle className="text-[13px] font-bold leading-snug text-text-primary">
+                                ¿Deseleccionar a {person.name}?
+                              </PopoverTitle>
+                              <PopoverDescription className="text-[12px] leading-relaxed">
+                                Pertenece al grupo{" "}
+                                <span className="font-semibold text-text-primary">{groupValue}</span>,
+                                seleccionado por completo. El grupo dejará de estar completo — elige qué
+                                pasa con el resto.
+                              </PopoverDescription>
+                            </PopoverHeader>
+                          </div>
+                          <div className="flex flex-col gap-1.5 border-t border-border/60 bg-muted/30 p-3">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="w-full justify-center"
+                              onClick={() => confirmKeepGroupRest(person.id)}
+                            >
+                              Mantener al resto seleccionado
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="destructive"
+                              className="w-full justify-center"
+                              onClick={() => confirmDeselectGroup(person.id)}
+                            >
+                              Deseleccionar todo el grupo
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="w-full justify-center text-muted-foreground"
+                              onClick={() => setPendingGroupConfirmId(null)}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      )}
+                    </Popover>
                   </TableCell>
                   <CollaboratorRow person={person} />
                 </TableRow>

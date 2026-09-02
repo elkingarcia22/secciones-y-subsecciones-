@@ -1,4 +1,5 @@
 import * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart3,
   BookOpen,
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { moveItemById } from "@/lib/reorder";
+import { cascadeContainer, cascadeItem } from "@/lib/cascadeAnimation";
 import { Switch } from "@/components/ui/switch";
 import { DemographicCard, SaveToModuleButton } from "./DemographicCard";
 import {
@@ -248,7 +250,9 @@ export function DemographicsEditor({
         </label>
       </div>
 
-      <div className="flex flex-col gap-3 px-6 py-6">
+      {/* `cascade-enter` staggers the accordions in one at a time on entry,
+          instead of the whole block settling as one. */}
+      <div className="flex flex-col gap-3 px-6 py-6 cascade-enter">
         {enabled ? (
           <>
             <p className="text-[13px] leading-relaxed text-text-secondary">
@@ -443,8 +447,15 @@ function AccordionSection({
       {...(isDefaultAnchor ? { [ANCHOR_ATTRIBUTE]: true } : {})}
       className="rounded-xl border border-border/60 bg-surface"
     >
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggle();
+          }
+        }}
         onClick={onToggle}
         aria-expanded={isOpen}
         className={cn(
@@ -488,13 +499,31 @@ function AccordionSection({
           )}
           strokeWidth={2.5}
         />
-      </button>
+      </div>
 
-      {isOpen && (
-        <div className="border-t border-border/60 px-4 py-4 animate-in fade-in slide-in-from-top-1 duration-200">
-          {children}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={{
+              hidden: { height: 0, opacity: 0 },
+              visible: {
+                height: "auto",
+                opacity: 1,
+                transition: {
+                  height: { duration: 0.3, ease: "easeInOut" },
+                  opacity: { duration: 0.3, ease: "easeInOut" },
+                },
+              },
+            }}
+            className="border-t border-border/60 overflow-hidden px-4 py-4"
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -517,7 +546,8 @@ function CatalogRow({
   extra?: React.ReactNode;
 }) {
   return (
-    <li
+    <motion.li
+      variants={cascadeItem}
       className={cn(
         "group flex items-center gap-3 bg-surface px-3.5 py-2.5 transition-all",
         isActive && "hover:bg-border/20"
@@ -552,7 +582,7 @@ function CatalogRow({
       </button>
 
       {isActive && extra}
-    </li>
+    </motion.li>
   );
 }
 
@@ -611,7 +641,12 @@ function SystemAccordionContent({
   const rowsAfter = isEditingHere ? SYSTEM_DEMOGRAPHICS.slice(editingIndex + 1) : [];
 
   const renderEntries = (entries: typeof SYSTEM_DEMOGRAPHICS) => (
-    <ul className="divide-y divide-border/50 overflow-hidden rounded-md border border-border/70 bg-surface">
+    <motion.ul
+      initial="hidden"
+      animate="show"
+      variants={cascadeContainer}
+      className="divide-y divide-border/50 overflow-hidden rounded-md border border-border/70 bg-surface"
+    >
       {entries.map((entry) => {
         const field = findFieldByCatalogKey(fields, entry.key);
         return (
@@ -633,7 +668,7 @@ function SystemAccordionContent({
           />
         );
       })}
-    </ul>
+    </motion.ul>
   );
 
   return (
@@ -709,7 +744,12 @@ function LibraryAccordionContent({
   const rowsAfter = isEditingHere ? library.slice(editingIndex + 1) : [];
 
   const renderEntries = (entries: readonly LibraryDemographic[]) => (
-    <ul className="divide-y divide-border/50 overflow-hidden rounded-md border border-border/70 bg-surface">
+    <motion.ul
+      initial="hidden"
+      animate="show"
+      variants={cascadeContainer}
+      className="divide-y divide-border/50 overflow-hidden rounded-md border border-border/70 bg-surface"
+    >
       {entries.map((entry) => {
         const field = findFieldByCatalogKey(fields, entry.key);
         return (
@@ -722,7 +762,7 @@ function LibraryAccordionContent({
           />
         );
       })}
-    </ul>
+    </motion.ul>
   );
 
   return (
@@ -821,7 +861,12 @@ function ImportedAccordionContent({
   const rowsAfter = isEditingHere ? entries.slice(editingIndex + 1) : [];
 
   const renderEntries = (slice: readonly ImportedDemographic[]) => (
-    <ul className="divide-y divide-border/50 overflow-hidden rounded-md border border-border/70 bg-surface">
+    <motion.ul
+      initial="hidden"
+      animate="show"
+      variants={cascadeContainer}
+      className="divide-y divide-border/50 overflow-hidden rounded-md border border-border/70 bg-surface"
+    >
       {slice.map((entry) => {
         const field = findFieldByCatalogKey(fields, importedCatalogKey(entry.key));
         const valueCount = entry.optionLabels.length;
@@ -853,7 +898,7 @@ function ImportedAccordionContent({
           />
         );
       })}
-    </ul>
+    </motion.ul>
   );
 
   return (

@@ -30,6 +30,8 @@ export interface UploadZoneProps {
   activeText?: string
   /** Additional CSS classes */
   className?: string
+  /** Whether to use AI styling */
+  isAI?: boolean
 }
 
 /**
@@ -50,6 +52,7 @@ export function UploadZone({
   idleText = 'Drag and drop files here or click to browse',
   activeText = 'Drop files here...',
   className,
+  isAI,
 }: UploadZoneProps) {
   const [isDragActive, setIsDragActive] = React.useState(false)
   const [localError, setLocalError] = React.useState<string | null>(null)
@@ -127,8 +130,17 @@ export function UploadZone({
         onClick={() => !disabled && inputRef.current?.click()}
         className={cn(
           'relative flex flex-col items-center justify-center min-h-[160px] p-6 border-2 border-dashed rounded-xl transition-all cursor-pointer',
-          'bg-muted/30 border-border hover:bg-muted/30 hover:border-primary/50',
-          isDragActive && 'bg-primary/5 border-primary scale-[1.01] shadow-card',
+          // Same hover wash as the mode cards. No `magic-card-lift`: the
+          // zone already scales on drag, and stacking a rise on top of
+          // that reads as a jitter.
+          !disabled && 'magic-card-sweep',
+          !disabled && isAI && 'magic-card-sweep-ai',
+          !isAI
+            ? 'bg-surface border-border hover:border-primary/40'
+            : 'bg-transparent border-border hover:border-ai-gradient-start/40',
+          'overflow-hidden border',
+isDragActive && !isAI ? 'bg-primary/5 border-primary scale-[1.01] shadow-card' : '',
+          isDragActive && isAI ? 'bg-surface border-ai-gradient border-transparent scale-[1.01] shadow-card' : '',
           hasError && 'bg-destructive/5 border-destructive/50 hover:border-destructive',
           disabled && 'opacity-50 cursor-not-allowed grayscale-[0.5] hover:border-border hover:bg-muted/30'
         )}
@@ -144,7 +156,8 @@ export function UploadZone({
           aria-hidden="true"
         />
 
-        <div className="flex flex-col items-center text-center gap-3">
+  
+        <div className="relative z-[1] flex flex-col items-center text-center gap-3">
           <div className={cn(
             'p-3 rounded-full bg-background shadow-card border border-border/60',
             isDragActive && 'text-primary',

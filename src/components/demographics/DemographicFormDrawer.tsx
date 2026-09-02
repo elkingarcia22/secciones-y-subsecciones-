@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SheetFooter } from "@/components/ui/sheet";
 import { DrawerShell } from "@/components/overlays/DrawerShell";
+import { MagicCard } from "@/components/ui/magic-card";
 import { DEMOGRAPHIC_TYPES } from "@/components/survey-builder/demographics";
 import {
   createLibraryDemographic,
@@ -206,52 +207,32 @@ export function DemographicFormDrawer({
           )}
         </div>
 
-        <fieldset className="flex flex-col gap-2.5">
-          <legend className="mb-1 text-[13px] font-bold text-text-primary">
-            Forma de responder
+        <fieldset className="flex flex-col gap-1.5">
+          <legend className="mb-1.5 text-[13px] font-bold text-text-primary">
+            Tipo de respuesta
           </legend>
-          {DEMOGRAPHIC_TYPES.map((entry) => {
-            const Icon = entry.icon;
-            const selected = type === entry.value;
-            return (
-              <button
-                key={entry.value}
-                type="button"
-                onClick={() => setType(entry.value)}
-                aria-pressed={selected}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-all",
-                  selected
-                    ? "border-primary bg-primary/[0.04] shadow-[0_0_0_1px_theme(colors.brand.DEFAULT)]"
-                    : "border-border bg-surface hover:border-border hover:bg-muted/40"
-                )}
-              >
-                <span
+          <div className="flex flex-wrap gap-2">
+            {DEMOGRAPHIC_TYPES.map((entry) => {
+              const Icon = entry.icon;
+              const selected = type === entry.value;
+              return (
+                <button
+                  key={entry.value}
+                  type="button"
+                  onClick={() => setType(entry.value)}
                   className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                    selected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                    "flex flex-1 min-w-[100px] flex-col items-center justify-center gap-1.5 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                    selected
+                      ? "border-primary bg-primary/10 text-primary shadow-sm"
+                      : "border-border bg-surface text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                   )}
                 >
-                  <Icon className="h-5 w-5" strokeWidth={2} />
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-[13px] font-bold text-text-primary">{entry.label}</span>
-                  <span className="mt-0.5 text-[12px] text-muted-foreground">
-                    {TYPE_HINTS[entry.value]}
-                  </span>
-                </span>
-                <span
-                  aria-hidden
-                  className={cn(
-                    "flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-                    selected ? "border-primary" : "border-border"
-                  )}
-                >
-                  {selected && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
-                </span>
-              </button>
-            );
-          })}
+                  <Icon className="h-4 w-4" strokeWidth={selected ? 2.5 : 2} />
+                  <span className="text-[10px] font-semibold leading-tight">{entry.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </fieldset>
 
         <div className="flex flex-col gap-2">

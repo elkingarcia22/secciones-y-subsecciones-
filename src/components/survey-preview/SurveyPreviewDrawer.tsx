@@ -62,6 +62,9 @@ export function SurveyPreviewDrawer({ draft, open, onOpenChange }: SurveyPreview
   const [isContentsOpen, setIsContentsOpen] = React.useState(false);
 
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  // The drawer's own root: confetti on the closing page portals here so the
+  // burst is clipped to the panel instead of covering the whole screen.
+  const drawerRef = React.useRef<HTMLDivElement>(null);
 
   // Each opening is a fresh run-through: the point of the preview is to see the
   // survey as someone meeting it for the first time.
@@ -139,7 +142,7 @@ export function SurveyPreviewDrawer({ draft, open, onOpenChange }: SurveyPreview
           Vista previa de {draft.name.trim() || "la encuesta"}
         </SheetTitle>
 
-        <div className="flex h-full min-h-0 w-full flex-col">
+        <div ref={drawerRef} className="relative flex h-full min-h-0 w-full flex-col">
           <PreviewHeader
             name={draft.name}
             page={page}
@@ -172,6 +175,7 @@ export function SurveyPreviewDrawer({ draft, open, onOpenChange }: SurveyPreview
 
             {(page?.kind === "section" || page?.kind === "demographics") && (
               <PreviewQuestionsPage
+                key={page.id}
                 page={page}
                 answers={answers}
                 followUps={followUps}
@@ -186,6 +190,7 @@ export function SurveyPreviewDrawer({ draft, open, onOpenChange }: SurveyPreview
                 summary={summary}
                 answeredCount={totals.answered}
                 onRestart={() => goTo(0)}
+                drawerRef={drawerRef}
               />
             )}
           </div>

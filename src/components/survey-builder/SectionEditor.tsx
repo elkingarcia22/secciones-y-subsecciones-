@@ -1,9 +1,12 @@
 import * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronUp, CornerDownRight, Layers, Plus, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/feedback/EmptyState";
+import { EmptyStateActionButton } from "@/components/feedback/EmptyStateActionButton";
+import { AiGeneratedBadge } from "@/components/ai-interaction";
+import { AiCreateChip } from "./AiCreateChip";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
 import { SubsectionAccordion, type SubsectionAccordionHandlers } from "./SubsectionAccordion";
 import { SectionQuestions } from "./SectionQuestions";
@@ -11,6 +14,11 @@ import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
 import { SECTION_HEADER_DIVIDER, SIBLING_DIVIDER } from "./depthTheme";
 import { childEntries, type SectionTreeEntry } from "./sectionTree";
 import { depthLabel, canHaveQuestions } from "./surveyBuilderTypes";
+import {
+  cascadeContainer,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+} from "@/lib/cascadeAnimation";
 
 interface SectionEditorProps extends SubsectionAccordionHandlers {
   readOnly?: boolean;
@@ -25,6 +33,17 @@ interface SectionEditorProps extends SubsectionAccordionHandlers {
    * needs and opens that question straight away, in one click.
    */
   onAddSubsectionWithQuestion: (parentId: string) => void;
+  /**
+   * Level 1's third empty-state option: hands the section over to the AI
+   * drawer, which proposes the subsections and questions to fill it with.
+   */
+  onGenerateWithAi: (sectionId: string) => void;
+  /**
+   * The inline AI composer, when it was opened from THIS section. It replaces
+   * the empty state in place — the panel never leaves, and the proposal is
+   * built where it will land.
+   */
+  aiComposer?: React.ReactNode;
 }
 
 /**
@@ -38,6 +57,8 @@ export function SectionEditor({
   onToggleCardCollapse,
   canDelete,
   onAddSubsectionWithQuestion,
+  onGenerateWithAi,
+  aiComposer,
   ...handlers
 }: SectionEditorProps) {
   const { section, depth, numbering } = entry;
@@ -140,9 +161,12 @@ export function SectionEditor({
             </span>
 
             <div className="min-w-0 flex-1">
-              <p className="px-1.5 text-[10px] font-bold uppercase tracking-widest text-primary/70">
-                {depthLabel(depth)}
-              </p>
+              <div className="flex items-center gap-2 px-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-primary/70">
+                  {depthLabel(depth)}
+                </p>
+                {section.isAiGenerated && <AiGeneratedBadge />}
+              </div>
               <input
                 value={section.title}
                 readOnly={readOnly}
@@ -187,34 +211,48 @@ export function SectionEditor({
         )}
       </div>
 
-      {!isCollapsed && (
-        <div className="flex min-h-0 flex-col gap-4 px-6 py-5 animate-in fade-in slide-in-from-top-1 duration-300">
-          {children.length === 0 && section.questions.length === 0 ? (
+      <AnimatePresence initial={false}>
+        {!isCollapsed && (
+          <motion.div
+            variants={{
+              collapsed: { height: 0, opacity: 0 },
+              expanded: {
+                height: "auto",
+                opacity: 1,
+                transition: {
+                  height: { duration: 0.3, ease: "easeInOut" },
+                  opacity: { duration: 0.3, ease: "easeInOut" },
+                }
+              }
+            }}
+            initial="collapsed"
+            animate="expanded"
+            exit="collapsed"
+            className="flex min-h-0 flex-col gap-4 px-6 py-5 overflow-hidden"
+          >
+          {aiComposer ? (
+            aiComposer
+          ) : children.length === 0 && section.questions.length === 0 ? (
             <EmptyState
               icon={Layers}
               title="Esta sección está vacía"
-              description="Las secciones pueden contener preguntas o subsecciones. Crea una subsección para organizar el contenido, o crea directamente una pregunta."
+              description="Las secciones pueden contener preguntas o subsecciones. Créalas tú mismo, o cuéntale a la IA de qué trata la encuesta y deja que proponga la estructura completa."
               className="p-8"
               action={
                 <div className="flex flex-wrap items-center justify-center gap-2">
-                  <Button
+                  <EmptyStateActionButton
                     onClick={() => onAddSubsection(section.id)}
-                    variant="secondary"
-                    size="sm"
-                    className="gap-2 rounded-xl"
+                    icon={<CornerDownRight className="size-4" strokeWidth={2.5} />}
                   >
-                    <CornerDownRight className="h-4 w-4" strokeWidth={2.5} />
                     Crear subsección
-                  </Button>
-                  <Button
+                  </EmptyStateActionButton>
+                  <EmptyStateActionButton
                     onClick={() => onAddSubsectionWithQuestion(section.id)}
-                    variant="secondary"
-                    size="sm"
-                    className="gap-2 rounded-xl"
+                    icon={<Plus className="size-4" strokeWidth={2.5} />}
                   >
-                    <Plus className="h-4 w-4" strokeWidth={2.5} />
                     Crear pregunta
-                  </Button>
+                  </EmptyStateActionButton>
+                  {!readOnly && <AiCreateChip onClick={() => onGenerateWithAi(section.id)} />}
                 </div>
               }
             />
@@ -236,19 +274,35 @@ export function SectionEditor({
                   onReorderQuestions={handlers.onReorderQuestions}
                   sections={handlers.sections}
                   onMoveQuestion={handlers.onMoveQuestion}
+                  aiStartQuestionId={handlers.aiStartQuestionId}
                 />
               )}
               {children.length > 0 && (
-                <ul className={cn("flex flex-col", SIBLING_DIVIDER)}>
-                  {children.map((child) => (
-                    <SubsectionAccordion key={child.section.id} entry={child} readOnly={readOnly} {...handlers} />
+                <motion.ul
+                  className={cn("flex flex-col", SIBLING_DIVIDER)}
+                  initial="hidden"
+                  animate="show"
+                  variants={cascadeContainer}
+                >
+                  {children.map((child, index) => (
+                    <SubsectionAccordion
+                      key={child.section.id}
+                      entry={child}
+                      readOnly={readOnly}
+                      index={index}
+                      // This row's own content starts right as the row itself
+                      // settles in, not after every sibling row has.
+                      contentDelay={cascadeItemSettleTime(0, index) + CASCADE_CONTENT_GAP}
+                      {...handlers}
+                    />
                   ))}
-                </ul>
+                </motion.ul>
               )}
             </>
           )}
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </section>
   );
 }

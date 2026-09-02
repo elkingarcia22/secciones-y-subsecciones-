@@ -1,4 +1,5 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import {
   ChevronDown,
   ChevronLeft,
@@ -11,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { cascadeContainer, cascadeItem } from "@/lib/cascadeAnimation";
 import {
   Popover,
   PopoverAnchor,
@@ -172,8 +174,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     const hasChildren = !!child.children;
     const isCurrent = currentNodeId === child.id;
     return (
-      <button
+      <motion.button
         key={child.id}
+        variants={cascadeItem}
         onClick={() => (hasChildren ? pushDrill(child) : selectNode(child.id))}
         className={cn(
           "relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:bg-background hover:text-text-primary",
@@ -183,7 +186,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         {isCurrent && <span className="absolute -left-[9px] bottom-0.5 top-0.5 w-0.5 rounded-full bg-primary" />}
         <span className="min-w-0 flex-1 truncate text-left">{child.label}</span>
         {hasChildren && <ChevronRight className="h-3 w-3 shrink-0 text-border-strong" strokeWidth={2.5} />}
-      </button>
+      </motion.button>
     );
   };
 
@@ -239,9 +242,17 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             )}
           >
             <div className="min-h-0 overflow-hidden">
-              <div className="ml-4 flex flex-col gap-1 border-l border-border/60 pl-2">
+              {/* Rows stay mounted across open/close (the grid-rows above does
+                  the height animation), so the cascade re-triggers off isOpen
+                  rather than mount — otherwise it would only ever play once. */}
+              <motion.div
+                initial="hidden"
+                animate={isOpen ? "show" : "hidden"}
+                variants={cascadeContainer}
+                className="ml-4 flex flex-col gap-1 border-l border-border/60 pl-2"
+              >
                 {item.children!.map((child) => renderChildRow(child))}
-              </div>
+              </motion.div>
             </div>
           </div>
         )}

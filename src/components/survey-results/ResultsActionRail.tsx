@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Download, Bell, Minimize2, Pin, Info, Tag, ShieldCheck, Users, Lock, CalendarRange, Sparkles, type LucideIcon } from "lucide-react";
+import { Download, Bell, Minimize2, Pin, Info, Tag, ShieldCheck, Users, Lock, CalendarRange, Sparkles, Eye, type LucideIcon } from "lucide-react";
 import { AiAgentDrawer } from "@/components/ai/AiAgentDrawer";
 import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
 import { cn } from "@/lib/utils";
@@ -8,7 +8,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { SURVEY_KIND_LABELS, type SurveyDraft } from "@/components/survey-builder";
 import type { SegmentDefinition, SurveyResults } from "@/mocks/surveyResults";
 import { formatPreviewDate } from "@/components/survey-preview/previewModel";
-import { RailSelectionChip } from "@/components/action-rail";
+import { RailSelectionChip, useRailAutoHide } from "@/components/action-rail";
 
 interface ResultsActionRailProps {
   draft: SurveyDraft;
@@ -25,6 +25,7 @@ interface ResultsActionRailProps {
   onSendReminders: () => void;
   /** Drops the table's tick marks from the rail. */
   onClearSelection: () => void;
+  onPreview?: () => void;
 }
 
 /** "área" → "áreas", "líder" → "líderes", "país" → "países": every segment
@@ -66,18 +67,24 @@ export function ResultsActionRail({
   onDownload,
   onSendReminders,
   onClearSelection,
+  onPreview,
 }: ResultsActionRailProps) {
   const start = formatPreviewDate(draft.startDate);
   const end = formatPreviewDate(draft.endDate);
   const isAnonymous = draft.visibility === "anonymous";
-  const [autoHide, setAutoHide] = React.useState(false);
+  const [autoHide, setAutoHide] = useRailAutoHide();
   const [isExpanded, setIsExpanded] = React.useState(true);
   const [aiDrawerOpen, setAiDrawerOpen] = React.useState(false);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const forceOpenTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Step-change detection (contextual actions) ──────────
   const prevSelectedRef = React.useRef(selectedCount > 0);
   const [stepChangeKey, setStepChangeKey] = React.useState(0);
+  /** False until the mount-grace effect below has run once — lets both
+   * sync effects below tell a real change from their own first pass, so
+   * neither collapses the rail before the grace period even starts. */
+  const hasMountedRef = React.useRef(false);
 
   const startCollapseTimer = React.useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -102,8 +109,10 @@ export function ResultsActionRail({
       // Force the rail open and cancel any pending collapses
       setIsExpanded(true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    } else {
-      // Selection cleared: resume auto-hide if it was configured
+    } else if (hasMountedRef.current) {
+      // Selection cleared: resume auto-hide if it was configured. Skipped
+      // on the effect's own first pass so the mount-grace effect below
+      // gets to hold the rail open first.
       if (autoHide) {
         startCollapseTimer();
       }
@@ -114,11 +123,37 @@ export function ResultsActionRail({
     if (!autoHide || selectedCount > 0) {
       setIsExpanded(true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    } else {
+    } else if (hasMountedRef.current) {
       setIsExpanded(false);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     }
   }, [autoHide, selectedCount]);
+
+  // On first mount, hold the rail open for a few seconds before autoHide
+  // collapses it — whoever just opened this screen should see the bar
+  // open at least once. The cleanup resets `hasMountedRef` rather than
+  // leaving it set, because StrictMode runs every effect's
+  // setup → cleanup → setup once in dev: without the reset, that replay
+  // would see a "mounted" ref on its second setup pass and collapse the
+  // rail immediately, well before the real timer below ever fires.
+  React.useEffect(() => {
+    hasMountedRef.current = true;
+    if (!autoHide || selectedCount > 0) {
+      return () => {
+        hasMountedRef.current = false;
+      };
+    }
+    if (forceOpenTimerRef.current) clearTimeout(forceOpenTimerRef.current);
+    forceOpenTimerRef.current = setTimeout(() => {
+      if (autoHide) startCollapseTimer();
+    }, 1500);
+    return () => {
+      hasMountedRef.current = false;
+      if (forceOpenTimerRef.current) clearTimeout(forceOpenTimerRef.current);
+    };
+    // Mount-only grace period — must run once, not on every autoHide flip.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMouseEnter = () => {
     setIsExpanded(true);
@@ -192,38 +227,14 @@ export function ResultsActionRail({
               onClick={onDownload}
             />
 
-            <HoverCard openDelay={100} closeDelay={100}>
-              <HoverCardTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Información de la encuesta"
-                  className="dock-item hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-                >
-                  <Info className="h-[20px] w-[20px]" strokeWidth={2} />
-                </button>
-              </HoverCardTrigger>
-              <HoverCardContent
-                align="center"
-                side="top"
-                sideOffset={16}
-                className="w-[280px] rounded-xl p-3 shadow-rail border-white/10 bg-surface-nav text-white/60 gap-0"
-              >
-                <div className="px-1 text-[13px] font-semibold text-white leading-none">Información</div>
-                <div className="mt-1.5 mb-2 h-px bg-white/10" />
-                <div className="flex flex-col gap-1.5 px-1 pb-0.5">
-                  {draft.kind && (
-                    <InfoRow icon={Tag} label="Tipo" value={SURVEY_KIND_LABELS[draft.kind]} />
-                  )}
-                  <InfoRow icon={isAnonymous ? ShieldCheck : Users} label="Privacidad" value={isAnonymous ? "Anónima" : "Pública"} />
-                  {isAnonymous && (
-                    <InfoRow icon={Lock} label="Mínimo por grupo" value={`${results.threshold} respuestas`} />
-                  )}
-                  <InfoRow icon={Users} label="Audiencia" value={`${results.participation.invited.toLocaleString("es-CO")} invitados`} />
-                  <InfoRow icon={CalendarRange} label="Fecha de inicio" value={start ?? "—"} />
-                  <InfoRow icon={CalendarRange} label="Fecha de finalización" value={end ?? "—"} />
-                </div>
-              </HoverCardContent>
-            </HoverCard>
+            {onPreview && (
+              <RailButton
+                icon={<Eye className="h-[20px] w-[20px]" strokeWidth={2} />}
+                label="Vista previa"
+                onClick={onPreview}
+              />
+            )}
+
 
             <svg width="0" height="0" className="absolute">
               <defs>

@@ -47,6 +47,12 @@ export function useClickOutside(
     if (!enabled) return;
 
     const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      // Radix modals (Select, DropdownMenu) lock scroll and block pointer events
+      // outside the portal. Clicking outside them targets `body`, which would trigger
+      // a false-positive outside click. We ignore these so dismissing a list doesn't
+      // also close the editor.
+      if (document.body.hasAttribute("data-scroll-locked")) return;
+
       const target = event.target;
       if (!(target instanceof Node)) return;
       if (ref.current && ref.current.contains(target)) return;

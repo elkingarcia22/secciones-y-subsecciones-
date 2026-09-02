@@ -4,6 +4,7 @@ import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 
 import { cn } from "@/lib/utils"
+import { FluidHighlight } from "@/components/ui/fluid-highlight"
 import {
   Dialog,
   DialogContent,
@@ -90,17 +91,24 @@ function CommandInput({
 
 function CommandList({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.List>) {
   return (
     <CommandPrimitive.List
       data-slot="command-list"
+      // `relative`: es el bloque contenedor de la píldora de resaltado, y a la
+      // vez el elemento con scroll, así que la píldora acompaña al contenido
+      // cuando la lista se desplaza.
       className={cn(
-        "max-h-72 scroll-py-1 overflow-x-hidden overflow-y-auto outline-none",
+        "relative max-h-72 scroll-py-1 overflow-x-hidden overflow-y-auto outline-none",
         className
       )}
       {...props}
-    />
+    >
+      <FluidHighlight />
+      {children}
+    </CommandPrimitive.List>
   )
 }
 
@@ -155,7 +163,12 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none in-data-[slot=dialog-content]:rounded-lg! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-accent data-selected:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:*:[svg]:text-foreground",
+        // Sin `data-selected:bg-accent`: el fondo del ítem activo lo pinta la
+        // píldora compartida (FluidHighlight) que vive en CommandList y se
+        // desplaza entre ítems. Si el ítem también pintara el suyo, el destino
+        // ya estaría relleno antes de que la píldora llegue y no se vería el
+        // recorrido. `z-[1]` mantiene texto e iconos por encima de ella.
+        "group/command-item relative z-[1] flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none transition-colors duration-150 in-data-[slot=dialog-content]:rounded-lg! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:*:[svg]:text-foreground",
         className
       )}
       {...props}

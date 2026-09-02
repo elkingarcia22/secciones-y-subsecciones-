@@ -1,4 +1,5 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import {
   AlignLeft,
   ChevronDown,
@@ -19,6 +20,7 @@ import { ResultsSectionTree } from "./ResultsSectionTree";
 import { ResultsSortHeader } from "./ResultsSortHeader";
 import { countSectionAnswers, countSectionQuestions } from "./sectionTotals";
 import type { ResultLevel } from "./resultLevels";
+import { cascadeContainer, cascadeItem } from "@/lib/cascadeAnimation";
 
 const formatCount = (value: number) => new Intl.NumberFormat("es-CO").format(value);
 
@@ -65,13 +67,14 @@ export function QuestionBreakdownView({
   onOpenComments,
 }: QuestionBreakdownViewProps) {
   const renderQuestions = React.useCallback(
-    (section: SectionResult) => (
+    (section: SectionResult, revealDelay: number) => (
       <QuestionTable
         questions={section.questions}
         breakdowns={breakdowns}
         hideCounts={!visibleLevels.has("question")}
         onDrillDown={onDrillDown}
         onOpenComments={onOpenComments}
+        revealDelay={revealDelay}
       />
     ),
     [breakdowns, visibleLevels, onDrillDown, onOpenComments]
@@ -154,12 +157,16 @@ function QuestionTable({
   hideCounts,
   onDrillDown,
   onOpenComments,
+  revealDelay = 0,
 }: {
   questions: readonly QuestionResult[];
   breakdowns: ReadonlyMap<string, QuestionBreakdown>;
   hideCounts: boolean;
   onDrillDown: (questionId: string, tallyId: string) => void;
   onOpenComments: (questionId: string) => void;
+  /** Delay before this table's rows start cascading in — set by the section
+   * tree so questions only start once the row above them has settled. */
+  revealDelay?: number;
 }) {
   const [sortKey, setSortKey] = React.useState<SortKey | null>(null);
   const [ascending, setAscending] = React.useState(true);
@@ -210,7 +217,13 @@ function QuestionTable({
           <th className="w-10 py-2.5 pr-4" aria-label="Detalle" />
         </tr>
       </thead>
-      <tbody className="divide-y divide-border/25">
+      <motion.tbody
+        className="divide-y divide-border/25"
+        initial="hidden"
+        animate="show"
+        custom={revealDelay}
+        variants={cascadeContainer}
+      >
         {sorted.map((question, index) => (
           <QuestionRows
             key={question.id}
@@ -222,7 +235,7 @@ function QuestionTable({
             onOpenComments={onOpenComments}
           />
         ))}
-      </tbody>
+      </motion.tbody>
     </table>
   );
 }
@@ -253,7 +266,8 @@ function QuestionRows({
 
   return (
     <>
-      <tr
+      <motion.tr
+        variants={cascadeItem}
         role="button"
         tabIndex={0}
         aria-expanded={open}
@@ -318,7 +332,7 @@ function QuestionRows({
             strokeWidth={2}
           />
         </td>
-      </tr>
+      </motion.tr>
 
       {open && (
         <tr className="bg-muted/30">

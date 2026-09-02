@@ -34,13 +34,15 @@ import {
   insertAfterSibling,
   isBranch,
   isQuestionComplete,
+  isDemographicComplete,
   isStepComplete,
   isStepReachable,
   moveQuestionTo,
   moveSectionTo,
   questionBlockedReason,
   nextSelectionAfterRemoval,
-  participantCount,
+  participantsGroupBreakdown,
+  totalParticipantCount,
   pathIds,
   patchSection,
   removeSection,
@@ -60,6 +62,10 @@ import {
 } from "@/components/survey-builder";
 import { SurveyPreviewDrawer, canPreview } from "@/components/survey-preview";
 import { QuestionBankDrawer } from "@/components/survey-builder/QuestionBankDrawer";
+import { AiSectionsComposer } from "@/components/survey-builder/AiSectionsComposer";
+import { AiGenerationReviewBar } from "@/components/survey-builder/AiGenerationReviewBar";
+import { SectionsEmptyState } from "@/components/survey-builder/SectionsEmptyState";
+import type { AiScope, AiSectionsBrief } from "@/components/survey-builder/aiSectionGenerator";
 
 interface SurveyBuilderProps {
   initialDraft?: SurveyDraft;
@@ -121,7 +127,7 @@ export function SurveyBuilder({
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setIsSectionsPanelCollapsed(true);
-    }, 8000);
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
   // Steps the author has passed through. Visit-based steps (welcome,
@@ -175,6 +181,9 @@ export function SurveyBuilder({
   // directly, so there is no draft to save or discard — opening another row
   // just moves the form onto it.
   const [editingQuestionId, setEditingQuestionId] = React.useState<string | null>(null);
+  /** La pregunta creada desde "crear pregunta con IA", si hay alguna abierta:
+   * su formulario se monta con la IA ya pidiendo de qué va la pregunta. */
+  const [aiQuestionId, setAiQuestionId] = React.useState<string | null>(null);
   const [renamingId, setRenamingId] = React.useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null);
   // The preview reads the same draft the builder is editing, so there is
@@ -221,13 +230,37 @@ export function SurveyBuilder({
   const railRef = React.useRef<HTMLDivElement>(null);
 
   // Bumped whenever validation opens a question the author didn't click on
-  // themselves, so the workspace scrolls it into view instead of leaving it
-  // open somewhere off-screen.
+  // themselves, or a section/subsection/question is freshly created, so the
+  // workspace scrolls it into view instead of leaving it open somewhere
+  // off-screen.
   const [scrollToAnchorTick, setScrollToAnchorTick] = React.useState(0);
   React.useEffect(() => {
     if (scrollToAnchorTick === 0) return;
-    const anchor = workspaceRef.current?.querySelector<HTMLElement>(`[${ANCHOR_ATTRIBUTE}]`);
-    anchor?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const container = workspaceRef.current;
+    const anchor = container?.querySelector<HTMLElement>(`[${ANCHOR_ATTRIBUTE}]`);
+    if (!container || !anchor) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const railRect = railRef.current?.getBoundingClientRect();
+
+    // The floating rail sits over the workspace instead of pushing it up, so
+    // centering the anchor's own box can still land it half hidden behind
+    // the rail. Padding the anchor's scroll margin by however much the rail
+    // overlaps makes the centering math treat that overlap as part of the
+    // anchor, pushing the true content above it — `scrollIntoView` reads
+    // `scroll-margin` as part of the target's box, so this needs no manual
+    // scroll math (which, unlike `scrollIntoView`, doesn't reliably animate
+    // on a backgrounded tab).
+    const isBottomDocked = railRect !== undefined && railRect.width > railRect.height;
+    const overlap =
+      isBottomDocked && railRect.top < containerRect.bottom
+        ? Math.max(0, containerRect.bottom - railRect.top)
+        : 0;
+
+    const previousMargin = anchor.style.scrollMarginBottom;
+    anchor.style.scrollMarginBottom = `${overlap}px`;
+    anchor.scrollIntoView({ behavior: "smooth", block: "center" });
+    anchor.style.scrollMarginBottom = previousMargin;
   }, [scrollToAnchorTick]);
 
   const questionCount = React.useMemo(() => countQuestions(draft.sections), [draft.sections]);
@@ -235,7 +268,11 @@ export function SurveyBuilder({
   // matters once there's at least one question to round up from zero.
   const estimatedMinutes =
     questionCount === 0 ? 0 : Math.max(1, Math.round(questionCount * MINUTES_PER_QUESTION));
-  const participantsTotal = participantCount(draft.participants);
+  const participantsTotal = totalParticipantCount(draft.participants);
+  const participantsBreakdown = React.useMemo(
+    () => participantsGroupBreakdown(draft.participants),
+    [draft.participants]
+  );
 
   const hasSectionWithQuestion = React.useMemo(
     () => draft.sections.length > 0 && countQuestions(draft.sections) > 0,
@@ -360,7 +397,11 @@ export function SurveyBuilder({
     }
     if (blockingStep === "demographics") {
       const isNom035 = draft.name.toLowerCase().includes("nom 035");
-      if (isNom035) {
+      const hasIncompleteFields = draft.demographics.enabled && draft.demographics.fields.some(f => !isDemographicComplete(f));
+      
+      if (hasIncompleteFields) {
+        toast.error("Completa todos los campos (pregunta y opciones) de los datos demográficos activos.");
+      } else if (isNom035) {
         toast.error(
           "Para la encuesta NOM 035, debes mantener activado al menos un dato demográfico."
         );
@@ -441,6 +482,7 @@ export function SurveyBuilder({
     setExpandedCardIds(new Set([section.id]));
     setEditingQuestionId(null);
     setRenamingId(section.id);
+    setScrollToAnchorTick((tick) => tick + 1);
   };
 
   /**
@@ -466,6 +508,182 @@ export function SurveyBuilder({
         summary.sections === 1 ? "sección" : "secciones"
       } y ${summary.questions} ${summary.questions === 1 ? "pregunta" : "preguntas"}.`
     );
+  };
+
+  /**
+   * The open AI request, or null while the drawer is closed.
+   *
+   * It carries the section it was opened from rather than a bare boolean,
+   * because the proposal has to land somewhere: a brief scoped to "esta
+   * sección" fills exactly that one, and the survey-wide scope replaces it when
+   * it is still the empty placeholder that offered the button. Opened from the
+   * step's own empty state there is no section yet, so the id is null and only
+   * the survey-wide scope is on offer.
+   */
+  const [aiRequest, setAiRequest] = React.useState<{ sectionId: string | null; autoStart?: boolean } | null>(
+    null
+  );
+
+  /**
+   * The last AI batch applied to the survey, awaiting the author's word on it.
+   *
+   * The proposal lands in the survey the moment it is generated — there is no
+   * separate review screen — so this is what drives the bar sitting above it:
+   * keep it, ask for another version in the same spot, or reopen the brief to
+   * change what was asked. `insertedSections` is the exact array that went in,
+   * kept whole (not just ids) so "otra propuesta" and the bar's own counts
+   * don't need a second lookup into the tree.
+   */
+  interface PendingAiReview {
+    insertedSections: readonly SurveySection[];
+    scope: AiScope;
+    targetId: string | null;
+    brief: AiSectionsBrief;
+    seed: number;
+  }
+  const [pendingAiReview, setPendingAiReview] = React.useState<PendingAiReview | null>(null);
+
+  const handleOpenAiSections = (sectionId: string | null) => {
+    if (!isStepReachable("sections", stepInput)) {
+      announceStepBlocked();
+      return;
+    }
+    setEditingQuestionId(null);
+    // The composer renders inside the section it was launched from, so that
+    // card has to be the open one — otherwise it would mount inside a collapsed
+    // body and the click would look like it did nothing.
+    if (sectionId) applySelectSection(sectionId);
+    setAiRequest({ sectionId });
+  };
+
+  /**
+   * Inserts a proposal into the survey, replacing a previous still-pending
+   * batch in the same spot instead of stacking on top of it.
+   *
+   * Scoped to one section, the proposal IS that section's children, so it
+   * nests into it. Scoped to the whole survey it brings its own level-1
+   * sections, and the section the drawer was opened from is dropped when it
+   * is still empty — leaving an untouched "Sección 1" above the generated ones
+   * would be a leftover of the empty state, not something the author asked
+   * for. `replacing` is only the ids from a pending review at the exact same
+   * target: a fresh request elsewhere never touches someone else's proposal.
+   */
+  const applyAiProposal = (
+    sections: SurveySection[],
+    scope: AiScope,
+    targetId: string | null,
+    brief: AiSectionsBrief,
+    seed: number,
+    replacing: readonly string[] = []
+  ) => {
+    if (sections.length === 0) return;
+    // "Esta sección" has nowhere to land without one — the drawer only offers
+    // that scope when there is a section open, so this is a guard, not a path.
+    if (scope === "section" && !targetId) return;
+
+    const target = targetId ? findSection(draft.sections, targetId) : null;
+
+    setDraft((current) => {
+      const withoutReplaced = replacing.reduce(
+        (tree, id) => removeSection(tree, id),
+        current.sections as SurveySection[]
+      );
+
+      if (scope === "section" && targetId) {
+        return {
+          ...current,
+          sections: sections.reduce((tree, child) => appendChild(tree, targetId, child), withoutReplaced),
+        };
+      }
+
+      const isTargetEmpty =
+        target !== null &&
+        target.section.questions.length === 0 &&
+        target.section.children.length === 0;
+
+      const base =
+        isTargetEmpty && targetId ? removeSection(withoutReplaced, targetId) : withoutReplaced;
+      return { ...current, sections: [...base, ...sections] };
+    });
+
+    // The generated rows are not in `draft.sections` yet, so the branch to open
+    // is built by hand — the target's own path plus what was just nested under
+    // it, or the first new root plus its first subsection.
+    const first = sections[0];
+    if (scope === "section" && targetId) {
+      commitSelection({ kind: "section", id: targetId });
+      setExpandedCardIds(new Set([...pathIds(draft.sections, targetId), first.id]));
+    } else {
+      commitSelection({ kind: "section", id: first.id });
+      const firstChild = first.children[0];
+      setExpandedCardIds(new Set(firstChild ? [first.id, firstChild.id] : [first.id]));
+    }
+    setEditingQuestionId(null);
+    setAiRequest(null);
+    setPendingAiReview({ insertedSections: sections, scope, targetId, brief, seed });
+  };
+
+  /** The composer's own callback: applies straight into wherever it was opened from. */
+  const handleApplyAiSections = (
+    sections: SurveySection[],
+    scope: AiScope,
+    brief: AiSectionsBrief,
+    seed: number
+  ) => {
+    const targetId = aiRequest?.sectionId ?? null;
+    const isContinuation = pendingAiReview !== null && pendingAiReview.targetId === targetId;
+    applyAiProposal(
+      sections,
+      scope,
+      targetId,
+      brief,
+      seed,
+      isContinuation ? pendingAiReview!.insertedSections.map((s) => s.id) : []
+    );
+  };
+
+  /**
+   * "Otra propuesta": a fresh version in the exact same spot, same brief,
+   * no retyping — but it still goes through the composer's own "generating"
+   * stage instead of swapping instantly, so the wait reads the same way a
+   * first generation does rather than looking like nothing happened.
+   */
+  const handleRegenerateAiReview = () => {
+    if (!pendingAiReview) return;
+    if (pendingAiReview.targetId) applySelectSection(pendingAiReview.targetId);
+    setAiRequest({ sectionId: pendingAiReview.targetId, autoStart: true });
+  };
+
+  /** "Conservar esta versión": nothing left to decide, the bar just goes away. */
+  const handleKeepAiReview = () => setPendingAiReview(null);
+
+  /** "Modificar los criterios": back to the brief, prefilled with what was asked. */
+  const handleModifyAiCriteria = () => {
+    if (!pendingAiReview) return;
+    if (pendingAiReview.targetId) applySelectSection(pendingAiReview.targetId);
+    setAiRequest({ sectionId: pendingAiReview.targetId });
+  };
+
+  /** "Descartar": drops the batch entirely, leaving whatever was there before it. */
+  const handleDiscardAiReview = () => {
+    if (!pendingAiReview) return;
+    const idsToRemove = pendingAiReview.insertedSections.map((s) => s.id);
+    const nextSelection = idsToRemove[0]
+      ? nextSelectionAfterRemoval(draft.sections, idsToRemove[0])
+      : null;
+
+    setDraft((current) => ({
+      ...current,
+      sections: idsToRemove.reduce(
+        (tree, id) => removeSection(tree, id),
+        current.sections as SurveySection[]
+      ),
+    }));
+
+    if (nextSelection) {
+      commitSelection({ kind: "section", id: nextSelection });
+    }
+    setPendingAiReview(null);
   };
 
   const handleAddSubsection = (parentId: string) => {
@@ -496,6 +714,7 @@ export function SurveyBuilder({
     setExpandedCardIds(new Set([...pathIds(draft.sections, parentId), child.id]));
     setEditingQuestionId(null);
     setRenamingId(child.id);
+    setScrollToAnchorTick((tick) => tick + 1);
   };
 
   /**
@@ -534,6 +753,7 @@ export function SurveyBuilder({
     setExpandedCardIds(new Set([...pathIds(draft.sections, parent.section.id), child.id]));
     setEditingQuestionId(null);
     setRenamingId(child.id);
+    setScrollToAnchorTick((tick) => tick + 1);
   };
 
   /**
@@ -568,6 +788,7 @@ export function SurveyBuilder({
     commitSelection({ kind: "section", id: child.id });
     setExpandedCardIds(new Set([...pathIds(draft.sections, parentId), child.id]));
     setEditingQuestionId(question.id);
+    setScrollToAnchorTick((tick) => tick + 1);
   };
 
   const confirmDelete = () => {
@@ -661,7 +882,7 @@ export function SurveyBuilder({
    * question has nothing to show collapsed, so the form is the useful state.
    * Level 1 never takes questions.
    */
-  const handleAddQuestionTo = (sectionId: string) => {
+  const handleAddQuestionTo = (sectionId: string, startWithAi = false) => {
     const target = findSection(draft.sections, sectionId);
     if (!target) return;
 
@@ -676,6 +897,10 @@ export function SurveyBuilder({
       questions: [...target.section.questions, question],
     });
     setEditingQuestionId(question.id);
+    // Solo la recién creada arranca con la IA preguntando: marcar la id evita
+    // que el resto de formularios se abran pidiendo contexto.
+    setAiQuestionId(startWithAi ? question.id : null);
+    setScrollToAnchorTick((tick) => tick + 1);
   };
 
   /**
@@ -716,6 +941,21 @@ export function SurveyBuilder({
       return;
     }
     handleAddQuestionTo(selectedSection.id);
+  };
+
+  /**
+   * "Crear pregunta con IA" del rail.
+   *
+   * Crea la misma pregunta vacía que el botón de al lado y abre su formulario
+   * con la IA ya preguntando de qué va: la decisión de usar la IA se tomó en
+   * el rail, así que pedirla otra vez dentro del formulario sobraría.
+   */
+  const handleAddQuestionWithAi = () => {
+    if (!selectedSection) {
+      toast.info("Selecciona una sección para añadir preguntas.");
+      return;
+    }
+    handleOpenAiSections(selectedSection.id);
   };
 
   const handleAddBankQuestions = (texts: string[]) => {
@@ -865,6 +1105,7 @@ export function SurveyBuilder({
     onQuestionChange: handleQuestionChange,
     onCloseQuestion: () => setEditingQuestionId(null),
     onAddQuestion: handleAddQuestionTo,
+    aiStartQuestionId: aiQuestionId,
     onDuplicateQuestion: handleDuplicateQuestion,
     onRemoveQuestion: handleRemoveQuestion,
     onReorderQuestions: handleReorderQuestions,
@@ -944,8 +1185,38 @@ export function SurveyBuilder({
       }
     }
 
+    if (aiComposer) {
+      return (
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          {aiComposer}
+        </div>
+      );
+    }
+
+    if (draft.sections.length === 0) {
+      return (
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <SectionsEmptyState
+            readOnly={draft.isReadOnly}
+            onAddSection={handleAddRootSection}
+            onGenerateWithAi={() => handleOpenAiSections(null)}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-w-0 flex-1 flex-col gap-3">
+        {pendingAiReview && !draft.isReadOnly && (
+          <AiGenerationReviewBar
+            sections={pendingAiReview.insertedSections}
+            scope={pendingAiReview.scope}
+            onKeep={handleKeepAiReview}
+            onRegenerate={handleRegenerateAiReview}
+            onModifyCriteria={handleModifyAiCriteria}
+            onDiscard={handleDiscardAiReview}
+          />
+        )}
         {draft.sections.map((rootSection, index) => (
           <SectionEditor
             readOnly={draft.isReadOnly}
@@ -961,6 +1232,7 @@ export function SurveyBuilder({
             onToggleCardCollapse={() => handleToggleCardExpanded(rootSection.id)}
             canDelete={draft.sections.length > 1}
             onAddSubsectionWithQuestion={handleAddSubsectionWithQuestion}
+            onGenerateWithAi={handleOpenAiSections}
             {...accordionHandlers}
           />
         ))}
@@ -971,6 +1243,36 @@ export function SurveyBuilder({
   // The rail's creation buttons and the footer's progress label both key off
   // of which step is active, so it is resolved once here rather than
   // recomputed per consumer.
+  /** The section the AI composer is filling, resolved for its context header. */
+  const aiSection = aiRequest?.sectionId
+    ? findSection(draft.sections, aiRequest.sectionId)?.section ?? null
+    : null;
+
+  /**
+   * The composer itself, rendered once and slotted into whichever empty state
+   * asked for it — the step's own, or a section's. Keyed by that origin so
+   * moving between them starts a fresh brief instead of carrying over one
+   * written for a different scope.
+   */
+  const aiComposer = aiRequest ? (
+    <AiSectionsComposer
+      key={aiRequest.sectionId ?? "survey"}
+      surveyKind={draft.kind}
+      // A level-1 section holds no questions of its own, so "esta sección"
+      // only means something when there is one open to fill.
+      canScopeToSection={aiSection !== null}
+      initialScope={aiSection ? "section" : "survey"}
+      // Reopening on the same spot a pending review already sits on — via
+      // "Modificar los criterios" or "Otra propuesta" — starts from what was
+      // last asked instead of a blank brief, and continues its seed sequence.
+      initialBrief={pendingAiReview?.targetId === aiRequest.sectionId ? pendingAiReview.brief : undefined}
+      initialSeed={pendingAiReview?.targetId === aiRequest.sectionId ? pendingAiReview.seed : undefined}
+      autoStart={aiRequest.autoStart}
+      onCancel={() => setAiRequest(null)}
+      onApply={handleApplyAiSections}
+    />
+  ) : null;
+
   const activeStep = stepFromSelection(selection);
   const isSectionsStepActive = activeStep === "sections";
   const isDemographicsStepActive = activeStep === "demographics";
@@ -1093,7 +1395,7 @@ export function SurveyBuilder({
           scroll region entirely — not merely stickied within it — so it never
           drifts even a pixel from the header, and the same p-3 governs its
           margin as everyone else's. */}
-      <div className="flex min-h-0 flex-1 items-start gap-3 p-3">
+      <div className="flex min-h-0 flex-1 items-start gap-3 px-1 py-3">
         <SectionsPanel
           readOnly={draft.isReadOnly}
           sections={draft.sections}
@@ -1126,7 +1428,13 @@ export function SurveyBuilder({
             ref={workspaceRef}
             className="flex flex-1 items-start gap-3 self-stretch overflow-y-auto"
           >
-            {renderMainPanel()}
+            {/* `contents` keeps this a flex-item passthrough — the wrapper only
+                exists so `key={activeStep}` remounts on every step change,
+                replaying the entrance cascade, without disturbing the parent's
+                flex layout of whatever renderMainPanel() returns. */}
+            <div key={activeStep} className="contents cascade-enter">
+              {renderMainPanel()}
+            </div>
           </div>
 
           {/* The bottom action bar provides navigation and save actions on all steps,
@@ -1150,6 +1458,7 @@ export function SurveyBuilder({
               }
             }}
             onAddQuestion={handleAddQuestion}
+            onAddQuestionWithAi={handleAddQuestionWithAi}
             onOpenAnswerBank={() =>
               toast.info("El banco de respuestas llega en el siguiente paso.")
             }
@@ -1164,6 +1473,7 @@ export function SurveyBuilder({
             questionCount={questionCount}
             estimatedMinutes={estimatedMinutes}
             participantsCount={participantsTotal}
+            participantsBreakdown={participantsBreakdown}
             demographicsCount={draft.demographics.fields.length}
             addQuestionBlockedReason={addQuestionBlockedReason}
             addSubsectionBlockedReason={addSubsectionBlockedReason}
@@ -1179,6 +1489,10 @@ export function SurveyBuilder({
             participantsSelectionCount={participantsSelectionCount}
             onClearParticipantsSelection={clearParticipantsSelection}
             onDeleteParticipantsSelection={deleteParticipantsSelection}
+            // Also minimized while a proposal sits unreviewed above the
+            // sections: the rail's own creation actions have to wait until
+            // that one is kept, regenerated, changed, or discarded.
+            forceMinimized={aiRequest !== null || pendingAiReview !== null}
           />
         </div>
       </div>

@@ -1,5 +1,9 @@
+import * as React from "react";
 import { Flag, Home } from "lucide-react";
+import { AiAnalyzingState } from "@/components/ai-interaction";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AiCreateChip } from "./AiCreateChip";
+import { refinePageMessage, type PageMessageKind } from "./aiPageWording";
 import { RichTextEditor } from "./RichTextEditor";
 
 interface PagesEditorProps {
@@ -15,6 +19,19 @@ export function PagesEditor({
   onWelcomeChange,
   onClosingChange,
 }: PagesEditorProps) {
+  // Which page's message the AI is currently rewriting — at most one at a
+  // time, since the two tabs are never both in view.
+  const [improving, setImproving] = React.useState<PageMessageKind | null>(null);
+
+  const handleImprove = async (kind: PageMessageKind) => {
+    setImproving(kind);
+    const content = kind === "welcome" ? welcomeContent : closingContent;
+    const improved = await refinePageMessage(content, kind);
+    if (kind === "welcome") onWelcomeChange(improved);
+    else onClosingChange(improved);
+    setImproving(null);
+  };
+
   return (
     <section className="flex min-w-0 flex-1 flex-col self-stretch rounded-2xl border border-border/60 bg-surface shadow-card">
       <div className="flex flex-col gap-4 p-5">
@@ -30,10 +47,21 @@ export function PagesEditor({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="welcome" className="mt-6 flex flex-col gap-4 outline-none">
-            <p className="max-w-2xl text-[13px] leading-relaxed text-text-secondary">
-              Primera pantalla que ve el participante. Explica el propósito de la encuesta, el tiempo estimado y el tratamiento de la información. Si lo dejas en blanco, no se mostrará.
-            </p>
+          <TabsContent value="welcome" className="mt-6 flex flex-col gap-4 outline-none cascade-enter">
+            <div className="flex items-start justify-between gap-3">
+              <p className="max-w-2xl text-[13px] leading-relaxed text-text-secondary">
+                Primera pantalla del participante: propósito, duración y confidencialidad. En blanco, no se muestra.
+              </p>
+              <AiCreateChip
+                label="Mejorar con IA"
+                onClick={() => void handleImprove("welcome")}
+                disabled={improving !== null}
+                className="h-8 shrink-0 px-2.5 text-[12px]"
+              />
+            </div>
+            {improving === "welcome" && (
+              <AiAnalyzingState variant="inline" title="Mejorando el mensaje de bienvenida…" />
+            )}
             <div className="relative">
               <RichTextEditor
                 value={welcomeContent}
@@ -44,10 +72,21 @@ export function PagesEditor({
             </div>
           </TabsContent>
 
-          <TabsContent value="closing" className="mt-6 flex flex-col gap-4 outline-none">
-            <p className="max-w-2xl text-[13px] leading-relaxed text-text-secondary">
-              Mensaje final que se muestra al enviar las respuestas. Úsalo para agradecer la participación y contar los siguientes pasos. Si lo dejas en blanco, no se mostrará.
-            </p>
+          <TabsContent value="closing" className="mt-6 flex flex-col gap-4 outline-none cascade-enter">
+            <div className="flex items-start justify-between gap-3">
+              <p className="max-w-2xl text-[13px] leading-relaxed text-text-secondary">
+                Última pantalla al enviar: agradecimiento y próximos pasos. En blanco, no se muestra.
+              </p>
+              <AiCreateChip
+                label="Mejorar con IA"
+                onClick={() => void handleImprove("closing")}
+                disabled={improving !== null}
+                className="h-8 shrink-0 px-2.5 text-[12px]"
+              />
+            </div>
+            {improving === "closing" && (
+              <AiAnalyzingState variant="inline" title="Mejorando el mensaje de cierre…" />
+            )}
             <div className="relative">
               <RichTextEditor
                 value={closingContent}

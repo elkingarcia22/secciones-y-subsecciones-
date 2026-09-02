@@ -1,9 +1,11 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { OptionTally, QuestionBreakdown } from "@/mocks/questionResponses";
 import { FAVORABILITY_BANDS, NSNR, NSNR_BG, NSNR_BORDER, NSNR_TEXT } from "./favorabilityScale";
+import { cascadeContainer, cascadeItem } from "@/lib/cascadeAnimation";
 
 /** Colours a tally takes: its band's, or the NS/NR grey when it's off-scale. */
 function tallyPalette(tally: OptionTally, accent: string) {
@@ -57,13 +59,19 @@ export function AnswerTallyList({ breakdown, onDrillDown, dense }: AnswerTallyLi
 
   if (dense) {
     return (
-      <div className="flex flex-wrap gap-2">
+      <motion.div
+        className="flex flex-wrap gap-2"
+        initial="hidden"
+        animate="show"
+        variants={cascadeContainer}
+      >
         {breakdown.tallies.map((tally) => {
           const palette = tallyPalette(tally, accent);
           const interactive = onDrillDown !== undefined && tally.count > 0;
           return (
-            <button
+            <motion.button
               key={tally.id}
+              variants={cascadeItem}
               type="button"
               disabled={!interactive}
               onClick={() => onDrillDown?.(tally.id)}
@@ -95,15 +103,20 @@ export function AnswerTallyList({ breakdown, onDrillDown, dense }: AnswerTallyLi
               <span className="text-[10px] font-medium leading-none text-muted-foreground tabular-nums">
                 {formatShare(tally.percentage)}
               </span>
-            </button>
+            </motion.button>
           );
         })}
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <ul className="flex flex-col">
+    <motion.ul
+      className="flex flex-col"
+      initial="hidden"
+      animate="show"
+      variants={cascadeContainer}
+    >
       {breakdown.tallies.map((tally) => {
         const palette = tallyPalette(tally, accent);
         const interactive = onDrillDown !== undefined && tally.count > 0;
@@ -114,8 +127,9 @@ export function AnswerTallyList({ breakdown, onDrillDown, dense }: AnswerTallyLi
         const scaled = tally.bandIndex !== null || tally.isNsNr;
 
         return (
-          <li
+          <motion.li
             key={tally.id}
+            variants={cascadeItem}
             className="group grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 rounded-lg px-2 py-2 transition-colors hover:bg-muted/40"
           >
             {/* The step number is already the first thing the option says
@@ -190,9 +204,9 @@ export function AnswerTallyList({ breakdown, onDrillDown, dense }: AnswerTallyLi
                 }}
               />
             </span>
-          </li>
+          </motion.li>
         );
       })}
-    </ul>
+    </motion.ul>
   );
 }

@@ -57,6 +57,8 @@ export interface SurveyQuestion {
   options: readonly QuestionOption[];
   /** Indicates if this question was imported from the UBITS question bank. */
   isBankQuestion?: boolean;
+  /** Set on every question a "Crear con IA" proposal produces. */
+  isAiGenerated?: boolean;
 }
 
 export interface SurveySection {
@@ -68,6 +70,7 @@ export interface SurveySection {
   questions: readonly SurveyQuestion[];
   /** Nested subsections. Several siblings are allowed at every level. */
   children: readonly SurveySection[];
+  isAiGenerated?: boolean;
 }
 
 /**
@@ -143,11 +146,15 @@ export const SURVEY_STATUS_LABELS: Readonly<Record<SurveyStatus, string>> = {
 };
 
 /**
- * How the audience is put together. The three are mutually exclusive: each
+ * How the audience is put together. The four are mutually exclusive: each
  * answers "who receives this" in a different way, so mixing them would leave
  * the real recipient list ambiguous.
  */
-export type ParticipantMode = "company" | "individual" | "import";
+export type ParticipantMode = "company" | "groups" | "individual" | "import";
+
+/** Category used to bucket collaborators into groups — shared by the "Toda la
+ * empresa" breakdown table and the "Por grupos" participant mode. */
+export type SegmentKey = "area" | "leader" | "country" | "age" | "gender";
 
 /**
  * One row read from an imported file, before it is resolved against the
@@ -200,6 +207,20 @@ export interface ParticipantsSelection {
    * empty parse so "corrupt file" and "valid file with no users" stay two
    * distinguishable messages. */
   importedFailed: boolean;
+  /** "Por grupos" mode: which category the group list is bucketed by. */
+  groupSegmentBy: SegmentKey;
+  /** "Por grupos" mode: the specific group values chosen within that category
+   * (e.g. the areas picked, once `groupSegmentBy` is "area"). A selected
+   * group is all-or-nothing — there is no partial membership — so "Por
+   * colaborador" can carve a group member out of it only by dropping the
+   * whole group, never by excepting just that person. */
+  selectedGroups: readonly string[];
+  /** "Por grupos" mode: whether a collaborator who later joins one of the
+   * selected groups is added to the survey automatically. */
+  groupsAutoInclude: boolean;
+  /** "Toda la empresa" mode: whether a collaborator who joins the company
+   * after the survey launches is added automatically. */
+  companyAutoInclude: boolean;
 }
 
 /**
@@ -217,6 +238,10 @@ export const DEFAULT_PARTICIPANTS: ParticipantsSelection = {
   importedNewCount: 0,
   importedDemographics: [],
   importedFailed: false,
+  groupSegmentBy: "area",
+  selectedGroups: [],
+  groupsAutoInclude: true,
+  companyAutoInclude: true,
 };
 
 /**

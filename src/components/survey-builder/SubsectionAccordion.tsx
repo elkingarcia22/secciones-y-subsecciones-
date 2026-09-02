@@ -1,7 +1,9 @@
 import type * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { AiGeneratedBadge } from "@/components/ai-interaction";
 import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
 import { MoveToPopover } from "./MoveToPopover";
@@ -9,6 +11,12 @@ import { SectionQuestions, type QuestionListHandlers } from "./SectionQuestions"
 import { CHIP_SELECTED_RING, RAIL_SELECTED, SIBLING_DIVIDER, depthTheme } from "./depthTheme";
 import { childEntries, countQuestions, moveDestinationsForSection, findSection, type SectionTreeEntry } from "./sectionTree";
 import { canHaveQuestions, depthLabel, type SurveySection } from "./surveyBuilderTypes";
+import {
+  cascadeContainer,
+  cascadeItem,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+} from "@/lib/cascadeAnimation";
 
 export interface SubsectionAccordionHandlers extends QuestionListHandlers {
   /** Rows currently open. At most one per level, so this is a single branch. */
@@ -42,6 +50,10 @@ export interface SubsectionAccordionHandlers extends QuestionListHandlers {
 interface SubsectionAccordionProps extends SubsectionAccordionHandlers {
   readOnly?: boolean;
   entry: SectionTreeEntry;
+  index?: number;
+  /** Delay before this row's own questions/nested subsections start
+   * cascading in — set by the sibling list so they wait their turn. */
+  contentDelay?: number;
 }
 
 /**
@@ -55,7 +67,7 @@ interface SubsectionAccordionProps extends SubsectionAccordionHandlers {
  * Only one row per level stays open, so the card never grows into a column the
  * author has to scroll through to find their place.
  */
-export function SubsectionAccordion({ entry, readOnly, ...handlers }: SubsectionAccordionProps) {
+export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, ...handlers }: SubsectionAccordionProps) {
   const {
     expandedIds,
     selectedId,
@@ -91,7 +103,8 @@ export function SubsectionAccordion({ entry, readOnly, ...handlers }: Subsection
   const moveDestinations = moveDestinationsForSection(handlers.sections, entry);
 
   return (
-    <li
+    <motion.li
+      variants={cascadeItem}
       {...handlers.getSectionDropTargetProps(section.id)}
       className={cn(
         "relative transition-all",
@@ -155,16 +168,20 @@ export function SubsectionAccordion({ entry, readOnly, ...handlers }: Subsection
             </div>
 
             <div className="min-w-0 flex-1 pl-0.5 pt-1">
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[10px] uppercase tracking-wider",
-                  theme.chip,
-                  isSelected && CHIP_SELECTED_RING
-                )}
-              >
-                <span className="tabular-nums">{numbering}</span>
-                <span className="font-semibold opacity-70">{depthLabel(depth)}</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[10px] uppercase tracking-wider",
+                    theme.chip,
+                    isSelected && CHIP_SELECTED_RING
+                  )}
+                >
+                  <span className={cn("font-extrabold opacity-60", theme.chipMarker)}>{numbering}</span>
+                  <span className="font-semibold">{depthLabel(depth)}</span>
+                </span>
+                
+                {section.isAiGenerated && <AiGeneratedBadge />}
+              </div>
 
               <input
                 value={section.title}
@@ -226,15 +243,30 @@ export function SubsectionAccordion({ entry, readOnly, ...handlers }: Subsection
         )}
       </div>
 
-      {isExpanded && (
-        <div
-          className={cn(
-            "mt-2.5 flex flex-col gap-3 pb-1 animate-in fade-in slide-in-from-top-1 duration-200",
-            theme.rail,
-            theme.railOffset,
-            isSelected && RAIL_SELECTED
-          )}
-        >
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            variants={{
+              collapsed: { height: 0, opacity: 0 },
+              expanded: {
+                height: "auto",
+                opacity: 1,
+                transition: {
+                  height: { duration: 0.3, ease: "easeInOut" },
+                  opacity: { duration: 0.3, ease: "easeInOut" },
+                }
+              }
+            }}
+            initial="collapsed"
+            animate="expanded"
+            exit="collapsed"
+            className={cn(
+              "mt-2.5 flex flex-col gap-3 pb-1 overflow-hidden",
+              theme.rail,
+              theme.railOffset,
+              isSelected && RAIL_SELECTED
+            )}
+          >
           {canHaveQuestions(depth) && (
             <SectionQuestions
               readOnly={readOnly}
@@ -251,18 +283,34 @@ export function SubsectionAccordion({ entry, readOnly, ...handlers }: Subsection
               onReorderQuestions={handlers.onReorderQuestions}
               sections={handlers.sections}
               onMoveQuestion={handlers.onMoveQuestion}
+              aiStartQuestionId={handlers.aiStartQuestionId}
+              revealDelay={contentDelay}
             />
           )}
 
           {children.length > 0 && (
-            <ul className={cn("flex flex-col", SIBLING_DIVIDER)}>
-              {children.map((child) => (
-                <SubsectionAccordion key={child.section.id} entry={child} readOnly={readOnly} {...handlers} />
+            <motion.ul
+              className={cn("flex flex-col", SIBLING_DIVIDER)}
+              initial="hidden"
+              animate="show"
+              custom={contentDelay}
+              variants={cascadeContainer}
+            >
+              {children.map((child, index) => (
+                <SubsectionAccordion
+                  key={child.section.id}
+                  entry={child}
+                  readOnly={readOnly}
+                  index={index}
+                  contentDelay={cascadeItemSettleTime(contentDelay, index) + CASCADE_CONTENT_GAP}
+                  {...handlers}
+                />
               ))}
-            </ul>
+            </motion.ul>
           )}
-        </div>
+        </motion.div>
       )}
-    </li>
+      </AnimatePresence>
+    </motion.li>
   );
 }

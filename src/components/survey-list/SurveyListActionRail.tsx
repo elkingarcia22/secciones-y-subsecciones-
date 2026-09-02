@@ -132,6 +132,16 @@ export function SurveyListActionRail({
                       tone: spec.tone,
                       icon: <Icon className="h-[18px] w-[18px]" strokeWidth={2} />,
                       onClick: () => onAction(id, selectedSurvey.id),
+                      subItems: spec.subActions?.map((subId) => {
+                        const subSpec = SURVEY_ACTIONS[subId];
+                        const SubIcon = subSpec.icon;
+                        return {
+                          id: subId,
+                          label: subSpec.label,
+                          icon: <SubIcon className="h-[18px] w-[18px]" strokeWidth={2} />,
+                          onClick: () => onAction(subId, selectedSurvey.id),
+                        };
+                      }),
                     };
                   })}
                 />

@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { UbitsLogo } from "@/components/ui/UbitsLogo";
@@ -8,7 +7,6 @@ import { AppHeader } from "./AppHeader";
 import { AgentView } from "./AgentView";
 import { ShellHeaderSlotProvider } from "./shellHeaderSlot";
 import { ShellRailSlotProvider } from "./shellRailSlot";
-import { AI_GRADIENT, NEWS_ITEMS } from "./appShellData";
 import type { ShellBreadcrumb, ShellMode } from "./shellTypes";
 
 interface AdminShellProps {
@@ -39,7 +37,6 @@ export const AdminShell: React.FC<AdminShellProps> = ({
   const [isDark, setIsDark] = React.useState(() =>
     typeof document !== "undefined" ? document.documentElement.classList.contains("dark") : false
   );
-  const [newsOpen, setNewsOpen] = React.useState(false);
   const [feedbackOpen, setFeedbackOpen] = React.useState(false);
   const [feedbackSent, setFeedbackSent] = React.useState(false);
   const [headerSlot, setHeaderSlot] = React.useState<HTMLDivElement | null>(null);
@@ -115,7 +112,7 @@ export const AdminShell: React.FC<AdminShellProps> = ({
           onToggleSidebar={toggleSidebar}
           isDark={isDark}
           onToggleDark={() => setIsDark((value) => !value)}
-          onOpenNews={() => setNewsOpen(true)}
+          onOpenNews={() => {/* handled inside AppHeader */}}
           onSlotRef={setHeaderSlot}
         />
 
@@ -162,44 +159,6 @@ export const AdminShell: React.FC<AdminShellProps> = ({
           </footer>
         )}
       </div>
-
-      {/* ---------- Novedades ---------- */}
-      <Dialog open={newsOpen} onOpenChange={setNewsOpen}>
-        <DialogContent className="max-w-md gap-0 overflow-hidden rounded-3xl border-border/60 p-0">
-          <div className="relative px-6 py-5 text-white" style={{ background: AI_GRADIENT }}>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
-                <Sparkles className="h-4 w-4" strokeWidth={2} />
-              </div>
-              <div>
-                <DialogTitle className="text-base font-bold text-white">Novedades en UBITS</DialogTitle>
-                <DialogDescription className="text-xs text-white/80">
-                  Lo último que agregamos a tu plataforma
-                </DialogDescription>
-              </div>
-            </div>
-          </div>
-          <div className="max-h-[420px] overflow-y-auto p-3">
-            {NEWS_ITEMS.map((item) => (
-              <button
-                key={item.title}
-                onClick={() => setNewsOpen(false)}
-                className="w-full rounded-2xl px-3 py-3 text-left transition-colors hover:bg-background"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-text-primary">{item.title}</span>
-                  {item.isNew && (
-                    <span className="flex h-4 items-center rounded-full bg-surface-muted px-2 text-[10px] font-extrabold text-primary">
-                      Nuevo
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1 text-xs leading-snug text-text-secondary">{item.description}</p>
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* ---------- Feedback ---------- */}
       <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>

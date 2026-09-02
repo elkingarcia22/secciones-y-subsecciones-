@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DualDateRangePicker } from "@/components/date";
+import { MagicCard } from "@/components/ui/magic-card";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -99,6 +101,14 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
   const startDate = parseISODate(draft.startDate);
   const isAnonymous = draft.visibility === "anonymous";
 
+  // Local to the form: whether the description field is shown at all. Starts
+  // on when the draft already carries a description (editing an existing
+  // survey), off otherwise, so a blank new survey doesn't open with an extra
+  // field nobody asked for.
+  const [descriptionEnabled, setDescriptionEnabled] = React.useState(
+    () => draft.description.trim() !== ""
+  );
+
   // Typed independently of `draft.anonymityThreshold` so a digit being typed
   // (including an empty field mid-edit, or a value below the floor) isn't
   // immediately clamped back — that would fight the author's keystrokes.
@@ -120,36 +130,97 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
 
   return (
     <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
-      <div className="flex flex-col gap-5">
+      {/* `cascade-enter` here staggers this step's own fields in one at a
+          time — name, then description, then dates, and so on — the same
+          settle-in language the preview cascade uses for a page's pieces. */}
+      <div className="flex flex-col gap-5 cascade-enter">
         {/* Name leads: it is the first thing the author decides and the one
-            field that shows up outside this form, in the header title. */}
-        <Field label="Nombre de la encuesta" error={nameError}>
-          <input
-            value={draft.name}
-            onChange={(event) => onChange({ name: event.target.value })}
-            placeholder="Escribe el nombre de la encuesta"
-            aria-label="Nombre de la encuesta"
-            aria-invalid={!!nameError}
-            className={cn(
-              "h-10 w-full rounded-md border bg-surface px-3 text-[13px] text-text-primary outline-none transition-all focus:ring-2 placeholder:text-muted-foreground/70",
-              nameError
-                ? "border-destructive focus:border-destructive focus:ring-destructive/25"
-                : "border-border focus:border-primary focus:ring-primary/25"
-            )}
-          />
-        </Field>
+            field that shows up outside this form, in the header title. The
+            description toggle rides alongside it — turning it on reveals the
+            field right below rather than committing every survey to one. */}
+        <label className="flex min-w-0 flex-col gap-1.5">
+          <span className="text-[13px] font-semibold text-text-primary">
+            Nombre de la encuesta
+          </span>
+          <span className="flex items-center gap-3">
+            <input
+              value={draft.name}
+              onChange={(event) => onChange({ name: event.target.value })}
+              placeholder="Escribe el nombre de la encuesta"
+              aria-label="Nombre de la encuesta"
+              aria-invalid={!!nameError}
+              className={cn(
+                "h-10 min-w-0 flex-1 rounded-md border bg-surface px-3 text-[13px] text-text-primary outline-none transition-all focus:ring-2 placeholder:text-muted-foreground/70",
+                nameError
+                  ? "border-destructive focus:border-destructive focus:ring-destructive/25"
+                  : "border-border focus:border-primary focus:ring-primary/25"
+              )}
+            />
+            <span className="flex shrink-0 items-center gap-2">
+              <span className="text-[12px] font-medium text-text-secondary">
+                Añadir descripción
+              </span>
+              <Switch
+                size="sm"
+                checked={descriptionEnabled}
+                onCheckedChange={(checked) => {
+                  setDescriptionEnabled(checked);
+                  if (!checked) onChange({ description: "" });
+                }}
+                aria-label="Añadir descripción"
+              />
+            </span>
+          </span>
+          {nameError && <span className="text-[12px] text-destructive">{nameError}</span>}
+        </label>
 
-        <Field label="Descripción (Opcional)" hint={`Máximo ${MAX_DESCRIPTION_LENGTH} caracteres`}>
-          <textarea
-            value={draft.description}
-            onChange={(event) =>
-              onChange({ description: event.target.value.slice(0, MAX_DESCRIPTION_LENGTH) })
-            }
-            maxLength={MAX_DESCRIPTION_LENGTH}
-            rows={2}
-            aria-label="Descripción de la encuesta"
-            className="w-full resize-y rounded-md border border-border bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-text-primary outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/70"
-          />
+        {descriptionEnabled && (
+          <Field label="Descripción" hint={`Máximo ${MAX_DESCRIPTION_LENGTH} caracteres`}>
+            <textarea
+              value={draft.description}
+              onChange={(event) =>
+                onChange({ description: event.target.value.slice(0, MAX_DESCRIPTION_LENGTH) })
+              }
+              maxLength={MAX_DESCRIPTION_LENGTH}
+              rows={2}
+              autoFocus
+              aria-label="Descripción de la encuesta"
+              className="w-full resize-y rounded-md border border-border bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-text-primary outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/70"
+            />
+          </Field>
+        )}
+
+        <Field label="Tipo de encuesta" error={kindError}>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5" role="radiogroup" aria-label="Tipo de encuesta">
+            {KIND_OPTIONS.map(([optionValue, label]) => {
+              const Icon = KIND_ICONS[optionValue];
+              const isSelected = draft.kind === optionValue;
+              return (
+                <MagicCard
+                  key={optionValue}
+                  role="radio"
+                  aria-checked={isSelected}
+                  isSelected={isSelected}
+                  onClick={() => onChange({ kind: optionValue })}
+                  className={cn(kindError && !isSelected && "border-destructive/50")}
+                  contentClassName="flex-col items-center justify-center gap-2.5 h-full"
+                >
+                  <div
+                    className={cn(
+                      "absolute -right-2 -top-2 flex size-3.5 items-center justify-center rounded-full border transition-colors",
+                      isSelected ? "border-primary" : "border-border/60"
+                    )}
+                  >
+                    {isSelected && <div className="size-1.5 rounded-full bg-primary" />}
+                  </div>
+                  <Icon className="size-6 mt-1" strokeWidth={2} />
+                  <span className="text-center text-[12px] font-medium leading-tight">
+                    {label}
+                  </span>
+                </MagicCard>
+              );
+            })}
+          </div>
         </Field>
 
         {/* Flight-booking experience: two distinct inputs for start and end dates with a unified dual-month range picker */}
@@ -167,50 +238,17 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
           }}
         />
 
-        <Field label="Tipo de encuesta" error={kindError}>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-            {KIND_OPTIONS.map(([optionValue, label]) => {
-              const Icon = KIND_ICONS[optionValue];
-              const isSelected = draft.kind === optionValue;
-              return (
-                <button
-                  key={optionValue}
-                  type="button"
-                  onClick={() => onChange({ kind: optionValue })}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-2.5 rounded-lg border p-4 transition-all hover:bg-background",
-                    isSelected
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border bg-surface text-text-secondary hover:border-primary/30",
-                    kindError && !isSelected && "border-destructive/50"
-                  )}
-                >
-                  <Icon className="size-6" strokeWidth={2} />
-                  <span className="text-center text-[12px] font-medium leading-tight">
-                    {label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Field>
-
         <Field label="Tipo de visibilidad">
           <div className="grid gap-4 sm:grid-cols-2">
             {VISIBILITY_OPTIONS.map(([optionValue, label]) => {
               const isSelected = draft.visibility === optionValue;
               const Icon = optionValue === "public" ? Globe : EyeOff;
               return (
-                <button
+                <MagicCard
                   key={optionValue}
-                  type="button"
+                  isSelected={isSelected}
                   onClick={() => onChange({ visibility: optionValue })}
-                  className={cn(
-                    "flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all hover:bg-background",
-                    isSelected
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                      : "border-border bg-surface hover:border-primary/30"
-                  )}
+                  contentClassName="flex-col items-start gap-3"
                 >
                   <div className="flex w-full items-center gap-2">
                     <Icon className={cn("size-5", isSelected ? "text-primary" : "text-muted-foreground")} strokeWidth={2} />
@@ -226,7 +264,7 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
                       {SURVEY_VISIBILITY_NOTES[optionValue]}
                     </p>
                   </div>
-                </button>
+                </MagicCard>
               );
             })}
           </div>

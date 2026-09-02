@@ -1,3 +1,10 @@
+import { motion } from "framer-motion";
+import {
+  cascadeContainer,
+  cascadeItem,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+} from "@/lib/cascadeAnimation";
 import {
   AI_RANK_CELL,
   AI_ROW_STATIC,
@@ -31,6 +38,10 @@ export function AiStrengthsSection({
   strengths: readonly Finding[];
   numbering: number;
 }) {
+  // This card's own rows wait for the card itself to arrive in the tab's
+  // shared cascade, not for every other card in the stack to finish.
+  const revealDelay = cascadeItemSettleTime(0, numbering - 1) + CASCADE_CONTENT_GAP;
+
   return (
     <AiSectionCard
       numbering={numbering}
@@ -54,9 +65,15 @@ export function AiStrengthsSection({
               <th className="w-[130px] py-2.5 pr-4 text-right">Favorabilidad</th>
             </tr>
           </thead>
-          <tbody className={AI_TBODY}>
+          <motion.tbody
+            className={AI_TBODY}
+            initial="hidden"
+            animate="show"
+            custom={revealDelay}
+            variants={cascadeContainer}
+          >
             {strengths.map((finding, index) => (
-              <tr key={finding.id} className={AI_ROW_STATIC}>
+              <motion.tr key={finding.id} variants={cascadeItem} className={AI_ROW_STATIC}>
                 <td className={AI_RANK_CELL}>{index + 1}</td>
 
                 <td className={AI_TITLE_CELL}>
@@ -78,9 +95,9 @@ export function AiStrengthsSection({
                 <td className="py-3 pr-4 text-right">
                   <StrengthChip favorability={finding.favorability} />
                 </td>
-              </tr>
+              </motion.tr>
             ))}
-          </tbody>
+          </motion.tbody>
         </table>
       )}
     </AiSectionCard>

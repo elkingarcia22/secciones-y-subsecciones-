@@ -1,10 +1,35 @@
 import * as React from "react";
 import type { TableSelectionActions } from "@/components/action-rail";
 import * as XLSX from "xlsx";
-import { CheckCircle2, FileSearch, FileX2, TriangleAlert, Users, Sparkles } from "lucide-react";
+import {
+  FileSearch,
+  FileX2,
+  TriangleAlert,
+  Users,
+  Sparkles,
+  CheckIcon,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  MinusIcon,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AiAnalyzingState } from "@/components/ai-interaction";
 import { UploadZone } from "@/components/upload";
+import { MagicCard } from "@/components/ui/magic-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -15,22 +40,31 @@ import {
 } from "@/components/ui/table";
 import { COLLABORATOR_COUNT, COLLABORATORS } from "@/mocks/collaborators";
 import { CollaboratorTable } from "./CollaboratorTable";
-import { SortableHeader, FilterMenu, type SortDir } from "./CollaboratorTableParts";
+import { SortableHeader, FilterMenu, PagerButton, type SortDir } from "./CollaboratorTableParts";
 import { ImportedUsersTable } from "./ImportedUsersTable";
 import {
   DEMOGRAPHIC_COLUMN_LABELS,
   PARTICIPANT_MODES,
   PARTICIPANT_MODE_COPY,
+  SEGMENT_LABELS,
+  clearedGroupSelection,
+  effectiveIndividualIds,
   formatCount,
+  groupMemberIds,
   humanizeColumn,
-  participantCount,
+  participantCountForMode,
   resolveImportedRows,
+  segmentCounts,
+  totalParticipantCount,
+  withGroupConvertedToIndividuals,
+  withGroupDeselected,
   type ImportedUser,
 } from "./participants";
 import type {
   ImportedDemographic,
   ParticipantMode,
   ParticipantsSelection,
+  SegmentKey,
 } from "./surveyBuilderTypes";
 
 interface ParticipantsEditorProps {
@@ -132,20 +166,48 @@ async function readImportedUsers(file: File): Promise<ReadImportResult> {
 /**
  * Who receives the survey.
  *
- * Three mutually exclusive ways to answer that, laid out as one choice: the
- * whole company, a list built by hand, or a file. The panel underneath belongs
- * to whichever is active, so the page only ever asks one question at a time.
+ * Four mutually exclusive ways to answer that, laid out as one choice: the
+ * whole company, a set of groups, a list built by hand, or a file. The panel
+ * underneath belongs to whichever is active, so the page only ever asks one
+ * question at a time.
+ *
+ * "Por grupos" and "Por colaborador" share one another's state, though: a
+ * group brought in from the first shows up already ticked in the second. A
+ * selected group is all-or-nothing, so "Por colaborador" can't carve one
+ * person out of it — unchecking one of its members there instead asks
+ * whether to drop the whole group (see `groupProtectedIds` below).
  */
-export function ParticipantsEditor({ 
-  participants, 
-  onChange, 
+export function ParticipantsEditor({
+  participants,
+  onChange,
   showValidation = false,
-  onSelectionChange 
+  onSelectionChange
 }: ParticipantsEditorProps) {
   const [files, setFiles] = React.useState<File[]>([]);
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
   const [analyzingProgress, setAnalyzingProgress] = React.useState(0);
-  const total = participantCount(participants);
+  const total = totalParticipantCount(participants);
+
+  // "Por colaborador" checked set = group carry-over union with ad-hoc picks
+  // — see the class doc above.
+  const individualEffectiveIds = React.useMemo(
+    () => [...effectiveIndividualIds(participants)],
+    [participants]
+  );
+  const groupProtectedIds = React.useMemo(
+    () => groupMemberIds(participants.groupSegmentBy, participants.selectedGroups),
+    [participants.groupSegmentBy, participants.selectedGroups]
+  );
+  const groupLabelById = React.useMemo(() => {
+    const map = new Map<string, string>();
+    if (participants.selectedGroups.length === 0) return map;
+    const groups = new Set(participants.selectedGroups);
+    COLLABORATORS.forEach((person) => {
+      const value = person[participants.groupSegmentBy] ?? "Sin asignar";
+      if (groups.has(value)) map.set(person.id, value);
+    });
+    return map;
+  }, [participants.groupSegmentBy, participants.selectedGroups]);
 
   const handleFiles = async (next: File[]) => {
     setFiles(next);
@@ -260,7 +322,10 @@ export function ParticipantsEditor({
         </span>
       </div>
 
-      <div className="flex flex-col gap-6 px-6 py-6">
+      {/* `cascade-enter` staggers this step's own pieces in one at a time —
+          the validation hint (when present), the mode choice, then whichever
+          panel that choice opens — instead of the whole block settling as one. */}
+      <div className="flex flex-col gap-6 px-6 py-6 cascade-enter">
         {showValidation && total === 0 && (
           <p className="flex items-center gap-1.5 text-[12px] font-medium text-destructive animate-in fade-in duration-200">
             <TriangleAlert className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
@@ -268,26 +333,64 @@ export function ParticipantsEditor({
           </p>
         )}
 
-        <div role="radiogroup" aria-label="Cómo asignar participantes" className="grid gap-4 lg:grid-cols-3">
+        <div role="radiogroup" aria-label="Cómo asignar participantes" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PARTICIPANT_MODES.map((mode) => (
             <ModeCard
               key={mode}
               mode={mode}
               isActive={participants.mode === mode}
+              hasSelection={hasModeSelection(mode, participants)}
               state={modeState(mode, participants)}
               onSelect={() => onChange({ mode })}
             />
           ))}
         </div>
 
-        {participants.mode === "company" && <CompanySummary />}
+        {participants.mode === "company" && (
+          <CompanySummary
+            autoInclude={participants.companyAutoInclude}
+            onAutoIncludeChange={(companyAutoInclude) => onChange({ companyAutoInclude })}
+          />
+        )}
+
+        {participants.mode === "groups" && (
+          <GroupsPanel
+            segmentBy={participants.groupSegmentBy}
+            onSegmentByChange={(groupSegmentBy) => onChange({ groupSegmentBy, ...clearedGroupSelection() })}
+            selectedGroups={participants.selectedGroups}
+            onToggleGroup={(value) => {
+              onChange(
+                participants.selectedGroups.includes(value)
+                  ? withGroupDeselected(participants, value)
+                  : { selectedGroups: [...participants.selectedGroups, value] }
+              );
+            }}
+            onSelectAll={(values) => onChange({ selectedGroups: values })}
+            onClearAll={() => onChange(clearedGroupSelection())}
+            autoInclude={participants.groupsAutoInclude}
+            onAutoIncludeChange={(groupsAutoInclude) => onChange({ groupsAutoInclude })}
+            onSelectionChange={onSelectionChange}
+          />
+        )}
 
         {participants.mode === "individual" && (
           <CollaboratorTable
             collaborators={COLLABORATORS}
-            selectedIds={participants.selectedIds}
-            onChange={(selectedIds) => onChange({ selectedIds })}
+            selectedIds={individualEffectiveIds}
+            onChange={(selectedIds) => onChange({ selectedIds, ...clearedGroupSelection() })}
+            onToggleIndividual={(id) => {
+              const next = new Set(participants.selectedIds);
+              if (next.has(id)) next.delete(id);
+              else next.add(id);
+              onChange({ selectedIds: [...next] });
+            }}
             onSelectionChange={onSelectionChange}
+            groupProtectedIds={groupProtectedIds}
+            groupLabelFor={(id) => groupLabelById.get(id) ?? null}
+            onDeselectGroup={(groupValue) => onChange(withGroupDeselected(participants, groupValue))}
+            onKeepGroupRestIndividually={(groupValue, personId) =>
+              onChange(withGroupConvertedToIndividuals(participants, groupValue, personId))
+            }
           />
         )}
 
@@ -302,6 +405,7 @@ export function ParticipantsEditor({
             ) : (
               <>
                 <UploadZone
+                  isAI={true}
                   value={displayedFiles}
                   onChange={handleFiles}
                   accept=".csv,.xlsx"
@@ -339,68 +443,12 @@ export function ParticipantsEditor({
 
 function AnalyzingState({ progress }: { progress: number }) {
   return (
-    <div className="relative flex flex-col min-h-[300px] p-[2px] rounded-xl bg-ai-gradient shimmer-mirror shadow-card animate-in fade-in duration-300 select-none">
-      <div className="relative z-10 flex-1 w-full bg-ai-mesh-card rounded-[calc(var(--radius-xl)-2px)] flex flex-col items-center justify-center p-6 gap-6">
-        
-        {/* Pulsing UBITS AI Icon */}
-        <div className="relative w-16 h-16 flex items-center justify-center mb-1">
-          <div className="absolute w-11 h-11 rounded-full bg-ai-gradient opacity-20 blur-xl animate-pulse" />
-          <svg width="42" height="42" viewBox="0 0 24 24" className="relative">
-            <defs>
-              <linearGradient id="aiLoaderIconGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--ai-gradient-start))" />
-                <stop offset="100%" stopColor="hsl(var(--ai-gradient-end))" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M12,3 Q12,12 3,12 Q12,12 12,21 Q12,12 21,12 Q12,12 12,3 Z"
-              fill="none"
-              stroke="url(#aiLoaderIconGrad)"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="animate-[pulse_1.8s_infinite_ease-in-out]"
-            />
-            <path
-              d="M19,5 Q19,7 17,7 Q19,7 19,9 Q19,7 21,7 Q19,7 19,5 Z"
-              fill="url(#aiLoaderIconGrad)"
-              className="animate-[pulse_1.3s_infinite_ease-in-out] [animation-delay:0.3s]"
-            />
-            <circle
-              cx="5.5"
-              cy="18.5"
-              r="1.75"
-              fill="url(#aiLoaderIconGrad)"
-              className="animate-[pulse_1.5s_infinite_ease-in-out] [animation-delay:0.6s]"
-            />
-          </svg>
-        </div>
-        
-        <div className="flex flex-col items-center gap-1.5 text-center">
-          <p className="text-[16px] font-bold text-ai-gradient">
-            Analizando archivos
-          </p>
-        </div>
-
-        <div className="w-full max-w-sm flex flex-col gap-2">
-          <div className="flex justify-between items-end text-[12px] font-bold">
-            <span className="text-text-secondary">0 objetivos en 0 usuarios</span>
-            <span className="text-ai-gradient">
-              {progress}%
-            </span>
-          </div>
-          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden relative">
-            <div 
-              className="h-full bg-ai-gradient rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="text-center text-[11px] text-text-secondary mt-2">
-            Estamos extrayendo y validando la información de tus objetivos.
-          </p>
-        </div>
-      </div>
-    </div>
+    <AiAnalyzingState
+      title="Analizando el archivo"
+      progress={progress}
+      detail="Participantes y datos demográficos"
+      caption="Estamos leyendo el archivo y validando qué columnas podemos usar como datos demográficos."
+    />
   );
 }
 
@@ -409,101 +457,122 @@ function modeState(mode: ParticipantMode, participants: ParticipantsSelection): 
   switch (mode) {
     case "company":
       return `${formatCount(COLLABORATOR_COUNT)} colaboradores`;
-    case "individual":
-      return participants.selectedIds.length === 0
-        ? "Sin seleccionar"
-        : `${formatCount(participants.selectedIds.length)} de ${formatCount(COLLABORATOR_COUNT)} seleccionados`;
+    case "groups":
+      return participants.selectedGroups.length === 0
+        ? "Ningún grupo seleccionado"
+        : `${formatCount(participants.selectedGroups.length)} grupos · ${formatCount(participantCountForMode("groups", participants))} personas`;
+    case "individual": {
+      const total = participantCountForMode("individual", participants);
+      if (total === 0) return "Sin seleccionar";
+      const groupCount = participants.selectedGroups.length;
+      // No groups feeding in: the plain, pre-existing reading.
+      if (groupCount === 0) return `${formatCount(total)} de ${formatCount(COLLABORATOR_COUNT)} seleccionados`;
+      const fromGroups = groupMemberIds(participants.groupSegmentBy, participants.selectedGroups).size;
+      const extra = total - fromGroups;
+      const groupsLabel = `${formatCount(groupCount)} ${groupCount === 1 ? "grupo" : "grupos"} (${formatCount(fromGroups)})`;
+      return extra > 0 ? `${groupsLabel} + ${formatCount(extra)} individuales` : groupsLabel;
+    }
     case "import":
       return participants.importedFileName ?? "Ningún archivo cargado";
+  }
+}
+
+/**
+ * Whether a mode already has people in it, independent of which panel is
+ * currently open below. "Toda la empresa" is the one exclusive choice — it
+ * only counts while it is the active mode, since picking it makes every
+ * other source stop contributing (see `totalParticipantCount`). Groups,
+ * hand-picked collaborators and an import all combine freely, so each shows
+ * as selected the moment it holds anyone, even while a different one of
+ * those three is the mode currently open.
+ */
+function hasModeSelection(mode: ParticipantMode, participants: ParticipantsSelection): boolean {
+  switch (mode) {
+    case "company":
+      return participants.mode === "company";
+    case "groups":
+      return participants.mode !== "company" && participants.selectedGroups.length > 0;
+    case "individual":
+      return participants.mode !== "company" && participantCountForMode("individual", participants) > 0;
+    case "import":
+      return participants.importedCount > 0;
   }
 }
 
 function ModeCard({
   mode,
   isActive,
+  hasSelection,
   state,
   onSelect,
 }: {
   mode: ParticipantMode;
+  /** Whether this mode's panel is the one open below. */
   isActive: boolean;
+  /** Whether this mode already contributes people to the audience — shown
+   * checked even while a different mode's panel is open, so mixing several
+   * ways of adding participants stays visible. */
+  hasSelection: boolean;
   state: string;
   onSelect: () => void;
 }) {
   const { icon: Icon, title, description } = PARTICIPANT_MODE_COPY[mode];
   const isAI = mode === "import";
+  const isMarked = isActive || hasSelection;
 
   return (
-    <label
-      className={cn(
-        "relative flex cursor-pointer flex-col rounded-xl overflow-hidden transition",
-        isAI && isActive ? "p-[2px] bg-ai-gradient" : "",
-        !isAI && isActive ? "border p-4 border-primary bg-primary/[0.04] shadow-card ring-1 ring-primary/20" : "",
-        !isActive && !isAI ? "border p-4 border-border/60 hover:border-primary/30 hover:bg-primary/[0.02] hover:shadow-card" : "",
-        !isActive && isAI ? "border p-4 border-border/60 hover:border-primary/30 hover:shadow-card bg-ai-mesh-card" : ""
-      )}
+    <MagicCard
+      isSelected={isMarked}
+      variant={isAI ? "ai" : "primary"}
+      onClick={onSelect}
+      className={cn("w-full", isAI && isMarked ? "p-[14px]" : "")}
+      contentClassName="flex-col gap-3 h-full text-left w-full"
     >
-      <input
-        type="radio"
-        name="participant-mode"
-        checked={isActive}
-        onChange={onSelect}
-        className="sr-only"
-      />
-
-      <div 
-        className={cn(
-          "flex flex-col gap-3 h-full",
-          isAI && isActive ? "p-[14px] rounded-[calc(var(--radius-xl)-2px)] bg-ai-mesh-card" : ""
-        )}
-      >
-        <div className="flex items-start justify-between gap-2">
-          <span
-            className={cn(
-              "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors",
-              isActive && !isAI ? "bg-primary/10 text-primary" : "",
-              !isActive && !isAI ? "bg-muted/60 text-muted-foreground" : "",
-              isAI ? "bg-ai-bg text-primary" : ""
-            )}
-          >
-            {isAI ? <Sparkles className="h-[18px] w-[18px]" strokeWidth={2} /> : <Icon className="h-[18px] w-[18px]" strokeWidth={2} />}
-          </span>
-
-          {isActive ? (
-            <CheckCircle2 className="h-5 w-5 shrink-0 fill-primary text-primary-foreground" strokeWidth={2} />
-          ) : (
-            <span aria-hidden className="h-5 w-5 shrink-0 rounded-full border border-border-strong/40" />
-          )}
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <span className="text-[14px] font-semibold tracking-tight text-text-primary">
-            {isAI ? "Importar archivo con IA" : title}
-          </span>
-          <p className="text-[12px] leading-relaxed text-text-secondary">{description}</p>
-        </div>
-
+      <div className="flex items-start justify-between gap-2 w-full">
         <span
           className={cn(
-            "w-fit rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums mt-auto",
-            isActive ? "bg-primary/10 text-primary" : "bg-muted/60 text-muted-foreground"
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors",
+            isMarked && !isAI ? "bg-primary/10 text-primary" : "",
+            !isMarked && !isAI ? "bg-muted/60 text-muted-foreground" : "",
+            isAI ? "bg-ai-bg text-primary" : ""
           )}
         >
+          {isAI ? <Sparkles className="h-[18px] w-[18px]" strokeWidth={2} /> : <Icon className="h-[18px] w-[18px]" strokeWidth={2} />}
+        </span>
+        {/* Una marca dibujada, no un `Checkbox`: la tarjeta entera ya es el
+            botón que alterna este modo, y meter el checkbox real dentro
+            anidaría un botón en otro —HTML inválido, y dos cosas pulsables
+            para una sola decisión—. */}
+        <span
+          aria-hidden
+          className={cn(
+            "flex size-5 shrink-0 items-center justify-center rounded-sm border transition-colors",
+            isMarked
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-input bg-surface"
+          )}
+        >
+          {isMarked && <CheckIcon className="size-3.5" strokeWidth={2.5} />}
+        </span>
+      </div>
+
+      <div className="w-full">
+        <h3 className={cn("text-[13px] font-bold leading-none tracking-tight", isAI ? "text-ai-gradient-start" : isMarked ? "text-text-primary" : "text-text-secondary")}>
+          {isAI ? "Importar con IA" : title}
+        </h3>
+        <p className="mt-1.5 text-[11px] font-medium leading-[1.35] text-text-muted line-clamp-2">
+          {description}
+        </p>
+      </div>
+
+      <div className="mt-auto pt-1 w-full">
+        <span className="inline-flex rounded-full bg-surface-muted px-2 py-0.5 text-[9.5px] font-bold tracking-tight text-text-secondary">
           {state}
         </span>
       </div>
-    </label>
+    </MagicCard>
   );
 }
-
-// Add this type and these options outside the function
-type SegmentKey = "area" | "leader" | "country" | "age" | "gender";
-const SEGMENT_LABELS: Record<SegmentKey, string> = {
-  area: "Área",
-  leader: "Líder",
-  country: "País",
-  age: "Edad",
-  gender: "Sexo",
-};
 
 /**
  * "Everyone" is an abstraction until you can see what it contains, so the
@@ -514,7 +583,13 @@ const SEGMENT_LABELS: Record<SegmentKey, string> = {
  * hairline dividers, ranked, the count as the one bold figure per row and its
  * share as quiet context beside it.
  */
-function CompanySummary() {
+function CompanySummary({
+  autoInclude,
+  onAutoIncludeChange,
+}: {
+  autoInclude: boolean;
+  onAutoIncludeChange: (value: boolean) => void;
+}) {
   const [segmentBy, setSegmentBy] = React.useState<SegmentKey>("area");
   const [sortKey, setSortKey] = React.useState<"segment" | "count" | null>("count");
   const [sortDir, setSortDir] = React.useState<SortDir>("desc");
@@ -529,13 +604,7 @@ function CompanySummary() {
   };
 
   const segments = React.useMemo(() => {
-    const counts = new Map<string, number>();
-    COLLABORATORS.forEach((person) => {
-      const value = person[segmentBy] ?? "Sin asignar";
-      counts.set(value, (counts.get(value) ?? 0) + 1);
-    });
-    
-    let entries = [...counts.entries()];
+    let entries = [...segmentCounts(segmentBy).entries()];
 
     if (segmentFilter.size > 0) {
       entries = entries.filter(([segment]) => segmentFilter.has(segment));
@@ -583,8 +652,15 @@ function CompanySummary() {
   }, [segmentBy]);
 
   return (
-    <div className="flex flex-col gap-5 rounded-xl border border-border/60 p-6 shadow-card bg-surface">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 border-b border-border/60 pb-5">
+    <div className="flex flex-col gap-5">
+      <AutoIncludeToggle
+        checked={autoInclude}
+        onCheckedChange={onAutoIncludeChange}
+        title="Incluir automáticamente nuevos colaboradores"
+        description="Si alguien se une a la empresa después de lanzar la encuesta, se agrega solo a la lista de participantes."
+      />
+
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-2">
         <div className="shrink-0">
           <p className="text-[13px] text-text-secondary font-medium mb-1">
             Se asignarán
@@ -600,7 +676,7 @@ function CompanySummary() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 pt-2">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-[13px] font-bold text-text-primary">
             Detalle de la distribución
@@ -685,6 +761,453 @@ function CompanySummary() {
           </Table>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * "Por grupos" mode: the audience is every collaborator inside whichever
+ * areas, leaders, or other category values the author checks off. Same
+ * bucketing as the company breakdown table, but the values become a
+ * selection instead of a read-only ranking.
+ */
+function HeaderSelectionMark({ state }: { state: boolean | "indeterminate" }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "flex size-4 shrink-0 items-center justify-center rounded-xs border transition-colors",
+        state === false ? "border-input" : "border-primary bg-primary text-primary-foreground"
+      )}
+    >
+      {state === "indeterminate" && <MinusIcon className="size-3.5" strokeWidth={2.5} />}
+      {state === true && <CheckIcon className="size-3.5" />}
+    </span>
+  );
+}
+
+const PAGE_SIZES = [10, 25, 50] as const;
+
+function GroupsPanel({
+  segmentBy,
+  onSegmentByChange,
+  selectedGroups,
+  onToggleGroup,
+  onSelectAll,
+  onClearAll,
+  autoInclude,
+  onAutoIncludeChange,
+  onSelectionChange,
+}: {
+  segmentBy: SegmentKey;
+  onSegmentByChange: (value: SegmentKey) => void;
+  selectedGroups: readonly string[];
+  onToggleGroup: (value: string) => void;
+  onSelectAll: (values: readonly string[]) => void;
+  onClearAll: () => void;
+  autoInclude: boolean;
+  onAutoIncludeChange: (value: boolean) => void;
+  onSelectionChange?: (count: number, actions: TableSelectionActions) => void;
+}) {
+  const groups = React.useMemo(
+    () => [...segmentCounts(segmentBy).entries()].sort((a, b) => b[1] - a[1]),
+    [segmentBy]
+  );
+  
+  const [query, setQuery] = React.useState("");
+  const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const [onlySelected, setOnlySelected] = React.useState(false);
+  const [pageSize, setPageSize] = React.useState<number>(PAGE_SIZES[0]);
+  const [page, setPage] = React.useState(1);
+
+
+  const selectedSet = React.useMemo(() => new Set(selectedGroups), [selectedGroups]);
+  const selectedCount = React.useMemo(
+    () => groupMemberIds(segmentBy, selectedGroups).size,
+    [segmentBy, selectedGroups]
+  );
+  
+  const terms = React.useMemo(
+    () => query.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().split(/\s+/).filter(Boolean),
+    [query]
+  );
+
+  const filtered = React.useMemo(() => {
+    return groups.filter(([group]) => {
+      const g = group.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+      const matchesSearch = terms.every((t) => g.includes(t));
+      const matchesSelected = !onlySelected || selectedSet.has(group);
+      return matchesSearch && matchesSelected;
+    });
+  }, [groups, terms, onlySelected, selectedSet]);
+
+  
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const firstIndex = (currentPage - 1) * pageSize;
+  const visible = filtered.slice(firstIndex, firstIndex + pageSize);
+
+  const selectedOnPage = visible.filter(([group]) => selectedSet.has(group)).length;
+
+  const headerState =
+    filtered.length > 0 && selectedOnPage === filtered.length
+      ? true
+      : selectedOnPage > 0
+        ? "indeterminate"
+        : false;
+
+  const callbacksRef = React.useRef({ onSelectionChange, onClearAll });
+  React.useEffect(() => {
+    callbacksRef.current = { onSelectionChange, onClearAll };
+  });
+  React.useEffect(() => {
+    const { onSelectionChange: currentChange, onClearAll: currentClear } = callbacksRef.current;
+    currentChange?.(selectedCount, { clear: () => currentClear() });
+  }, [selectedCount]);
+
+  const selectAllMatches = () => {
+    const toAdd = filtered.map(([group]) => group).filter(g => !selectedSet.has(g));
+    onSelectAll([...selectedGroups, ...toAdd]);
+  };
+  
+  const deselectAllMatches = () => {
+    const toRemove = new Set(filtered.map(([group]) => group));
+    onSelectAll(selectedGroups.filter((g) => !toRemove.has(g)));
+  };
+
+  const clearSelection = () => {
+    onClearAll();
+    setOnlySelected(false);
+  };
+
+  const allMatchesSelected = filtered.length > 0 && filtered.every(([group]) => selectedSet.has(group));
+  const showSelectAll = filtered.length > 0 && !allMatchesSelected;
+  const showDeselectAll = allMatchesSelected;
+
+  return (
+    <div className="flex flex-col gap-5">
+      <AutoIncludeToggle
+        checked={autoInclude}
+        onCheckedChange={onAutoIncludeChange}
+        title="Incluir automáticamente nuevos colaboradores"
+        description="Si alguien se une a uno de los grupos seleccionados después de lanzar la encuesta, se agrega solo a la lista de participantes."
+      />
+
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-2">
+        <div className="shrink-0">
+          <p className="text-[13px] text-text-secondary font-medium mb-1">
+            Se asignarán
+          </p>
+          <p className="text-3xl font-bold tracking-tight text-primary leading-none">
+            {formatCount(selectedCount)}{" "}
+            <span className="text-[16px] font-semibold text-text-secondary">colaboradores</span>
+          </p>
+        </div>
+        <div className="hidden sm:block w-px h-10 bg-border/60" />
+        <p className="text-[13px] leading-relaxed text-muted-foreground max-w-2xl">
+          Elige cómo agrupar a tus colaboradores y marca los grupos que deben responder la encuesta.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4 pt-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] font-medium text-muted-foreground">Agrupar por:</span>
+            <Select value={segmentBy} onValueChange={(val) => {
+              onSegmentByChange(val as SegmentKey);
+              setQuery("");
+              setOnlySelected(false);
+              setPage(1);
+            }}>
+              <SelectTrigger className="h-8 w-[140px] rounded-lg border-border/60 bg-surface px-3 text-[12px] shadow-card focus:ring-2 focus:ring-primary/20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                {Object.entries(SEGMENT_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key} className="text-[12px]">
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-3 ml-auto">
+            <div
+              className={cn(
+                "relative flex h-9 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden rounded-lg border bg-surface",
+                (isSearchExpanded || query !== "")
+                  ? "w-[300px] border-primary/50 ring-1 ring-primary/15"
+                  : "w-9 border-border hover:bg-border/50 cursor-pointer"
+              )}
+              onClick={() => {
+                if (!isSearchExpanded && query === "") {
+                  setIsSearchExpanded(true);
+                  setTimeout(() => searchInputRef.current?.focus(), 50);
+                }
+              }}
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget) && query === "") {
+                  setIsSearchExpanded(false);
+                }
+              }}
+            >
+              <div
+                className={cn(
+                  "absolute left-0 -ml-px -mt-px flex h-9 w-9 items-center justify-center transition-colors",
+                  (isSearchExpanded || query !== "") ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                <Search className="h-4 w-4 translate-x-[0.667px] translate-y-[0.667px]" strokeWidth={2} />
+              </div>
+              
+              <input
+                ref={searchInputRef}
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setPage(1);
+                }}
+                placeholder="Busca por nombre del grupo"
+                aria-label="Buscar grupos"
+                className={cn(
+                  "h-full w-[300px] bg-transparent pl-9 pr-8 text-[13px] text-text-primary outline-none transition-all placeholder:text-muted-foreground/70",
+                  (isSearchExpanded || query !== "") ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
+              />
+              {query !== "" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    setPage(1);
+                    searchInputRef.current?.focus();
+                  }}
+                  className="absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-border/60 hover:text-text-primary"
+                >
+                  <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+                </button>
+              )}
+            </div>
+
+            <div
+              className={cn(
+                "flex shrink-0 items-center overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                (selectedGroups.length > 0 || onlySelected)
+                  ? "max-w-[200px] opacity-100"
+                  : "max-w-0 opacity-0 pointer-events-none"
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setOnlySelected((value) => !value);
+                  setPage(1);
+                }}
+                className={cn(
+                  "flex h-9 whitespace-nowrap shrink-0 items-center gap-2 rounded-lg border px-3 text-[13px] font-semibold transition-colors",
+                  onlySelected
+                    ? "border-primary/40 bg-primary/5 text-primary"
+                    : "border-border text-text-secondary hover:border-primary/30 hover:text-primary"
+                )}
+              >
+                {onlySelected ? (
+                  <EyeOff className="h-3.5 w-3.5" strokeWidth={2} />
+                ) : (
+                  <Eye className="h-3.5 w-3.5" strokeWidth={2} />
+                )}
+                {onlySelected ? "Ver todos" : `Ver seleccionados (${formatCount(selectedGroups.length)})`}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-xl border border-border/60">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
+                  <TableHead className="w-16 px-0">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          disabled={filtered.length === 0}
+                          aria-label="Opciones de selección"
+                          className="group flex h-8 w-full items-center gap-1 pl-6"
+                        >
+                          <HeaderSelectionMark state={headerState} />
+                          <ChevronDown
+                            className="h-3 w-3 text-muted-foreground transition-colors group-hover:text-text-primary"
+                            strokeWidth={2.5}
+                          />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-96">
+                        {showSelectAll && (
+                          <DropdownMenuItem onClick={selectAllMatches}>
+                            Seleccionar todos los grupos ({formatCount(filtered.length)})
+                          </DropdownMenuItem>
+                        )}
+                        {showSelectAll && showDeselectAll && (
+                          <DropdownMenuSeparator />
+                        )}
+                        {showDeselectAll && (
+                          <DropdownMenuItem onClick={deselectAllMatches}>
+                            Deseleccionar todos los grupos
+                          </DropdownMenuItem>
+                        )}
+                        {selectedGroups.length > 0 && (
+                          <>
+                            <div className="my-1 h-px bg-border" role="separator" />
+                            <DropdownMenuItem
+                              onClick={clearSelection}
+                              className="text-status-negative focus:text-status-negative focus:bg-status-negative/10"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Eliminar seleccionados ({selectedGroups.length})
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableHead>
+                  <TableHead className="min-w-[200px] py-3 text-[12px] font-semibold text-muted-foreground">
+                    Grupo
+                  </TableHead>
+                  <TableHead className="w-[120px] py-3 text-right text-[12px] font-semibold text-muted-foreground">
+                    Cantidad
+                  </TableHead>
+                  <TableHead className="w-[80px] py-3 pr-6 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    %
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visible.map(([group, count]) => {
+                  const isSelected = selectedSet.has(group);
+                  const share = Math.round((count / COLLABORATOR_COUNT) * 100);
+                  return (
+                    <TableRow
+                      key={group}
+                      data-state={isSelected ? "selected" : undefined}
+                      onClick={() => onToggleGroup(group)}
+                      className="cursor-pointer border-border/60 transition-colors"
+                    >
+                      <TableCell className="px-0">
+                        <div className="flex items-center justify-center">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => onToggleGroup(group)}
+                            onClick={(event) => event.stopPropagation()}
+                            aria-label={`Seleccionar grupo ${group}`}
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2.5 text-[13px] text-text-secondary">
+                        {group}
+                      </TableCell>
+                      <TableCell className="w-[120px] py-2.5 text-right tabular-nums text-[13px] text-text-secondary">
+                        {formatCount(count)}
+                      </TableCell>
+                      <TableCell className="w-[80px] py-2.5 pr-6 text-right tabular-nums text-[13px] text-muted-foreground">
+                        {share}%
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+            
+            {filtered.length === 0 && (
+              <div className="flex flex-col items-center gap-1.5 px-4 py-8 text-center border-t border-border/60">
+                <p className="text-[13px] font-semibold text-text-primary">
+                  {onlySelected ? "Aún no has seleccionado ningún grupo" : "Sin resultados"}
+                </p>
+                <p className="max-w-xs text-[12px] leading-relaxed text-muted-foreground">
+                  {onlySelected
+                    ? "Vuelve a la lista completa para elegir grupos."
+                    : "Prueba con otro nombre."}
+                </p>
+              </div>
+            )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[12px] text-muted-foreground">
+            {filtered.length === 0
+              ? "0 grupos"
+              : `${formatCount(firstIndex + 1)}–${formatCount(firstIndex + visible.length)} de ${formatCount(filtered.length)}`}
+          </p>
+
+          <div className="flex items-center gap-2">
+            <Select
+              value={String(pageSize)}
+              onValueChange={(value) => {
+                setPageSize(Number(value));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger
+                aria-label="Grupos por página"
+                className="h-8 w-[130px] rounded-lg px-2.5 text-[12px]"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" sideOffset={6}>
+                {PAGE_SIZES.map((size) => (
+                  <SelectItem key={size} value={String(size)} className="text-[13px]">
+                    {size} por página
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <PagerButton
+              label="Página anterior"
+              disabled={currentPage <= 1}
+              onClick={() => setPage(currentPage - 1)}
+            >
+              Anterior
+            </PagerButton>
+            <span className="text-[12px] tabular-nums text-text-secondary">
+              {formatCount(currentPage)} / {formatCount(pageCount)}
+            </span>
+            <PagerButton
+              label="Página siguiente"
+              disabled={currentPage >= pageCount}
+              onClick={() => setPage(currentPage + 1)}
+            >
+              Siguiente
+            </PagerButton>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** A named on/off switch for whether future joiners are swept into the
+ * audience automatically. Shared by "Toda la empresa" and "Por grupos" —
+ * same question, scoped to a different population. */
+function AutoIncludeToggle({
+  checked,
+  onCheckedChange,
+  title,
+  description,
+}: {
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-xl border border-border/60 bg-muted/20 px-4 py-3.5">
+      <div className="flex flex-col gap-0.5 pr-2">
+        <p className="text-[13px] font-semibold text-text-primary">{title}</p>
+        <p className="text-[12px] leading-relaxed text-muted-foreground">{description}</p>
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} className="mt-0.5 shrink-0" />
     </div>
   );
 }

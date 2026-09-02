@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
 
-function mapVariantToState(variant: "info" | "positive" | "warning" | "neutral"): "success" | "pending" | "failed" {
+function mapVariantToState(variant: "info" | "positive" | "warning" | "neutral"): "success" | "pending" | "failed" | "draft" {
   if (variant === "positive") return "success";
-  if (variant === "warning" || variant === "info" || variant === "neutral") return "pending"; // Map neutral/info to pending since there's no neutral in StatusBadge yet, or wait I'll map them appropriately if I extend it.
+  if (variant === "neutral") return "draft";
+  if (variant === "warning" || variant === "info") return "pending";
   return "failed";
 }
 import { Button } from "@/components/ui/button";

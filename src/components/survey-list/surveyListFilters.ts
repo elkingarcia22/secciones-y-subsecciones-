@@ -10,6 +10,7 @@
 export interface SurveyFilterableRow {
   type: string;
   status: string;
+  startDate: string;
   endDate: string;
   progress: number;
 }
@@ -24,8 +25,19 @@ export const CLOSE_BUCKETS = [
 /** Buckets offered by the "Avance" column, in menu order. */
 export const PROGRESS_BUCKETS = ["Menos de 50%", "50% a 79%", "80% o más"] as const;
 
+/**
+ * The participation a running survey is expected to reach. Same line the
+ * "Avance" column draws between "50% a 79%" and "80% o más".
+ */
+export const PARTICIPATION_TARGET = 80;
+
+/** The one bucket of the "Tendencia" dimension: on its current pace, the
+ *  survey will close short of `PARTICIPATION_TARGET`. */
+export const RISK_BUCKETS = ["Tendencia por debajo de la meta"] as const;
+
 export type CloseBucket = (typeof CLOSE_BUCKETS)[number];
 export type ProgressBucket = (typeof PROGRESS_BUCKETS)[number];
+export type RiskBucket = (typeof RISK_BUCKETS)[number];
 
 /** How near the close counts as "7 días o menos". */
 export const CLOSING_SOON_DAYS = 7;
@@ -35,6 +47,13 @@ export interface SurveyListFilters {
   status: readonly string[];
   close: readonly string[];
   progress: readonly string[];
+  /**
+   * Not offered by any column menu: a projection over start, close and
+   * progress rather than a value of one column. The home alert that sets it
+   * is the only surface that does, and the table's "limpiar filtros" clears it
+   * along with the rest.
+   */
+  risk: readonly string[];
 }
 
 export const NO_FILTERS: SurveyListFilters = {
@@ -42,6 +61,7 @@ export const NO_FILTERS: SurveyListFilters = {
   status: [],
   close: [],
   progress: [],
+  risk: [],
 };
 
 const MONTHS: Readonly<Record<string, number>> = {
@@ -70,7 +90,30 @@ export function closeBucketOf(row: SurveyFilterableRow, today: Date): CloseBucke
 
 export function progressBucketOf(row: SurveyFilterableRow): ProgressBucket {
   if (row.progress < 50) return "Menos de 50%";
-  return row.progress < 80 ? "50% a 79%" : "80% o más";
+  return row.progress < PARTICIPATION_TARGET ? "50% a 79%" : "80% o más";
+}
+
+/**
+ * Where participation will land on close day if it keeps today's pace:
+ * progress so far plus (progress per elapsed day × days left), capped at 100.
+ * Null for a survey that has not started or has already closed, or whose
+ * dates cannot be read — there is no pace to extend.
+ */
+export function projectedProgress(row: SurveyFilterableRow, today: Date): number | null {
+  const untilStart = daysUntil(row.startDate, today);
+  const untilEnd = daysUntil(row.endDate, today);
+  if (untilStart === null || untilEnd === null) return null;
+  const elapsed = -untilStart;
+  if (elapsed <= 0 || untilEnd < 0) return null;
+  const pace = row.progress / elapsed;
+  return Math.min(100, row.progress + pace * untilEnd);
+}
+
+/** A running survey whose projection falls short of the target; null otherwise. */
+export function riskBucketOf(row: SurveyFilterableRow, today: Date): RiskBucket | null {
+  const projected = projectedProgress(row, today);
+  if (projected === null || projected >= PARTICIPATION_TARGET) return null;
+  return "Tendencia por debajo de la meta";
 }
 
 /** An empty set for a column means "no narrowing on that column". */
@@ -88,6 +131,10 @@ export function matchesFilters(
   if (filters.progress.length > 0 && !filters.progress.includes(progressBucketOf(row))) {
     return false;
   }
+  if (filters.risk.length > 0) {
+    const bucket = riskBucketOf(row, today);
+    if (bucket === null || !filters.risk.includes(bucket)) return false;
+  }
   return true;
 }
 
@@ -95,7 +142,8 @@ export const hasAnyFilter = (filters: SurveyListFilters): boolean =>
   filters.type.length > 0 ||
   filters.status.length > 0 ||
   filters.close.length > 0 ||
-  filters.progress.length > 0;
+  filters.progress.length > 0 ||
+  filters.risk.length > 0;
 
 const sameValues = (a: readonly string[], b: readonly string[]): boolean =>
   a.length === b.length && [...a].sort().every((value, index) => value === [...b].sort()[index]);
@@ -105,7 +153,8 @@ export const filtersEqual = (a: SurveyListFilters, b: SurveyListFilters): boolea
   sameValues(a.type, b.type) &&
   sameValues(a.status, b.status) &&
   sameValues(a.close, b.close) &&
-  sameValues(a.progress, b.progress);
+  sameValues(a.progress, b.progress) &&
+  sameValues(a.risk, b.risk);
 
 /** Adds or removes one value from one column, leaving the others alone. */
 export function toggleFilterValue(

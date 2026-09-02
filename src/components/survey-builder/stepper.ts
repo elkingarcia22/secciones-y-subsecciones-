@@ -1,4 +1,5 @@
-import { participantCount } from "./participants";
+import { totalParticipantCount } from "./participants";
+import { isDemographicComplete } from "./demographics";
 import type { SurveyDraft } from "./surveyBuilderTypes";
 
 /**
@@ -98,14 +99,17 @@ export function isStepComplete(
     // survey whose results can't be segmented, which nobody asked for.
     case "demographics": {
       const isNom035 = draft.name.toLowerCase().includes("nom 035");
+      const areFieldsComplete = !draft.demographics.enabled || draft.demographics.fields.every(isDemographicComplete);
+      
       if (isNom035) {
         return (
           visitedSteps.has("demographics") &&
           draft.demographics.enabled &&
-          draft.demographics.fields.length > 0
+          draft.demographics.fields.length > 0 &&
+          areFieldsComplete
         );
       }
-      return visitedSteps.has("demographics");
+      return visitedSteps.has("demographics") && areFieldsComplete;
     }
     case "sections":
       return hasSectionWithQuestion && allSectionsHaveQuestions && allQuestionsComplete;
@@ -113,7 +117,7 @@ export function isStepComplete(
     // rather than on having been opened: a survey with nobody to answer it
     // isn't a step anyone finished.
     case "participants":
-      return participantCount(draft.participants) > 0;
+      return totalParticipantCount(draft.participants) > 0;
     // Optional pages carry content of their own, so they are judged on that
     // content while switched on — an enabled page with nothing on it isn't a
     // page anyone finished. Switched off, they are vacuously done.

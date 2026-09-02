@@ -39,37 +39,41 @@ export function PreviewQuestionsPage({
   const minutes = Math.max(1, Math.round(questions.length * MINUTES_PER_QUESTION));
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-8 sm:px-8">
+    <div className="preview-page-enter mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-8 sm:px-8">
       {/* Cover. Same card language as the welcome page: the accent rule marks
-          "this is the page talking", not a question. */}
-      <header className="relative overflow-hidden rounded-2xl border border-border/60 bg-surface p-6 shadow-drawer sm:p-7">
+          "this is the page talking", not a question. Entering a new section
+          animates as a set: the box itself settles in, then its own pieces
+          (breadcrumb, title, description, meta) cascade in right behind it. */}
+      <header className="preview-page-enter-header relative overflow-hidden rounded-2xl border border-border/60 bg-surface p-6 shadow-drawer sm:p-7">
         {/* Subtle top accent to mark it as a header without being intrusive */}
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/80 to-primary/40" />
         {/* Very faint background gradient to give it slight depth compared to questions */}
         <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none" />
 
-        {page.kind === "section" ? (
-          <SectionTrail page={page} />
-        ) : (
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
-            <UsersRound className="h-3.5 w-3.5" strokeWidth={2} />
-            Sobre ti
-          </span>
-        )}
+        <div className="preview-header-content relative">
+          {page.kind === "section" ? (
+            <SectionTrail page={page} />
+          ) : (
+            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
+              <UsersRound className="h-3.5 w-3.5" strokeWidth={2} />
+              Sobre ti
+            </span>
+          )}
 
-        <h1 className="mt-3 text-[28px] font-bold leading-[1.15] tracking-tight text-text-primary">
-          {page.title}
-        </h1>
+          <h1 className="mt-3 text-[28px] font-bold leading-[1.15] tracking-tight text-text-primary">
+            {page.title}
+          </h1>
 
-        {page.description.trim() && (
-          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-text-secondary">
-            {page.description}
-          </p>
-        )}
+          {page.description.trim() && (
+            <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-text-secondary">
+              {page.description}
+            </p>
+          )}
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Meta icon={ListChecks} label={`${questions.length} ${questions.length === 1 ? "pregunta" : "preguntas"}`} />
-          <Meta icon={Clock3} label={`${minutes} min aprox.`} />
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Meta icon={ListChecks} label={`${questions.length} ${questions.length === 1 ? "pregunta" : "preguntas"}`} />
+            <Meta icon={Clock3} label={`${minutes} min aprox.`} />
+          </div>
         </div>
       </header>
 

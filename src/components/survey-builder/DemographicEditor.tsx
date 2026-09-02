@@ -3,15 +3,9 @@ import { BookOpen, Database, Lock, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { MagicCard } from "@/components/ui/magic-card";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { QuestionOptionsEditor } from "./QuestionOptionsEditor";
 import { DEMOGRAPHIC_TYPES, demographicTypeLabel, findSystemDemographic } from "./demographics";
 import { MIN_OPTIONS, buildOption } from "./questionCatalog";
@@ -181,30 +175,33 @@ export function DemographicEditor({
         </div>
       ) : (
         <>
-          <Field label="Tipo de respuesta">
-            <Select value={field.type} onValueChange={(next) => changeType(next as DemographicType)}>
-              <SelectTrigger
-                aria-label="Tipo de respuesta"
-                className="h-10 rounded-md px-3 text-[13px]"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent
-                position="popper"
-                sideOffset={6}
-                className="w-[var(--radix-select-trigger-width)]"
-              >
-                {DEMOGRAPHIC_TYPES.map(({ value, label, icon: Icon }) => (
-                  <SelectItem key={value} value={value} className="text-[13px]">
-                    <span className="flex items-center gap-2">
-                      <Icon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
-                      {label}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className="text-[12px] font-semibold text-text-secondary mb-1.5">
+              Tipo de respuesta
+            </legend>
+            <div className="flex flex-wrap gap-2">
+              {DEMOGRAPHIC_TYPES.map(({ value, label, icon: Icon }) => {
+                const selected = field.type === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => changeType(value as DemographicType)}
+                    className={cn(
+                      "flex flex-1 min-w-[100px] flex-col items-center justify-center gap-1.5 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                      selected
+                        ? "border-primary bg-primary/10 text-primary shadow-sm"
+                        : "border-border bg-surface text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" strokeWidth={selected ? 2.5 : 2} />
+                    <span className="text-[10px] font-semibold leading-tight">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
 
           <QuestionOptionsEditor
             options={field.options}

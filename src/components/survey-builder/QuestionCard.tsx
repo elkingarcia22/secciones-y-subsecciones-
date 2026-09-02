@@ -1,12 +1,15 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import { GripVertical, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { AiGeneratedBadge } from "@/components/ai-interaction";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
 import { MoveToPopover } from "./MoveToPopover";
 import { questionTypeLabel, scaleTypeLabel } from "./questionCatalog";
 import type { SectionTreeEntry } from "./sectionTree";
 import type { SurveyQuestion } from "./surveyBuilderTypes";
+import { cascadeItem } from "@/lib/cascadeAnimation";
 
 interface QuestionCardProps {
   readOnly?: boolean;
@@ -69,7 +72,8 @@ export function QuestionCard({
   }
 
   return (
-    <li
+    <motion.li
+      variants={cascadeItem}
       {...dragProps}
       className={cn(
         "group relative flex items-center gap-2.5 bg-surface pl-2 pr-2.5 transition-all",
@@ -100,6 +104,8 @@ export function QuestionCard({
       >
         {index + 1}
       </span>
+
+      {question.isAiGenerated && <AiGeneratedBadge />}
 
       <button
         type="button"
@@ -156,6 +162,6 @@ export function QuestionCard({
           <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
         </button>
       )}
-    </li>
+    </motion.li>
   );
 }

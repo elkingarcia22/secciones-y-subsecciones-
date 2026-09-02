@@ -43,6 +43,14 @@ const Toaster = ({ theme = "system", ...props }: ToasterProps & { theme?: Toaste
           error: "group-[.toaster]:border-status-negative/20",
           warning: "group-[.toaster]:border-status-warning/20",
           info: "group-[.toaster]:border-status-info/20",
+          // Sonner default: a 20px circle absolutely pinned to the toast's
+          // corner, half hanging off the edge — a small, easy-to-miss target.
+          // This instead flows as the last item in the toast's own row (order
+          // + static position), landing fully on the card at a normal
+          // icon-button size, so there's a real 28px area to aim for instead
+          // of a sliver at the rim.
+          closeButton:
+            "group-[.toast]:!static group-[.toast]:!order-last group-[.toast]:!left-auto group-[.toast]:!right-auto group-[.toast]:!top-auto group-[.toast]:!ml-2 group-[.toast]:!size-7 group-[.toast]:![transform:none] group-[.toast]:!rounded-md group-[.toast]:!border-transparent group-[.toast]:!bg-transparent group-[.toast]:!text-muted-foreground [&_svg]:!size-4 hover:group-[.toast]:!bg-muted hover:group-[.toast]:!text-foreground",
         },
       }}
       {...props}

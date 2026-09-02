@@ -1,7 +1,9 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import { ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SECTION_HEADER_DIVIDER } from "@/components/survey-builder/depthTheme";
+import { cascadeItem } from "@/lib/cascadeAnimation";
 
 /**
  * The block chrome the Análisis con IA tab is built out of.
@@ -38,7 +40,10 @@ export function AiSectionCard({
   const toggle = () => setIsOpen((current) => !current);
 
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface">
+    <motion.section
+      variants={cascadeItem}
+      className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface"
+    >
       <div
         role="button"
         tabIndex={0}
@@ -87,7 +92,7 @@ export function AiSectionCard({
           {children}
         </div>
       )}
-    </section>
+    </motion.section>
   );
 }
 

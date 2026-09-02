@@ -11,5 +11,8 @@ export { TrendMetricLineChart } from './TrendMetricLineChart'
 export { SurveyMetricCard } from './SurveyMetricCard'
 export { FavorabilityDistributionCard } from './FavorabilityDistributionCard'
 export { ParticipationTrendCard } from './ParticipationTrendCard'
+export { RingGauge, Sparkline, DialGauge } from './pulseCharts'
+export { useMeasuredWidth } from './useMeasuredWidth'
+export type { SparkPoint } from './pulseCharts'
 
 export * from './surveyAnalyticsTypes'

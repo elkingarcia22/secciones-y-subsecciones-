@@ -309,6 +309,26 @@
                 linear-gradient(135deg, hsl(var(--ai-gradient-start)), hsl(var(--ai-gradient-end))) border-box !important;
   }
 
+  /* Gradient ring drawn as a masked pseudo-element so it layers on top of a
+     card's own background (e.g. the animated AI mesh) instead of replacing it,
+     which the padding-box/border-box trick above would do. */
+  .ai-gradient-ring {
+    position: relative;
+  }
+
+  .ai-gradient-ring::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(135deg, hsl(var(--ai-gradient-start)), hsl(var(--ai-gradient-end)));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
   .shadow-ai-premium {
     box-shadow: var(--shadow-ai-premium) !important;
   }
@@ -384,6 +404,68 @@
     }
     100% {
       background-position: 30% 50%;
+    }
+  }
+
+  /* ── Card hover ────────────────────────────────────────────
+     Two layers that ease in together on hover and out again on leave:
+       ::after — a faint single-hue wash, anchored bottom-left
+       .magic-card-lift — a barely-there rise plus a soft matching shadow
+     Kept deliberately restrained — a single soft gradient and a 1px lift
+     read as "alive" without calling attention to themselves. */
+  .magic-card-sweep::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(
+      130% 100% at 6% 112%,
+      hsl(var(--primary) / 0.06),
+      transparent 58%
+    );
+    transition: opacity 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .magic-card-sweep:hover::after {
+    opacity: 1;
+  }
+
+  /* AI variant — one soft blend of the same three hues as `.bg-ai-mesh-card`
+     instead of three stacked radials, so it reads as a gentle wash rather
+     than a patchwork of coloured blotches. */
+  .magic-card-sweep-ai::after {
+    background: linear-gradient(
+      135deg,
+      rgba(46, 198, 255, 0.07) 0%,
+      rgba(124, 58, 237, 0.05) 50%,
+      rgba(244, 63, 94, 0.06) 100%
+    );
+  }
+
+  /* The rise. Kept on its own class so surfaces that already scale on drag
+     (the upload dropzone) can take the wash without the movement. */
+  .magic-card-lift {
+    transition:
+      transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .magic-card-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px -12px hsl(var(--primary) / 0.28);
+  }
+
+  .magic-card-lift.magic-card-sweep-ai:hover {
+    box-shadow: 0 6px 16px -12px rgba(124, 58, 237, 0.22);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .magic-card-lift:hover {
+      transform: none;
     }
   }
 
@@ -579,26 +661,315 @@
   }
 }
 
+/* ── Table Row Cascade ────────────────────────────────────
+   Al montar una tabla, cada fila entra con un fade + leve
+   ascenso, escalonado por fila (nth-child) para que el conjunto
+   se lea como una cascada, no como un parpadeo. Cubre tanto
+   <TableBody> (data-slot) como <tbody> a mano.
+
+   Sin escala: una fila ocupa todo el ancho de la tabla, así que
+   un scale() por sutil que sea se percibe como un salto horizontal
+   grande (la fila "crece" varios px de cada lado), mucho más
+   notorio que el leve ascenso vertical que sí queremos.
+*/
 @layer utilities {
-  @keyframes icon-pop {
-    0% { transform: scale(1); }
-    40% { transform: scale(1.2) rotate(-8deg); }
-    70% { transform: scale(1) rotate(5deg); }
-    100% { transform: scale(1) rotate(0deg); }
+  @keyframes table-row-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
-  .dock-item:hover svg,
-  .dock-item-list:hover svg {
-    animation: icon-pop 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  [data-slot="table-body"] > tr,
+  tbody > tr {
+    animation: table-row-in 780ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  [data-slot="table-body"] > tr:nth-child(1),  tbody > tr:nth-child(1)  { animation-delay: 0ms; }
+  [data-slot="table-body"] > tr:nth-child(2),  tbody > tr:nth-child(2)  { animation-delay: 55ms; }
+  [data-slot="table-body"] > tr:nth-child(3),  tbody > tr:nth-child(3)  { animation-delay: 110ms; }
+  [data-slot="table-body"] > tr:nth-child(4),  tbody > tr:nth-child(4)  { animation-delay: 165ms; }
+  [data-slot="table-body"] > tr:nth-child(5),  tbody > tr:nth-child(5)  { animation-delay: 220ms; }
+  [data-slot="table-body"] > tr:nth-child(6),  tbody > tr:nth-child(6)  { animation-delay: 275ms; }
+  [data-slot="table-body"] > tr:nth-child(7),  tbody > tr:nth-child(7)  { animation-delay: 330ms; }
+  [data-slot="table-body"] > tr:nth-child(8),  tbody > tr:nth-child(8)  { animation-delay: 385ms; }
+  [data-slot="table-body"] > tr:nth-child(9),  tbody > tr:nth-child(9)  { animation-delay: 440ms; }
+  [data-slot="table-body"] > tr:nth-child(10), tbody > tr:nth-child(10) { animation-delay: 495ms; }
+  [data-slot="table-body"] > tr:nth-child(11), tbody > tr:nth-child(11) { animation-delay: 550ms; }
+  [data-slot="table-body"] > tr:nth-child(12), tbody > tr:nth-child(12) { animation-delay: 605ms; }
+  [data-slot="table-body"] > tr:nth-child(13), tbody > tr:nth-child(13) { animation-delay: 660ms; }
+  [data-slot="table-body"] > tr:nth-child(14), tbody > tr:nth-child(14) { animation-delay: 715ms; }
+  [data-slot="table-body"] > tr:nth-child(15), tbody > tr:nth-child(15) { animation-delay: 770ms; }
+  [data-slot="table-body"] > tr:nth-child(16), tbody > tr:nth-child(16) { animation-delay: 825ms; }
+  [data-slot="table-body"] > tr:nth-child(17), tbody > tr:nth-child(17) { animation-delay: 880ms; }
+  [data-slot="table-body"] > tr:nth-child(18), tbody > tr:nth-child(18) { animation-delay: 935ms; }
+  [data-slot="table-body"] > tr:nth-child(19), tbody > tr:nth-child(19) { animation-delay: 990ms; }
+  [data-slot="table-body"] > tr:nth-child(20), tbody > tr:nth-child(20) { animation-delay: 1045ms; }
+  [data-slot="table-body"] > tr:nth-child(n+21), tbody > tr:nth-child(n+21) { animation-delay: 1100ms; }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-slot="table-body"] > tr,
+    tbody > tr {
+      animation: none;
+    }
+  }
+
+  /* react-day-picker (the date/range calendar) renders its weeks as <tr>
+     too, but it isn't "a table loading" — it's a small widget that opens
+     and re-renders on every month change, so replaying the cascade there
+     reads as flicker, not polish. */
+  [data-slot="calendar"] tr {
+    animation: none;
   }
 }
 
+/* ── Preview Section Cascade ──────────────────────────────
+   Al pasar de sección en la vista previa de encuesta, el header
+   de la página (breadcrumb/insignia, título, descripción, meta)
+   entra como un conjunto y luego cada una de sus piezas se
+   escalona sutilmente; debajo, las preguntas aparecen en cascada
+   una a una. El remount por `key={page.id}` en SurveyPreviewDrawer
+   reinicia estas animaciones en cada navegación.
+*/
 @layer utilities {
-  button:not(:disabled):hover svg.lucide:not(.animate-spin), 
-  a:not(:disabled):hover svg.lucide:not(.animate-spin), 
-  [role="button"]:not(:disabled):hover svg.lucide:not(.animate-spin), 
-  .cursor-pointer:hover svg.lucide:not(.animate-spin),
-  .group:hover svg.lucide:not(.animate-spin) {
-    animation: icon-pop 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  @keyframes preview-box-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .preview-page-enter-header {
+    animation: preview-box-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .preview-header-content > * {
+    animation: preview-box-in 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .preview-header-content > *:nth-child(1) { animation-delay: 60ms; }
+  .preview-header-content > *:nth-child(2) { animation-delay: 150ms; }
+  .preview-header-content > *:nth-child(3) { animation-delay: 240ms; }
+  .preview-header-content > *:nth-child(4) { animation-delay: 330ms; }
+
+  .preview-page-enter > header ~ * {
+    animation: preview-box-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .preview-page-enter > header ~ *:nth-child(2)  { animation-delay: 380ms; }
+  .preview-page-enter > header ~ *:nth-child(3)  { animation-delay: 470ms; }
+  .preview-page-enter > header ~ *:nth-child(4)  { animation-delay: 560ms; }
+  .preview-page-enter > header ~ *:nth-child(5)  { animation-delay: 650ms; }
+  .preview-page-enter > header ~ *:nth-child(6)  { animation-delay: 740ms; }
+  .preview-page-enter > header ~ *:nth-child(7)  { animation-delay: 830ms; }
+  .preview-page-enter > header ~ *:nth-child(8)  { animation-delay: 920ms; }
+  .preview-page-enter > header ~ *:nth-child(9)  { animation-delay: 1010ms; }
+  .preview-page-enter > header ~ *:nth-child(10) { animation-delay: 1100ms; }
+  .preview-page-enter > header ~ *:nth-child(11) { animation-delay: 1190ms; }
+  .preview-page-enter > header ~ *:nth-child(n+12) { animation-delay: 1280ms; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .preview-page-enter-header,
+    .preview-header-content > *,
+    .preview-page-enter > header ~ * {
+      animation: none;
+    }
+  }
+}
+
+/* ── Screen & Tab Entrance Cascade ─────────────────────────
+   The same settle-in language as the preview cascade above, generalized
+   for anywhere a whole screen is swapped for another: a builder step, a
+   results tab, a home tab. Pair with `key={<step/tab id>}` on a
+   `.cascade-enter` wrapper so React remounts it — and replays this
+   animation — on every switch. When the freshly mounted screen is a
+   single root element it reads as one soft fade-and-settle; when it is a
+   list (e.g. the builder's stacked section cards), each one cascades in
+   right after the last, same as the preview's question cards.
+*/
+@layer utilities {
+  .cascade-enter > * {
+    animation: preview-box-in 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .cascade-enter > *:nth-child(1)  { animation-delay: 0ms; }
+  .cascade-enter > *:nth-child(2)  { animation-delay: 90ms; }
+  .cascade-enter > *:nth-child(3)  { animation-delay: 180ms; }
+  .cascade-enter > *:nth-child(4)  { animation-delay: 270ms; }
+  .cascade-enter > *:nth-child(5)  { animation-delay: 360ms; }
+  .cascade-enter > *:nth-child(6)  { animation-delay: 450ms; }
+  .cascade-enter > *:nth-child(7)  { animation-delay: 540ms; }
+  .cascade-enter > *:nth-child(8)  { animation-delay: 630ms; }
+  .cascade-enter > *:nth-child(9)  { animation-delay: 720ms; }
+  .cascade-enter > *:nth-child(10) { animation-delay: 810ms; }
+  .cascade-enter > *:nth-child(n+11) { animation-delay: 900ms; }
+
+  /* The thin bars under the home pulse metrics grow in from the left once,
+     on mount — transform only, so the row above never shifts. */
+  .pulse-bar-grow {
+    animation: pulse-bar-grow 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: 180ms;
+  }
+  @keyframes pulse-bar-grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+  /* The ring eases open via a transition on its dash offset (a keyframe
+     cannot know where each ring stops); the sparkline draws itself along
+     its normalized path length; the area and end dot simply fade in. */
+  .pulse-ring-draw {
+    transition: stroke-dashoffset 900ms cubic-bezier(0.16, 1, 0.3, 1) 180ms;
+  }
+  .pulse-line-draw {
+    stroke-dasharray: 1;
+    animation: pulse-line-draw 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: 180ms;
+  }
+  @keyframes pulse-line-draw {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+  }
+  .pulse-fade-in {
+    animation: pulse-fade-in 600ms ease-out both;
+    animation-delay: 700ms;
+  }
+  @keyframes pulse-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pulse-bar-grow,
+    .pulse-line-draw,
+    .pulse-fade-in { animation: none; }
+    .pulse-ring-draw { transition: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cascade-enter > * {
+      animation: none;
+    }
+  }
+}
+
+/* ── Drawer-internal cascade ────────────────────────────────
+   Same reveal as `.cascade-enter` above, timed to start only once a
+   Sheet's own slide-in (500ms, expo-out — visually settled well before it
+   technically ends) has cleared. Stacking the two motions at the same
+   start time buries the cascade's subtle vertical settle inside the much
+   bigger horizontal slide, so it read as nothing happening. Use this
+   instead of `.cascade-enter` for content that reveals as a drawer opens;
+   once the drawer is already open, a later swap (e.g. picking a different
+   item from a list inside it) has nothing to compete with and can use the
+   immediate `.cascade-enter` instead. */
+@layer utilities {
+  .cascade-enter-drawer > * {
+    animation: preview-box-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .cascade-enter-drawer > *:nth-child(1)  { animation-delay: 280ms; }
+  .cascade-enter-drawer > *:nth-child(2)  { animation-delay: 325ms; }
+  .cascade-enter-drawer > *:nth-child(3)  { animation-delay: 370ms; }
+  .cascade-enter-drawer > *:nth-child(4)  { animation-delay: 415ms; }
+  .cascade-enter-drawer > *:nth-child(5)  { animation-delay: 460ms; }
+  .cascade-enter-drawer > *:nth-child(6)  { animation-delay: 505ms; }
+  .cascade-enter-drawer > *:nth-child(7)  { animation-delay: 550ms; }
+  .cascade-enter-drawer > *:nth-child(8)  { animation-delay: 595ms; }
+  .cascade-enter-drawer > *:nth-child(9)  { animation-delay: 640ms; }
+  .cascade-enter-drawer > *:nth-child(10) { animation-delay: 685ms; }
+  .cascade-enter-drawer > *:nth-child(n+11) { animation-delay: 730ms; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cascade-enter-drawer > * {
+      animation: none;
+    }
+  }
+}
+
+/* ── Listas flotantes: cascada + resaltado deslizante ─────
+ *
+ * Dos piezas que van juntas y arreglan el mismo defecto: una lista que se
+ * abría de golpe y un resaltado que saltaba de un ítem a otro sin recorrido.
+ *
+ * 1. `.popup-cascade` escalona la entrada de los ítems (mismo patrón que
+ *    `.cascade-enter` y las filas de tabla, pero con pasos mucho más cortos:
+ *    un menú se lee de una ojeada, no admite el ritmo de una tabla). El primer
+ *    hijo del contenedor es la píldora, así que la numeración arranca en
+ *    `nth-child(2)`; los ítems agrupados se cuentan dentro de su grupo.
+ *
+ * 2. `[data-slot="fluid-highlight"]` es esa píldora: un único fondo absoluto
+ *    que se traslada hasta el ítem activo (ver `fluid-highlight.tsx`). El
+ *    `transform` lleva un easing con un rebase mínimo — llega, se pasa un
+ *    pelo y se asienta — mientras la altura usa el easing suave del resto del
+ *    sistema para que un ítem alto no dé un tirón. La opacidad es lo único
+ *    rápido: entrar y salir no debe arrastrarse.
+ *
+ *    Con `data-slide="false"` (primera aparición, o reaparición tras salir del
+ *    menú) solo transiciona la opacidad: la píldora aparece ya colocada en vez
+ *    de venir volando desde la esquina del contenedor.
+ */
+@layer utilities {
+  @keyframes popup-item-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, -6px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  .popup-cascade > *:not([data-slot="fluid-highlight"]),
+  .popup-cascade > [data-slot$="-group"] > * {
+    animation: popup-item-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .popup-cascade > *:nth-child(2),
+  .popup-cascade > [data-slot$="-group"] > *:nth-child(1) { animation-delay: 0ms; }
+  .popup-cascade > *:nth-child(3),
+  .popup-cascade > [data-slot$="-group"] > *:nth-child(2) { animation-delay: 26ms; }
+  .popup-cascade > *:nth-child(4),
+  .popup-cascade > [data-slot$="-group"] > *:nth-child(3) { animation-delay: 52ms; }
+  .popup-cascade > *:nth-child(5),
+  .popup-cascade > [data-slot$="-group"] > *:nth-child(4) { animation-delay: 78ms; }
+  .popup-cascade > *:nth-child(6),
+  .popup-cascade > [data-slot$="-group"] > *:nth-child(5) { animation-delay: 104ms; }
+  .popup-cascade > *:nth-child(7),
+  .popup-cascade > [data-slot$="-group"] > *:nth-child(6) { animation-delay: 130ms; }
+  .popup-cascade > *:nth-child(8),
+  .popup-cascade > [data-slot$="-group"] > *:nth-child(7) { animation-delay: 156ms; }
+  /*
+   * Tope deliberado: hay selects de decenas de opciones (países, plantillas) y
+   * seguir sumando 26ms por ítem dejaría los últimos entrando medio segundo
+   * después de que el usuario ya está leyendo la lista.
+   */
+  .popup-cascade > *:nth-child(n+9),
+  .popup-cascade > [data-slot$="-group"] > *:nth-child(n+8) { animation-delay: 182ms; }
+
+  [data-slot="fluid-highlight"] {
+    transition:
+      transform 300ms cubic-bezier(0.22, 1.14, 0.36, 1),
+      width 300ms cubic-bezier(0.22, 1.14, 0.36, 1),
+      height 220ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 130ms linear;
+    will-change: transform;
+  }
+
+  [data-slot="fluid-highlight"][data-slide="false"] {
+    transition: opacity 130ms linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .popup-cascade > *:not([data-slot="fluid-highlight"]),
+    .popup-cascade > [data-slot$="-group"] > * {
+      animation: none;
+    }
+    [data-slot="fluid-highlight"] {
+      transition: none;
+    }
   }
 }

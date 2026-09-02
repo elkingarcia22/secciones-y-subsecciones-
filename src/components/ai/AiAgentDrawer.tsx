@@ -59,30 +59,6 @@ export function AiAgentDrawer({ open, onOpenChange, context = "dashboard" }: AiA
 
   const config = CONTEXT_CONFIG[context];
 
-  const renderHeader = (
-    <div className="relative px-6 py-5" style={{ background: AI_GRADIENT }}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
-            <Sparkles className="h-5 w-5 text-white" strokeWidth={2} />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-white">Agente IA</h2>
-            <p className="text-sm text-white/80">{config.title}</p>
-          </div>
-        </div>
-        
-        <button
-          onClick={() => onOpenChange(false)}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-black/10 text-white transition-colors hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-          aria-label="Cerrar"
-        >
-          <X className="h-4 w-4" strokeWidth={2.5} />
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <DrawerShell
       open={open}
@@ -94,39 +70,61 @@ export function AiAgentDrawer({ open, onOpenChange, context = "dashboard" }: AiA
       showCloseButton={false}
       className="flex flex-col overflow-hidden"
     >
-      {renderHeader}
-      
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-6 bg-ai-mesh-agent">
-        <h3 className="mb-6 text-center text-2xl font-semibold tracking-tight text-text-primary lg:leading-tight">
+      {/* Todo en un solo div con la malla de fondo — header + contenido sin corte */}
+      <div className="flex flex-col flex-1 min-h-0 bg-ai-mesh-agent">
+        {/* Header */}
+        <div className="shrink-0 flex items-center gap-3 px-5 py-3.5 border-b border-border/20">
           <span
-            className="bg-clip-text text-transparent"
-            style={{ backgroundImage: AI_GRADIENT }}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+            style={{ background: AI_GRADIENT }}
           >
-            ¡Hola,
-          </span>{" "}
-          {firstName}!
-        </h3>
+            <Sparkles className="h-4 w-4 text-white" strokeWidth={2} />
+          </span>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-[13px] font-bold text-text-primary leading-tight">Agente IA</h2>
+            <p className="text-[11px] text-text-muted">{config.title}</p>
+          </div>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-black/5 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            aria-label="Cerrar"
+          >
+            <X className="h-4 w-4" strokeWidth={2} />
+          </button>
+        </div>
 
-        <div className="group relative rounded-[22px] bg-surface p-4 z-0 shadow-card transition-shadow focus-within:shadow-[0_0_20px_rgba(45,92,247,0.1)]">
-          {/* AI Light Border */}
-          <MovingBorderBeam 
-            duration={6000} 
-            borderWidth={1.5} 
-            rx={22}
-            ry={22}
-            colorFrom="hsl(var(--ai-gradient-start))" 
-            colorTo="hsl(var(--ai-gradient-end))" 
-          />
+        {/* Contenido */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-6">
+          <h3 className="mb-6 text-center text-2xl font-semibold tracking-tight text-text-primary lg:leading-tight">
+            <span
+              className="bg-clip-text text-transparent"
+              style={{ backgroundImage: AI_GRADIENT }}
+            >
+              ¡Hola,
+            </span>{" "}
+            {firstName}!
+          </h3>
 
-          <textarea
-            ref={inputRef}
-            rows={2}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            placeholder={config.placeholder}
-            className="relative z-10 min-h-12 w-full resize-none bg-transparent text-sm leading-normal text-text-primary outline-none placeholder:text-text-muted"
-          />
-          <div className="relative z-10 mt-2 flex items-center justify-between">
+          <div className="group relative rounded-[22px] bg-surface p-4 z-0 shadow-card transition-shadow focus-within:shadow-[0_0_20px_rgba(45,92,247,0.1)]">
+            {/* AI Light Border */}
+            <MovingBorderBeam
+              duration={6000}
+              borderWidth={1.5}
+              rx={22}
+              ry={22}
+              colorFrom="hsl(var(--ai-gradient-start))"
+              colorTo="hsl(var(--ai-gradient-end))"
+            />
+
+            <textarea
+              ref={inputRef}
+              rows={2}
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              placeholder={config.placeholder}
+              className="relative z-10 min-h-12 w-full resize-none bg-transparent text-sm leading-normal text-text-primary outline-none placeholder:text-text-muted"
+            />
+            <div className="relative z-10 mt-2 flex items-center justify-between">
               <button
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-surface text-text-secondary transition-colors hover:bg-background"
                 title="Agregar contexto"
@@ -143,25 +141,26 @@ export function AiAgentDrawer({ open, onOpenChange, context = "dashboard" }: AiA
                 <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
               </button>
             </div>
-        </div>
+          </div>
 
-        <p className="mt-3 text-center text-[11px] text-text-muted">
-          El Agente IA puede cometer errores, verifica las respuestas.
-        </p>
+          <p className="mt-3 text-center text-[11px] text-text-muted">
+            El Agente IA puede cometer errores, verifica las respuestas.
+          </p>
 
-        <div className="mt-6 flex flex-col gap-3">
-          {config.suggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              onClick={() => {
-                setPrompt(suggestion);
-                inputRef.current?.focus();
-              }}
-              className="rounded-2xl border border-border/70 bg-surface p-3 text-left text-xs font-medium leading-snug text-text-secondary transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:text-text-primary hover:shadow-card"
-            >
-              {suggestion}
-            </button>
-          ))}
+          <div className="mt-6 flex flex-col gap-3">
+            {config.suggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                onClick={() => {
+                  setPrompt(suggestion);
+                  inputRef.current?.focus();
+                }}
+                className="rounded-2xl border border-border/70 bg-surface p-3 text-left text-xs font-medium leading-snug text-text-secondary transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:text-text-primary hover:shadow-card"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </DrawerShell>

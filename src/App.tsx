@@ -4,7 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { UbitsToaster } from "@/components/feedback";
 import { AdminShell } from "@/components/app-shell";
 import { UbitsTabs } from "@/components/navigation";
-import { HomeMetricsBar } from "@/components/home";
+import { HomePulseStrip, TemplatesStrip } from "@/components/home";
+import { TemplatesDrawer } from "@/components/survey-list/TemplatesDrawer";
 import {
   NO_FILTERS,
   type SurveyListFilters,
@@ -25,18 +26,6 @@ import type { ShellBreadcrumb } from "@/components/app-shell";
 type AppView = "list" | "builder" | "results";
 type HomeTab = "encuestas" | "datos_demograficos";
 
-/**
- * How far above the viewport bottom toasts sit, per view — enough to clear
- * that view's own floating action bar. The list clears more than the other
- * two because it also sits above the legal footer; results and the builder
- * have no footer under their bar, so a shorter clearance already suffices.
- */
-const TOAST_BOTTOM_OFFSET_PX: Readonly<Record<AppView, number>> = {
-  list: 144,
-  results: 104,
-  builder: 100,
-};
-
 /** How many earlier measurements the results trend reaches back over. */
 const TREND_DEPTH = 5;
 
@@ -53,6 +42,11 @@ function App() {
   // Owned here rather than inside the table: the metric cards that set these
   // live above the tabs, outside the table's subtree.
   const [listFilters, setListFilters] = React.useState<SurveyListFilters>(NO_FILTERS);
+  // The home templates strip owns its own picker instance — it lives above the
+  // tabs, outside the "Encuestas" tab's own subtree, so it can't reuse that
+  // tab's local drawer state.
+  const [isStripTemplateDrawerOpen, setIsStripTemplateDrawerOpen] = React.useState(false);
+  const [stripInitialTemplateName, setStripInitialTemplateName] = React.useState<string | undefined>();
 
   const resultsSurvey = surveys.find((survey) => survey.id === resultsSurveyId) ?? null;
 
@@ -137,6 +131,33 @@ function App() {
       return [...prev.slice(0, index + 1), copy, ...prev.slice(index + 1)];
     });
 
+  /** Opens the builder on a fresh, empty draft — shared by the dashboard's own
+   *  "Crear en blanco" action and the home templates strip's "En blanco" tile. */
+  const handleCreateBlank = () => {
+    setEditingDraft(undefined);
+    setBuilderInitialStep("general");
+    setBuilderInitialSelection(undefined);
+    setView("builder");
+  };
+
+  /** Clones a template into the builder — shared by the dashboard's template
+   *  picker and the one the home strip opens on its own. */
+  const handleCreateFromTemplate = (template: SurveyDraft) => {
+    const draftClone = JSON.parse(JSON.stringify(template));
+
+    // Always activate library demographics for all templates
+    draftClone.demographics.fields = activateAllCatalogDemographics(
+      [],
+      getLibraryDemographics(),
+      buildLibraryDemographic
+    );
+
+    setEditingDraft(draftClone);
+    setBuilderInitialSelection(undefined);
+    setBuilderInitialStep("general");
+    setView("builder");
+  };
+
   /** Back to the survey list from wherever we are, keeping a draft in progress. */
   const leaveToList = () => {
     if (view === "builder") {
@@ -173,7 +194,7 @@ function App() {
 
   return (
     <TooltipProvider>
-      <UbitsToaster bottomOffset={TOAST_BOTTOM_OFFSET_PX[view]} />
+      <UbitsToaster />
       <AdminShell
         breadcrumb={breadcrumb}
         scrollContent={false}
@@ -197,20 +218,43 @@ function App() {
           />
         ) : (
           <div className="px-1 pt-2 pb-6 flex-1 flex flex-col min-h-0">
-            {/* Above the sticky bar on purpose: the headline numbers are an
-                orientation you read once and then scroll past, while the tabs
-                have to stay reachable the whole way down. */}
-            <HomeMetricsBar
+            {/* Above the pulse strip on purpose: "what can I start from" comes
+                before "how are my surveys doing" in the reading order. */}
+            <TemplatesStrip
+              className="mb-4 shrink-0"
+              onSelectTemplate={(template) => {
+                setHomeTab("encuestas");
+                setStripInitialTemplateName(template.name);
+                setIsStripTemplateDrawerOpen(true);
+              }}
+              onViewAll={() => {
+                setHomeTab("encuestas");
+                setStripInitialTemplateName(undefined);
+                setIsStripTemplateDrawerOpen(true);
+              }}
+            />
+
+            {/* Averages on the left, the list's alerts on the right. Alerts
+                filter the Encuestas tab, so pressing one also brings that tab
+                forward if the reader was on Datos Demográficos. */}
+            <HomePulseStrip
+              className="mb-4 shrink-0"
               surveys={surveys}
               filters={listFilters}
-              onFiltersChange={(next) => {
-                setListFilters(next);
-                // A narrowing of the survey list is meaningless on the other
-                // tab, so asking for one also switches back to it.
+              onFiltersChange={(filters) => {
                 setHomeTab("encuestas");
+                setListFilters(filters);
               }}
-              onOpenDemographics={() => setHomeTab("datos_demograficos")}
-              className="mb-4 shrink-0"
+            />
+
+            <TemplatesDrawer
+              open={isStripTemplateDrawerOpen}
+              onOpenChange={setIsStripTemplateDrawerOpen}
+              initialTemplateName={stripInitialTemplateName}
+              onSelectTemplate={(template) => {
+                setIsStripTemplateDrawerOpen(false);
+                handleCreateFromTemplate(template);
+              }}
             />
 
             {/* Pinned to the top of the scroll area — Encuestas can hold far
@@ -229,30 +273,16 @@ function App() {
                 className="mb-0 shrink-0"
               />
             </div>
+            {/* Keyed on the active home tab so switching tabs remounts this
+                wrapper and replays the entrance cascade — same language as
+                the survey preview and the builder steps. `contents` keeps it
+                a layout passthrough within the flex column above. */}
+            <div key={homeTab} className="contents cascade-enter">
             {homeTab === "encuestas" ? (
               <EncuestasDashboard
                 surveys={surveys}
-                onCreateBlank={() => {
-                  setEditingDraft(undefined);
-                  setBuilderInitialStep("general");
-                  setBuilderInitialSelection(undefined);
-                  setView("builder");
-                }}
-                onCreateFromTemplate={(template) => {
-                  const draftClone = JSON.parse(JSON.stringify(template));
-                  
-                  // Always activate library demographics for all templates
-                  draftClone.demographics.fields = activateAllCatalogDemographics(
-                    [],
-                    getLibraryDemographics(),
-                    buildLibraryDemographic
-                  );
-
-                  setEditingDraft(draftClone);
-                  setBuilderInitialSelection(undefined);
-                  setBuilderInitialStep("general");
-                  setView("builder");
-                }}
+                onCreateBlank={handleCreateBlank}
+                onCreateFromTemplate={handleCreateFromTemplate}
                 onEdit={(id) => {
                   const survey = surveys.find((s) => s.id === id);
                   if (survey) {
@@ -305,6 +335,7 @@ function App() {
             ) : (
               <DatosDemograficosDashboard />
             )}
+            </div>
           </div>
         )}
       </AdminShell>

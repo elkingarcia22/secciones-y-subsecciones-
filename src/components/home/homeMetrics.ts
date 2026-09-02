@@ -1,6 +1,9 @@
+import { AlertTriangle, CalendarClock, PlayCircle, TrendingDown, type LucideIcon } from "lucide-react";
 import {
   CLOSING_SOON_DAYS,
   NO_FILTERS,
+  PARTICIPATION_TARGET,
+  RISK_BUCKETS,
   type SurveyListFilters,
 } from "@/components/survey-list/surveyListFilters";
 
@@ -18,7 +21,7 @@ export const OPEN_STATUS = "En curso";
 export interface MetricPreset {
   id: string;
   label: string;
-  /** Shown in the same info tooltip the Favorabilidad row uses. */
+  /** One sentence on what the count means, for the button's tooltip. */
   hint: string;
   tone: "brand" | "warning" | "negative" | undefined;
   filters: SurveyListFilters;
@@ -28,15 +31,15 @@ export const METRIC_PRESETS: readonly MetricPreset[] = [
   {
     id: "open",
     label: "En curso",
-    hint: "Mediciones abiertas que siguen recibiendo respuestas. Filtra la columna Estado.",
-    tone: "brand",
+    hint: "Encuestas que hoy están recibiendo respuestas.",
+    tone: "warning",
     filters: { ...NO_FILTERS, status: [OPEN_STATUS] },
   },
   {
     id: "closing",
     label: "Por cerrar",
-    hint: `Mediciones abiertas cuyo cierre llega en ${CLOSING_SOON_DAYS} días o menos. Filtra Estado y Cierre.`,
-    tone: "warning",
+    hint: `Encuestas en curso que cierran en ${CLOSING_SOON_DAYS} días o menos.`,
+    tone: "brand",
     filters: {
       ...NO_FILTERS,
       status: [OPEN_STATUS],
@@ -46,7 +49,7 @@ export const METRIC_PRESETS: readonly MetricPreset[] = [
   {
     id: "low",
     label: "Participación baja",
-    hint: "Mediciones abiertas por debajo del 50% de avance: todavía hay tiempo de recordarles. Filtra Estado y Avance.",
+    hint: "Encuestas en curso con menos del 50% de participación hoy.",
     tone: "negative",
     filters: {
       ...NO_FILTERS,
@@ -54,6 +57,25 @@ export const METRIC_PRESETS: readonly MetricPreset[] = [
       progress: ["Menos de 50%"],
     },
   },
+  {
+    id: "risk",
+    label: "Riesgo por tendencia",
+    hint: `Encuestas en curso que, al ritmo de respuesta actual, cerrarán por debajo del ${PARTICIPATION_TARGET}% de participación.`,
+    tone: "warning",
+    filters: {
+      ...NO_FILTERS,
+      status: [OPEN_STATUS],
+      risk: [...RISK_BUCKETS],
+    },
+  },
 ];
 
 export const formatCount = (value: number): string => value.toLocaleString("es-CO");
+
+/** One icon per preset id, shared by every surface that renders these presets. */
+export const PRESET_ICONS: Readonly<Record<string, LucideIcon>> = {
+  open: PlayCircle,
+  closing: CalendarClock,
+  low: AlertTriangle,
+  risk: TrendingDown,
+};

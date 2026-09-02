@@ -1,6 +1,13 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 import { ChevronRight, Quote } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  cascadeContainer,
+  cascadeItem,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+} from "@/lib/cascadeAnimation";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SurveyInsight } from "@/mocks/surveyInsights";
 import {
@@ -52,21 +59,28 @@ export function InsightGroupList({
 }: InsightGroupListProps) {
   return (
     <div className="flex flex-col gap-4">
-      {groups.map((group, index) => (
-        <AiSectionCard
-          key={group.id}
-          numbering={startNumbering + index}
-          heading={group.heading}
-          question={group.question}
-          meta={<ConfidenceMix items={group.items} />}
-        >
-          {/* Opening the group deploys what is inside it, the way opening a
-              section in the other tabs deploys its subsections: the reader
-              asked for this branch, not for a list of nine more headlines to
-              click through. Each claim can still be folded back on its own. */}
-          <InsightTable items={group.items} isAnalyzing={isAnalyzing} />
-        </AiSectionCard>
-      ))}
+      {groups.map((group, index) => {
+        const numbering = startNumbering + index;
+        // This card's own claims wait for the card itself to arrive in the
+        // tab's shared cascade — never before, never only once every other
+        // card in the stack is done.
+        const revealDelay = cascadeItemSettleTime(0, numbering - 1) + CASCADE_CONTENT_GAP;
+        return (
+          <AiSectionCard
+            key={group.id}
+            numbering={numbering}
+            heading={group.heading}
+            question={group.question}
+            meta={<ConfidenceMix items={group.items} />}
+          >
+            {/* Opening the group deploys what is inside it, the way opening a
+                section in the other tabs deploys its subsections: the reader
+                asked for this branch, not for a list of nine more headlines to
+                click through. Each claim can still be folded back on its own. */}
+            <InsightTable items={group.items} isAnalyzing={isAnalyzing} revealDelay={revealDelay} />
+          </AiSectionCard>
+        );
+      })}
     </div>
   );
 }
@@ -99,9 +113,13 @@ function ConfidenceMix({ items }: { items: readonly SurveyInsight[] }) {
 function InsightTable({
   items,
   isAnalyzing,
+  revealDelay = 0,
 }: {
   items: readonly SurveyInsight[];
   isAnalyzing: boolean;
+  /** Delay before this table's rows start cascading in — set by the group
+   * list so claims only start once the group's own card has arrived. */
+  revealDelay?: number;
 }) {
   return (
     <table className={AI_TABLE}>
@@ -113,7 +131,13 @@ function InsightTable({
           <th className="w-10 py-2.5 pr-4" aria-label="Detalle" />
         </tr>
       </thead>
-      <tbody className={AI_TBODY}>
+      <motion.tbody
+        className={AI_TBODY}
+        initial="hidden"
+        animate="show"
+        custom={revealDelay}
+        variants={cascadeContainer}
+      >
         {items.map((insight, index) => (
           <InsightRows
             key={insight.id}
@@ -122,7 +146,7 @@ function InsightTable({
             isAnalyzing={isAnalyzing}
           />
         ))}
-      </tbody>
+      </motion.tbody>
     </table>
   );
 }
@@ -161,7 +185,7 @@ function InsightRows({
 
   return (
     <>
-      <tr
+      <motion.tr
         role="button"
         tabIndex={0}
         aria-expanded={open}
@@ -172,6 +196,7 @@ function InsightRows({
             toggle();
           }
         }}
+        variants={cascadeItem}
         className={cn(AI_ROW, open && "bg-primary/[0.03]")}
       >
         <td className={AI_RANK_CELL}>{index}</td>
@@ -191,18 +216,26 @@ function InsightRows({
             strokeWidth={2}
           />
         </td>
-      </tr>
+      </motion.tr>
 
       {open && (
         <tr className="bg-muted/30">
           <td colSpan={4} className="px-4 py-4">
-            <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
-              <p className="max-w-4xl text-[13px] leading-relaxed text-text-primary">
+            <motion.div
+              className="flex flex-col gap-3"
+              initial="hidden"
+              animate="show"
+              variants={cascadeContainer}
+            >
+              <motion.p variants={cascadeItem} className="max-w-4xl text-[13px] leading-relaxed text-text-primary">
                 {insight.body}
-              </p>
+              </motion.p>
               {/* The figure the claim rests on, quoted so the reader can go and
                   check it in the tab it came from. */}
-              <p className="flex items-start gap-2 text-[11px] leading-relaxed text-text-secondary">
+              <motion.p
+                variants={cascadeItem}
+                className="flex items-start gap-2 text-[11px] leading-relaxed text-text-secondary"
+              >
                 <Quote className="mt-px h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={2} />
                 <span>
                   <span className="font-semibold uppercase tracking-wide text-muted-foreground">
@@ -210,8 +243,8 @@ function InsightRows({
                   </span>{" "}
                   <span className="font-medium tabular-nums">{insight.evidence}</span>
                 </span>
-              </p>
-            </div>
+              </motion.p>
+            </motion.div>
           </td>
         </tr>
       )}

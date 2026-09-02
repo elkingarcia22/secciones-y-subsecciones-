@@ -50,10 +50,10 @@ export function FavorabilityTab({ results, segment, onSegmentChange }: Favorabil
  <div className="flex h-full min-h-0 flex-col">
   <MetricSummaryCard
     accentColor="bg-status-positive"
-    title="Total de favorabilidad"
+    title="Sentimiento general"
     hint={
       <div className="flex flex-col gap-3 items-start leading-relaxed">
-        <p className="text-[12px]"><strong>Favorabilidad:</strong><br/>La favorabilidad es el porcentaje de respuestas favorables en una escala de 1 a 5, donde se consideran "favorables" las respuestas de 4 y 5.</p>
+        <p className="text-[12px]"><strong>Sentimiento:</strong><br/>Distribución de respuestas favorables, neutrales y desfavorables en la escala de 1 a 5.</p>
         <FormulaBlock
           numerator="Respuestas favorables"
           denominator="Total de respuestas"
@@ -103,17 +103,17 @@ export function FavorabilityTab({ results, segment, onSegmentChange }: Favorabil
         onToggle: () => filtersState.toggleTierBand("nsnr"),
       },
     ]}
-    topAreasTitle="Top 3 áreas con mayor favorabilidad"
+    topAreasTitle="Top 3 áreas con más sentimiento negativo"
     topAreas={
       results.sections
         .filter(s => s.n > 0)
-        .sort((a, b) => b.favorability - a.favorability)
+        .sort((a, b) => a.favorability - b.favorability)
         .slice(0, 3)
         .map(s => ({
           id: s.id,
           label: s.title,
-          value: s.favorability,
-          displayValue: formatPercent(s.favorability),
+          value: 100 - s.favorability,
+          displayValue: formatPercent(100 - s.favorability),
         }))
     }
     chartTitle="Tendencia por medición"

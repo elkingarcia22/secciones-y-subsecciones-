@@ -21,12 +21,27 @@ function PopoverContent({
   sideOffset = 4,
   collisionPadding = 16,
   container,
+  liquid = false,
+  ref,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Content> &
-  Pick<React.ComponentProps<typeof PopoverPrimitive.Portal>, "container">) {
+  Pick<React.ComponentProps<typeof PopoverPrimitive.Portal>, "container"> & {
+    /**
+     * Reserved for the shell header panels (Novedades, Notificaciones,
+     * Avatar) — swaps the standard scale+fade for a circular clip-path
+     * reveal centered on the trigger (`--reveal-x`/`--reveal-y`, set by the
+     * caller from the trigger's measured position). The panel's own shape
+     * never changes; only the visible mask expands from that point, so it
+     * reads as a window opening from the button rather than a shape morphing
+     * into place. Not the default: most popovers (filters, pickers, inline
+     * menus) want the snappier standard motion.
+     */
+    liquid?: boolean
+  }) {
   return (
     <PopoverPrimitive.Portal container={container}>
       <PopoverPrimitive.Content
+        ref={ref}
         data-slot="popover-content"
         align={align}
         sideOffset={sideOffset}
@@ -34,21 +49,25 @@ function PopoverContent({
         className={cn(
           // Base
           "z-50 flex w-72 origin-[var(--radix-popover-content-transform-origin)] flex-col gap-2.5 rounded-lg bg-popover p-2.5 text-sm text-popover-foreground shadow-drawer ring-1 ring-foreground/10 outline-none",
-          // Open: emerge desde el origen del botón (scale + fade + dirección por lado)
-          "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-[0.96]",
-          "data-[side=bottom]:data-open:slide-in-from-top-1",
-          "data-[side=top]:data-open:slide-in-from-bottom-1",
-          "data-[side=left]:data-open:slide-in-from-right-1",
-          "data-[side=right]:data-open:slide-in-from-left-1",
-          // Open duration — más lento en la entrada para que se perciban los stagger items
-          "data-open:duration-[280ms] data-open:[animation-timing-function:cubic-bezier(0.16,1,0.3,1)]",
-          // Close: salida rápida y limpia
-          "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-[0.97]",
-          "data-[side=bottom]:data-closed:slide-out-to-top-1",
-          "data-[side=top]:data-closed:slide-out-to-bottom-1",
-          "data-[side=left]:data-closed:slide-out-to-right-1",
-          "data-[side=right]:data-closed:slide-out-to-left-1",
-          "data-closed:duration-[180ms] data-closed:[animation-timing-function:cubic-bezier(0.4,0,1,1)]",
+          liquid
+            ? "data-open:animate-shell-reveal-in data-closed:animate-shell-reveal-out"
+            : [
+                // Open: emerge suavemente
+                "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
+                "data-[side=bottom]:data-open:slide-in-from-top-2",
+                "data-[side=top]:data-open:slide-in-from-bottom-2",
+                "data-[side=left]:data-open:slide-in-from-right-2",
+                "data-[side=right]:data-open:slide-in-from-left-2",
+                // Open duration — smooth ease-out instead of bouncy
+                "data-open:duration-200 data-open:[animation-timing-function:cubic-bezier(0.16,1,0.3,1)]",
+                // Close: salida rápida y limpia
+                "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+                "data-[side=bottom]:data-closed:slide-out-to-top-1",
+                "data-[side=top]:data-closed:slide-out-to-bottom-1",
+                "data-[side=left]:data-closed:slide-out-to-right-1",
+                "data-[side=right]:data-closed:slide-out-to-left-1",
+                "data-closed:duration-[180ms] data-closed:[animation-timing-function:cubic-bezier(0.4,0,1,1)]",
+              ],
           className
         )}
         {...props}

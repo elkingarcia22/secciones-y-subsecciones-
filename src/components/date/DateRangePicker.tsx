@@ -153,7 +153,7 @@ export const DateRangePicker = React.forwardRef<
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-auto p-0"
+          className="w-auto p-0 data-open:animate-in data-open:fade-in data-open:slide-in-from-top-2 data-open:zoom-in-100 data-open:duration-200 data-open:[animation-timing-function:ease-out]"
           align="start"
           sideOffset={8}
         >

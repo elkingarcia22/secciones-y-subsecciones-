@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
@@ -6,6 +7,7 @@ import { QuestionCard } from "./QuestionCard";
 import { QuestionEditor } from "./QuestionEditor";
 import { moveDestinationsForQuestion } from "./sectionTree";
 import type { SurveyQuestion, SurveySection } from "./surveyBuilderTypes";
+import { cascadeContainer } from "@/lib/cascadeAnimation";
 
 export interface QuestionListHandlers {
   /** The single question currently open in edit mode, anywhere in the survey. */
@@ -26,12 +28,18 @@ export interface QuestionListHandlers {
   sections: readonly SurveySection[];
   /** Moves a question into a different section's question list. */
   onMoveQuestion: (questionId: string, targetSectionId: string) => void;
+  /** La pregunta que se creó desde "crear pregunta con IA": su formulario se
+   * abre con la IA ya preguntando de qué va, en vez de con el campo en blanco. */
+  aiStartQuestionId?: string | null;
 }
 
 interface SectionQuestionsProps extends QuestionListHandlers {
   readOnly?: boolean;
   sectionId: string;
   questions: readonly SurveyQuestion[];
+  /** Delay before this list's rows start cascading in — set by the parent
+   * so questions only start once the row they belong to has settled in. */
+  revealDelay?: number;
 }
 
 /**
@@ -60,6 +68,8 @@ export function SectionQuestions({
   onReorderQuestions,
   sections,
   onMoveQuestion,
+  aiStartQuestionId,
+  revealDelay = 0,
 }: SectionQuestionsProps) {
   const { draggingId, overId, getHandleProps, getDropTargetProps } = useDragReorder(onReorderQuestions);
 
@@ -75,7 +85,13 @@ export function SectionQuestions({
    * the list is what lets the open question step out of it as its own card.
    */
   const renderRows = (slice: readonly SurveyQuestion[], offset: number) => (
-    <ul className="divide-y divide-border/50 overflow-hidden rounded-md border border-border/70 bg-surface">
+    <motion.ul
+      className="divide-y divide-border/50 overflow-hidden rounded-md border border-border/70 bg-surface"
+      initial="hidden"
+      animate="show"
+      custom={revealDelay}
+      variants={cascadeContainer}
+    >
       {slice.map((question, index) => (
         <QuestionCard
           readOnly={readOnly}
@@ -92,7 +108,7 @@ export function SectionQuestions({
           dropTargetProps={getDropTargetProps(question.id)}
         />
       ))}
-    </ul>
+    </motion.ul>
   );
 
   const rowsBefore = isEditingHere ? questions.slice(0, editingIndex) : questions;
@@ -109,21 +125,22 @@ export function SectionQuestions({
           than a taller row among dimmed siblings. It edits the survey straight
           on — the stored question *is* what the editor shows. */}
       {isEditingHere && (
-        <div
-          {...{ [ANCHOR_ATTRIBUTE]: true }}
-          className="rounded-xl border border-primary bg-surface p-4 shadow-card ring-2 ring-primary/20 animate-in fade-in zoom-in-[0.99] duration-200"
-        >
-          <QuestionEditor
-            readOnly={readOnly}
-            question={questions[editingIndex]}
-            index={editingIndex}
-            showValidation={showQuestionValidation}
-            onChange={(question) => onQuestionChange(sectionId, question)}
-            onClose={onCloseQuestion}
-            onDuplicate={() => onDuplicateQuestion(questions[editingIndex].id)}
-            onRemove={() => onRemoveQuestion(questions[editingIndex].id)}
-          />
-        </div>
+        <QuestionEditor
+          // Cada pregunta es su propio formulario: sin la clave, React
+          // reutilizaría la instancia al pasar de una a otra y el estado
+          // interno viajaría con ella —la IA seguiría pidiendo contexto en la
+          // siguiente pregunta, o dejaría de pedirlo en la que sí lo necesita—.
+          key={questions[editingIndex].id}
+          readOnly={readOnly}
+          question={questions[editingIndex]}
+          index={editingIndex}
+          showValidation={showQuestionValidation}
+          onChange={(question) => onQuestionChange(sectionId, question)}
+          onClose={onCloseQuestion}
+          onDuplicate={() => onDuplicateQuestion(questions[editingIndex].id)}
+          onRemove={() => onRemoveQuestion(questions[editingIndex].id)}
+          startWithAi={aiStartQuestionId === questions[editingIndex].id}
+        />
       )}
 
       {rowsAfter.length > 0 && renderRows(rowsAfter, editingIndex + 1)}

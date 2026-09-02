@@ -1,10 +1,17 @@
 import * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SECTION_HEADER_DIVIDER, SIBLING_DIVIDER, depthTheme } from "@/components/survey-builder/depthTheme";
 import { useResetOnChange } from "@/lib/useResetOnChange";
 import type { SectionResult } from "@/mocks/surveyResults";
 import { countSectionQuestions, sectionHasContent } from "./sectionTotals";
+import {
+  cascadeContainer,
+  cascadeItem,
+  cascadeItemSettleTime,
+  CASCADE_CONTENT_GAP,
+} from "@/lib/cascadeAnimation";
 
 /**
  * The section → subsección → sub-subsección outline, as chrome.
@@ -20,8 +27,10 @@ import { countSectionQuestions, sectionHasContent } from "./sectionTotals";
 
 interface ResultsSectionTreeProps {
   sections: readonly SectionResult[];
-  /** The body a section's own questions render as. */
-  renderQuestions: (section: SectionResult) => React.ReactNode;
+  /** The body a section's own questions render as. `revealDelay` is when this
+   * section's row itself settles in — the body's own cascade should start
+   * there, not before and not only once every sibling row is done. */
+  renderQuestions: (section: SectionResult, revealDelay: number) => React.ReactNode;
   /** What sits at the right end of a section's header row. */
   renderMetric?: (section: SectionResult) => React.ReactNode;
   /** Extra wording after the title, replacing the default question count. */
@@ -148,45 +157,78 @@ function RootSection({
         </div>
       </div>
 
-      {isOpen && (
-        <div className="flex min-h-0 flex-col gap-4 px-6 py-5 animate-in fade-in slide-in-from-top-1 duration-300">
-          {section.questions.length > 0 && body.renderQuestions(section)}
-          {subSections.length > 0 && <SubsectionOutline sections={subSections} {...body} />}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="flex min-h-0 flex-col gap-4 px-6 py-5">
+              {section.questions.length > 0 && body.renderQuestions(section, 0)}
+              {subSections.length > 0 && <SubsectionOutline sections={subSections} {...body} />}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
 
 function SubsectionOutline({
   sections,
+  baseDelay = 0,
   ...body
-}: BodyProps & { sections: readonly SectionResult[] }) {
+}: BodyProps & {
+  sections: readonly SectionResult[];
+  /** When this list itself sits inside another cascade, how long to wait
+   * before its own rows start staggering in. */
+  baseDelay?: number;
+}) {
   return (
-    <ul className={cn("flex flex-col", SIBLING_DIVIDER)}>
+    <motion.ul
+      className={cn("flex flex-col", SIBLING_DIVIDER)}
+      initial="hidden"
+      animate="show"
+      custom={baseDelay}
+      variants={cascadeContainer}
+    >
       {sections.map((section, index) => (
         <SubsectionRow
           key={section.id}
           section={section}
           defaultOpen={body.expandAll || index === 0}
+          // This row's own content starts right as the row itself settles in,
+          // not after every sibling row has — no dead air waiting on rows
+          // that have nothing to do with this one's questions.
+          contentDelay={cascadeItemSettleTime(baseDelay, index) + CASCADE_CONTENT_GAP}
           {...body}
         />
       ))}
-    </ul>
+    </motion.ul>
   );
 }
 
 function SubsectionRow({
   section,
   defaultOpen,
+  contentDelay = 0,
   ...body
-}: BodyProps & { section: SectionResult; defaultOpen: boolean }) {
+}: BodyProps & {
+  section: SectionResult;
+  defaultOpen: boolean;
+  /** Delay before this row's own questions/nested subsections start
+   * cascading in — set by the sibling list so they wait their turn. */
+  contentDelay?: number;
+}) {
   const [expanded, setExpanded] = React.useState(defaultOpen);
   const subSections = section.children.filter(sectionHasContent);
   const theme = depthTheme(section.depth);
 
   return (
-    <li>
+    <motion.li variants={cascadeItem}>
       <div
         role="button"
         tabIndex={0}
@@ -246,18 +288,30 @@ function SubsectionRow({
         </div>
       </div>
 
-      {expanded && (
-        <div
-          className={cn(
-            "mt-2.5 flex flex-col gap-3 pb-1 animate-in fade-in slide-in-from-top-1 duration-200",
-            theme.rail,
-            theme.railOffset
-          )}
-        >
-          {section.questions.length > 0 && body.renderQuestions(section)}
-          {subSections.length > 0 && <SubsectionOutline sections={subSections} {...body} />}
-        </div>
-      )}
-    </li>
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div
+              className={cn(
+                "mt-2.5 flex flex-col gap-3 pb-1",
+                theme.rail,
+                theme.railOffset
+              )}
+            >
+              {section.questions.length > 0 && body.renderQuestions(section, contentDelay)}
+              {subSections.length > 0 && (
+                <SubsectionOutline sections={subSections} baseDelay={contentDelay} {...body} />
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.li>
   );
 }

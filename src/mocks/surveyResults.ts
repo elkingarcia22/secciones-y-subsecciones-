@@ -847,8 +847,19 @@ function quarterLabel(name: string): string {
 
 // --- Entry point -------------------------------------------------------------
 
-/** Share of invited people who finished, as a fraction. */
+/** Typical share of invited people who finish a closed measurement. */
 const COMPLETION_RATE = 0.869;
+
+/**
+ * How much of the audience has answered. A survey still in the field reports
+ * the very progress its list row shows, so opening it never contradicts the
+ * "Avance" column; a closed one lands near the typical rate, nudged per survey
+ * so a list of finished measurements does not average to one flat number.
+ */
+function completionRateOf(item: SurveyListItem): number {
+  if (item.status === "En curso") return clamp(item.progress / 100, 0, 1);
+  return clamp(jitter(`${item.id}:completion`, COMPLETION_RATE, 0.05), 0.7, 0.98);
+}
 
 export interface BuildResultsInput {
   draft: SurveyDraft;
@@ -859,7 +870,7 @@ export interface BuildResultsInput {
 
 export function buildSurveyResults({ draft, item, history = [] }: BuildResultsInput): SurveyResults {
   const invited = Number.parseInt(String(item.participants), 10) || 0;
-  const completed = Math.round(invited * COMPLETION_RATE);
+  const completed = Math.round(invited * completionRateOf(item));
   const inProgress = Math.min(invited - completed, Math.round(invited * 0.06));
   const rate = invited === 0 ? 0 : Math.round((completed / invited) * 1000) / 10;
 

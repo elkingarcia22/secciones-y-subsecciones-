@@ -142,7 +142,7 @@ export const DatePicker = React.forwardRef<
           </Button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-0 data-open:animate-in data-open:fade-in data-open:slide-in-from-top-2 data-open:zoom-in-100 data-open:duration-200 data-open:[animation-timing-function:ease-out]" align="start">
           <Calendar
             mode="single"
             // Without this the grid keeps react-day-picker's English month and

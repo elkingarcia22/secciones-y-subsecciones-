@@ -61,14 +61,14 @@ export function PreviewWelcomePage({
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-8 sm:px-8">
-      {/* Hero. Updated with a modern vibrant gradient and blur effects. */}
-      <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/95 via-primary to-brand-hover px-7 py-10 sm:px-10 sm:py-12">
+      {/* Hero. */}
+      <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/95 via-primary to-brand-hover px-7 py-10 sm:px-10 sm:py-12 animate-in fade-in zoom-in-[0.98] duration-500 ease-out fill-mode-both">
         {/* Decorative blur elements */}
         <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-white/20 blur-[80px]" />
         <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-white/10 blur-[100px]" />
 
         <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out fill-mode-both" style={{ animationDelay: '150ms' }}>
             {draft.kind && (
               <span className="rounded-full bg-white/20 px-3 py-1.5 text-[12px] font-semibold text-white backdrop-blur-sm">
                 {SURVEY_KIND_LABELS[draft.kind]}
@@ -84,18 +84,18 @@ export function PreviewWelcomePage({
             </span>
           </div>
 
-          <h1 className="max-w-2xl text-[28px] font-bold leading-[1.1] tracking-tight text-white sm:text-[38px]">
+          <h1 className="max-w-2xl text-[28px] font-bold leading-[1.1] tracking-tight text-white sm:text-[38px] animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out fill-mode-both" style={{ animationDelay: '250ms' }}>
             {draft.name.trim() || "Encuesta sin título"}
           </h1>
 
           {draft.description.trim() && (
-            <p className="max-w-2xl text-[14px] leading-relaxed text-white/65">
+            <p className="max-w-2xl text-[14px] leading-relaxed text-white/65 animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out fill-mode-both" style={{ animationDelay: '350ms' }}>
               {draft.description}
             </p>
           )}
 
           {(start || deadline) && (
-            <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[13px] font-medium text-white/55">
+            <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[13px] font-medium text-white/55 animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out fill-mode-both" style={{ animationDelay: '450ms' }}>
               {start && (
                 <span className="inline-flex items-center gap-1.5">
                   <CalendarDays className="h-3.5 w-3.5" strokeWidth={2} />
@@ -111,7 +111,7 @@ export function PreviewWelcomePage({
             </p>
           )}
 
-          <div className="pt-2">
+          <div className="pt-2 animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out fill-mode-both" style={{ animationDelay: '550ms' }}>
             <button
               type="button"
               onClick={onStart}
@@ -124,30 +124,37 @@ export function PreviewWelcomePage({
         </div>
       </section>
 
-      {/* Facts strip. Four numbers, equal weight — they answer "what am I
-          getting into" before any prose does. */}
+      {/* Facts strip */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
           icon={Layers}
           value={String(summary.rootSections)}
           label={summary.rootSections === 1 ? "Sección" : "Secciones"}
+          delayMs={300}
         />
         <StatTile
           icon={ListChecks}
           value={String(summary.questionCount)}
           label={summary.questionCount === 1 ? "Pregunta" : "Preguntas"}
+          delayMs={400}
         />
-        <StatTile icon={Clock3} value={`${summary.estimatedMinutes} min`} label="Tiempo estimado" />
+        <StatTile 
+          icon={Clock3} 
+          value={`${summary.estimatedMinutes} min`} 
+          label="Tiempo estimado" 
+          delayMs={500}
+        />
         <StatTile
           icon={isAnonymous ? Lock : Eye}
           value={SURVEY_VISIBILITY_LABELS[draft.visibility]}
           label={isAnonymous ? `Mínimo ${draft.anonymityThreshold} respuestas` : "Respuestas con nombre"}
+          delayMs={600}
         />
       </section>
 
       <div className="flex flex-col gap-4">
         {hasMessage && (
-          <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+          <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-surface p-6 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out fill-mode-both" style={{ animationDelay: '700ms' }}>
             <h2 className="mb-4 text-[14px] font-bold text-primary">
               Antes de empezar
             </h2>
@@ -157,22 +164,32 @@ export function PreviewWelcomePage({
           </section>
         )}
 
-        <section className="rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+        <section className="rounded-3xl border border-border/60 bg-surface p-6 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out fill-mode-both" style={{ animationDelay: hasMessage ? '800ms' : '700ms' }}>
           <h2 className="mb-4 text-[14px] font-bold text-primary">
             Contenido de la encuesta
           </h2>
-          <PreviewContents pages={pages} outline={outline} progressByPage={progressByPage} onJumpTo={onJumpTo} />
+          <PreviewContents pages={pages} outline={outline} progressByPage={progressByPage} onJumpTo={onJumpTo} baseDelayMs={hasMessage ? 900 : 800} />
         </section>
       </div>
     </div>
   );
 }
 
-function StatTile({ icon: Icon, value, label }: { icon: LucideIcon; value: string; label: string }) {
+function StatTile({ icon: Icon, value, label, delayMs }: { icon: LucideIcon; value: string; label: string; delayMs?: number }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-surface px-4 py-4">
-      <Icon className="mb-2.5 h-4 w-4 text-primary" strokeWidth={2} />
-      <p className="text-[20px] font-bold leading-none tracking-tight text-text-primary">{value}</p>
+    <div 
+      className="group rounded-2xl border border-border/60 bg-surface px-4 py-4 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out fill-mode-both"
+      style={delayMs !== undefined ? { animationDelay: `${delayMs}ms` } : undefined}
+    >
+      <Icon className="mb-2.5 h-4 w-4 text-primary transition-transform duration-300 group-hover:scale-125 group-hover:rotate-6" strokeWidth={2} />
+      <p className="text-[20px] font-bold leading-none tracking-tight text-text-primary">
+        <span 
+          className="inline-block animate-in fade-in slide-in-from-bottom-1.5 duration-700 ease-out fill-mode-both"
+          style={delayMs !== undefined ? { animationDelay: `${delayMs + 150}ms` } : undefined}
+        >
+          {value}
+        </span>
+      </p>
       <p className="mt-1.5 text-[12px] font-medium text-text-secondary">{label}</p>
     </div>
   );

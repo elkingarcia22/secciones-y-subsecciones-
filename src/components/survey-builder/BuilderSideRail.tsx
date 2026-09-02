@@ -10,6 +10,7 @@ import {
   ListChecks,
   ListPlus,
   Plus,
+  Sparkles,
   UploadCloud,
   Users,
   Save,
@@ -17,16 +18,12 @@ import {
   Check,
   Pin,
   Minimize2,
-  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SECTION_IMPORT_ACCEPT, importedToSections, parseSectionFile, summarizeImported } from "./sectionFileImport";
 import type { SectionImportSummary } from "./sectionFileImport";
 import type { SurveySection } from "./surveyBuilderTypes";
-import { AiAgentDrawer } from "@/components/ai/AiAgentDrawer";
-import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
-import { AI_GRADIENT } from "@/components/app-shell/appShellData";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -36,9 +33,9 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
-import { formatCount } from "./participants";
+import { formatCount, type ParticipantsGroupBreakdown } from "./participants";
 import { depthLabel } from "./surveyBuilderTypes";
-import { RailSelectionChip } from "@/components/action-rail";
+import { RailSelectionChip, useRailAutoHide } from "@/components/action-rail";
 
 interface BuilderSideRailProps {
   readOnly?: boolean;
@@ -73,6 +70,9 @@ interface BuilderSideRailProps {
    * fourth level is beyond the tree's maximum depth. */
   onAddLevelTwoSubsection: () => void;
   onAddQuestion: () => void;
+  /** Cuando existe, "añadir pregunta" abre el menú con las dos vías —IA o a
+   * mano— en vez de crear la pregunta en blanco directamente. */
+  onAddQuestionWithAi?: () => void;
   onOpenAnswerBank: () => void;
   onOpenQuestionBank: () => void;
   onAddDemographic: () => void;
@@ -86,6 +86,10 @@ interface BuilderSideRailProps {
   questionCount: number;
   estimatedMinutes: number;
   participantsCount: number;
+  /** How that count splits between selected groups and ad-hoc picks — empty
+   * outside "Por grupos" / "Por colaborador", where there is nothing to
+   * split. */
+  participantsBreakdown: ParticipantsGroupBreakdown;
   demographicsCount: number;
   /** Reason questions cannot be added right now, or null when they can. */
   addQuestionBlockedReason: string | null;
@@ -114,6 +118,8 @@ interface BuilderSideRailProps {
   onClearParticipantsSelection?: (() => void) | null;
   /** Present only when removing rows differs from clearing the ticks. */
   onDeleteParticipantsSelection?: (() => void) | null;
+  /** When true, the rail is forced minimized and ignores hover events to expand. */
+  forceMinimized?: boolean;
 }
 
 interface RailButtonProps {
@@ -237,6 +243,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
       onAddSiblingSubsection,
       onAddLevelTwoSubsection,
       onAddQuestion,
+      onAddQuestionWithAi,
       onOpenAnswerBank,
       onOpenQuestionBank,
       onAddDemographic,
@@ -247,6 +254,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
       questionCount,
       estimatedMinutes,
       participantsCount,
+      participantsBreakdown,
       demographicsCount,
       addQuestionBlockedReason,
       addSubsectionBlockedReason,
@@ -262,15 +270,16 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
       participantsSelectionCount = 0,
       onClearParticipantsSelection,
       onDeleteParticipantsSelection,
+      forceMinimized = false,
     },
     ref
   ) {
     const [isSubnivelMenuOpen, setIsSubnivelMenuOpen] = React.useState(false);
+    const [isAddQuestionMenuOpen, setIsAddQuestionMenuOpen] = React.useState(false);
     const [isImporting, setIsImporting] = React.useState(false);
     const importInputRef = React.useRef<HTMLInputElement>(null);
-    const [aiDrawerOpen, setAiDrawerOpen] = React.useState(false);
 
-    const [autoHide, setAutoHide] = React.useState(false);
+    const [autoHide, setAutoHide] = useRailAutoHide();
     const [isExpanded, setIsExpanded] = React.useState(true);
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -281,6 +290,11 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
     const prevStepRef = React.useRef(activeStep);
     const [stepChangeKey, setStepChangeKey] = React.useState(0);
     const forceOpenTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    /** False until the mount-grace effect below has run once — lets the
+     * autoHide-sync effect tell a real preference change from its own
+     * first pass, so it doesn't collapse the rail before the grace period
+     * even starts. */
+    const hasMountedRef = React.useRef(false);
 
     React.useEffect(() => {
       if (prevStepRef.current !== activeStep) {
@@ -312,30 +326,63 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
     const startCollapseTimer = React.useCallback(() => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       // Do not collapse if a menu is open or autoHide is disabled
-      if (isSubnivelMenuOpen || isImporting || !autoHide) return;
-      
+      if (isSubnivelMenuOpen || isAddQuestionMenuOpen || isImporting || !autoHide) return;
+
       timeoutRef.current = setTimeout(() => {
         setIsExpanded(false);
       }, 150);
-    }, [isSubnivelMenuOpen, isImporting, autoHide]);
+    }, [isSubnivelMenuOpen, isAddQuestionMenuOpen, isImporting, autoHide]);
 
     React.useEffect(() => {
-      if (!autoHide) {
+      if (forceMinimized) {
+        // A hard override, not a preference — applies immediately even on
+        // the very first mount, unlike the autoHide grace period below.
+        setIsExpanded(false);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      } else if (!autoHide) {
         setIsExpanded(true);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      } else {
+      } else if (hasMountedRef.current) {
         setIsExpanded(false);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
       }
-    }, [autoHide]);
+    }, [autoHide, forceMinimized]);
 
+    // On first mount, hold the rail open for a few seconds before autoHide
+    // collapses it — the same grace period a real step change gets, so
+    // whoever just opened this screen sees the bar open at least once. The
+    // cleanup resets `hasMountedRef` rather than leaving it set, because
+    // StrictMode runs every effect's setup → cleanup → setup once in dev:
+    // without the reset, that replay would see a "mounted" ref on its
+    // second setup pass and collapse the rail immediately, well before the
+    // real timer below ever gets a chance to.
+    React.useEffect(() => {
+      hasMountedRef.current = true;
+      if (forceMinimized || !autoHide) {
+        return () => {
+          hasMountedRef.current = false;
+        };
+      }
+      if (forceOpenTimerRef.current) clearTimeout(forceOpenTimerRef.current);
+      forceOpenTimerRef.current = setTimeout(() => {
+        if (autoHide) startCollapseTimer();
+      }, 1500);
+      return () => {
+        hasMountedRef.current = false;
+        if (forceOpenTimerRef.current) clearTimeout(forceOpenTimerRef.current);
+      };
+      // Mount-only grace period — must run once, not on every autoHide flip.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleMouseEnter = () => {
+      if (forceMinimized) return;
       setIsExpanded(true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
 
     const handleMouseLeave = () => {
+      if (forceMinimized) return;
       startCollapseTimer();
     };
 
@@ -517,13 +564,88 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                       </AnimatedActionItem>
                     ))}
                   <AnimatedActionItem animKey={stepChangeKey} staggerIndex={2}>
-                    <RailButton tooltipSide={isRight ? "left" : "top"}
-                      icon={<Plus className="h-[20px] w-[20px]" strokeWidth={2} />}
-                      label="Añadir pregunta"
-                      onClick={onAddQuestion}
-                      blockedReason={addQuestionBlockedReason}
-                      ignoreOutsideClick
-                    />
+                    {onAddQuestionWithAi && addQuestionBlockedReason === null ? (
+                      <Popover open={isAddQuestionMenuOpen} onOpenChange={setIsAddQuestionMenuOpen}>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            data-click-outside-ignore
+                            aria-label="Añadir pregunta"
+                            className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
+                          >
+                            <Plus className="h-[20px] w-[20px]" strokeWidth={2} />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          side={isRight ? "left" : "top"}
+                          align="center"
+                          sideOffset={16}
+                          avoidCollisions={false}
+                          className="w-[280px] rounded-2xl border-white/10 bg-surface-nav p-2 shadow-rail"
+                        >
+                          <div className="flex flex-col">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsAddQuestionMenuOpen(false);
+                                onAddQuestionWithAi();
+                              }}
+                              className="group flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-white/5"
+                            >
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 transition-colors group-hover:bg-white/10">
+                                {/* Same gradient as the "Agente IA" button on the home floating rail, so the AI branding reads as one system. */}
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-transparent">
+                                  <defs>
+                                    <linearGradient id="ai-icon-gradient-rail" x1="0%" y1="0%" x2="100%" y2="100%">
+                                      <stop offset="0%" stopColor="hsl(var(--ai-gradient-start))" />
+                                      <stop offset="100%" stopColor="hsl(var(--ai-gradient-end))" />
+                                    </linearGradient>
+                                  </defs>
+                                  <Sparkles stroke="url(#ai-icon-gradient-rail)" className="h-5 w-5" strokeWidth={2} />
+                                </svg>
+                              </div>
+                              <span className="flex min-w-0 flex-col gap-0.5">
+                                <span className="block text-[14px] font-bold tracking-tight text-ai-gradient">
+                                  Crear con IA
+                                </span>
+                                <span className="block text-[11px] font-medium text-white/45 truncate">
+                                  Genera una propuesta base.
+                                </span>
+                              </span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsAddQuestionMenuOpen(false);
+                                onAddQuestion();
+                              }}
+                              className="group flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-white/5"
+                            >
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/60 transition-colors group-hover:bg-white/10 group-hover:text-white">
+                                <Plus className="h-5 w-5" strokeWidth={2} />
+                              </div>
+                              <span className="flex min-w-0 flex-col gap-0.5">
+                                <span className="block text-[14px] font-bold tracking-tight text-white">
+                                  Crear manualmente
+                                </span>
+                                <span className="block text-[11px] font-medium text-white/45 truncate">
+                                  Redacta desde cero.
+                                </span>
+                              </span>
+                            </button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <RailButton tooltipSide={isRight ? "left" : "top"}
+                        icon={<Plus className="h-[20px] w-[20px]" strokeWidth={2} />}
+                        label="Añadir pregunta"
+                        onClick={onAddQuestion}
+                        blockedReason={addQuestionBlockedReason}
+                        ignoreOutsideClick
+                      />
+                    )}
                   </AnimatedActionItem>
                   <AnimatedActionItem animKey={stepChangeKey} staggerIndex={3}>
                     <RailButton tooltipSide={isRight ? "left" : "top"}
@@ -670,7 +792,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                   align="center"
                   sideOffset={16}
                   avoidCollisions={false}
-                  className="w-60 rounded-2xl p-4 bg-surface-nav border border-white/10 shadow-rail gap-0"
+                  className="w-72 rounded-2xl p-4 bg-surface-nav border border-white/10 shadow-rail gap-0"
                 >
                   <PopoverTitle className="text-[13px] font-semibold text-white">
                     Información
@@ -680,6 +802,36 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
 
                   <dl className="flex flex-col gap-2.5">
                     <InfoRow icon={Users} label="Participantes" value={formatCount(participantsCount)} />
+                    {(participantsBreakdown.groups.length > 0 ||
+                      participantsBreakdown.outsideCount > 0 ||
+                      participantsBreakdown.importedCount > 0) && (
+                      <div className="ml-[22px] flex flex-col gap-1 border-l border-white/10 pl-2.5">
+                        {participantsBreakdown.groups.map((group) => (
+                          <div key={group.label} className="flex items-center justify-between gap-3 text-[11.5px]">
+                            <span className="truncate text-white/50">{group.label}</span>
+                            <span className="shrink-0 tabular-nums font-medium text-white/80">
+                              {formatCount(group.count)}
+                            </span>
+                          </div>
+                        ))}
+                        {participantsBreakdown.outsideCount > 0 && (
+                          <div className="flex items-center justify-between gap-3 text-[11.5px]">
+                            <span className="truncate text-white/50">Fuera de grupos</span>
+                            <span className="shrink-0 tabular-nums font-medium text-white/80">
+                              {formatCount(participantsBreakdown.outsideCount)}
+                            </span>
+                          </div>
+                        )}
+                        {participantsBreakdown.importedCount > 0 && (
+                          <div className="flex items-center justify-between gap-3 text-[11.5px]">
+                            <span className="truncate text-white/50">Importados</span>
+                            <span className="shrink-0 tabular-nums font-medium text-white/80">
+                              {formatCount(participantsBreakdown.importedCount)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <InfoRow icon={Layers} label="Secciones" value={sectionCount} />
                     <InfoRow icon={ListChecks} label="Preguntas" value={questionCount} />
                     <InfoRow icon={BarChart3} label="Datos demográficos" value={demographicsCount} />
@@ -705,55 +857,6 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                 </TooltipTrigger>
                 <TooltipContent side="top">
                   {autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
-                </TooltipContent>
-              </Tooltip>
-
-              <svg width="0" height="0" className="absolute">
-                <defs>
-                  <linearGradient id="ai-icon-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="hsl(var(--ai-gradient-start))" />
-                    <stop offset="100%" stopColor="hsl(var(--ai-gradient-end))" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => setAiDrawerOpen(true)}
-                    aria-label="Agente IA"
-                    className="group hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl bg-transparent transition-all duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 overflow-hidden"
-                  >
-                    {/* Background animation on hover */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-ai-gradient -z-10" />
-                    
-                    <MovingBorderBeam 
-                      duration={4000}
-                      borderWidth={2}
-                      rx={12}
-                      ry={12}
-                      beamSize={60}
-                      colorFrom="hsl(var(--ai-gradient-start))"
-                      colorTo="hsl(var(--ai-gradient-end))"
-                      className="opacity-100 group-hover:opacity-0 transition-opacity duration-300"
-                    />
-                    
-                    {/* Gradient icon (default) */}
-                    <Sparkles 
-                      className="absolute z-10 h-[20px] w-[20px] drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] opacity-100 group-hover:opacity-0 transition-opacity duration-300" 
-                      stroke="url(#ai-icon-gradient)" 
-                      strokeWidth={2.5} 
-                    />
-                    
-                    {/* White icon (hover) */}
-                    <Sparkles 
-                      className="absolute z-10 h-[20px] w-[20px] text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
-                      strokeWidth={2.5} 
-                    />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side={isRight ? "left" : "top"}>
-                  Agente IA
                 </TooltipContent>
               </Tooltip>
 
@@ -805,7 +908,6 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
           </div>
         </div>
       </div>
-      <AiAgentDrawer open={aiDrawerOpen} onOpenChange={setAiDrawerOpen} context="builder" />
     </>
   );
   }
