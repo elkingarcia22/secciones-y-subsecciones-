@@ -115,6 +115,10 @@ interface RowHighlightProps {
  * row with a level chip and a rail hanging off the chevron — so the report
  * reads the same hierarchy the author wrote.
  */
+function flattenChildren(section: SectionResult): readonly QuestionResult[] {
+  return section.children.flatMap(child => [...child.questions, ...flattenChildren(child)]);
+}
+
 export function QuestionsTab({
   results,
   segments,
