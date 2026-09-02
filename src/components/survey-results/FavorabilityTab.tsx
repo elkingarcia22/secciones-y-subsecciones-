@@ -130,7 +130,7 @@ export function FavorabilityTab({ results, segment, onSegmentChange }: Favorabil
     }
   />
 
- <div className="min-h-0 flex-1 flex flex-col">
+ <div className="min-h-0 flex-1 flex flex-col mt-6">
  <div className=" pb-6 min-h-0 flex-1">
  {activeSubTab === "questions" ? (
  <QuestionsTab
