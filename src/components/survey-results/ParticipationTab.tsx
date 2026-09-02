@@ -1,51 +1,29 @@
 import * as React from "react";
-import { ArrowUpDown, CheckCircle2, Clock3, Info, Search, UserX, Users, X, CheckIcon, ChevronDown, Eye, EyeOff, MinusIcon, Bell, ListFilter } from "lucide-react";
+import { Search, Users, X, Eye, EyeOff, Bell, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
 import { Progress } from "@/components/ui/progress";
-import {
- DropdownMenu,
- DropdownMenuContent,
- DropdownMenuItem,
- DropdownMenuSeparator,
- DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+
 import { Checkbox } from "@/components/ui/checkbox";
-import {
- Table,
- TableBody,
- TableCell,
- TableHead,
- TableHeader,
- TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/feedback";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
-import { MiniMetricCard, AnimatedNumber } from "./MiniMetricCard";
+import { AnimatedNumber } from "./MiniMetricCard";
+import { ResultsSummaryCard } from "./ResultsSummaryCard";
+import { PARTICIPATION_TARGET } from "@/components/survey-list/surveyListFilters";
+import { Sparkline } from "@/components/survey-analytics/pulseCharts";
 import { useAnimatedValue } from "@/lib/useAnimatedValue";
 import { COLLABORATORS } from "@/mocks/collaborators";
-import {
- participationBySegment,
- type ParticipationRow,
- type SegmentDefinition,
- type SurveyResults,
-} from "@/mocks/surveyResults";
+import { participationBySegment, type ParticipationRow, type SegmentDefinition, type SurveyResults } from "@/mocks/surveyResults";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PagerButton } from "@/components/survey-builder/CollaboratorTableParts";
-import {
- FilterSortHeader,
- SelectionHeaderMenu,
- SortOnlyHeader,
-} from "@/components/data-display";
-import { 
- formatPercent,
- POSITIVE_BG, POSITIVE_TEXT, POSITIVE_BORDER,
- YELLOW_BG, YELLOW_TEXT, YELLOW_BORDER,
- NEGATIVE_BG, NEGATIVE_TEXT, NEGATIVE_BORDER
-} from "./favorabilityScale";
+import { FilterSortHeader, SelectionHeaderMenu, SortOnlyHeader } from "@/components/data-display";
+import { formatPercent, toneForParticipation, POSITIVE, YELLOW, NEGATIVE } from "./favorabilityScale";
 import { FormulaBlock } from "./FormulaBlock";
+import { MetricSummaryCard } from "./MetricSummaryCard";
 
 interface ParticipationTabProps {
  results: SurveyResults;
@@ -300,68 +278,68 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  <div className="flex flex-col gap-8">
  <div className="flex flex-col gap-6 pb-6">
  {/* Métricas de participación — mismas tarjetas que las de favorabilidad */}
- <div className="grid pt-1 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
- <MiniMetricCard size="compact"
- icon={Users}
- label="Total de participación"
- value={<AnimatedNumber value={results.participation.rate} format={formatPercent} />}
- >
- <Tooltip>
- <TooltipTrigger asChild>
- <button
- type="button"
- className="text-muted-foreground hover:text-text-primary transition-colors bg-muted/30 p-1 rounded-md"
- >
- <Info className="h-3.5 w-3.5" />
- </button>
- </TooltipTrigger>
- <TooltipContent
- side="top"
- className="max-w-[400px] p-4 bg-surface-nav text-white shadow-drawer border-none"
- >
- <div className="flex flex-col gap-3 items-start leading-relaxed">
- <p className="text-[12px]">
- <strong>Participación:</strong>
- <br />
- Es el porcentaje de personas invitadas que completaron la encuesta.
- </p>
- <FormulaBlock
- numerator="Personas que completaron"
- denominator="Personas invitadas"
- result="% de participación"
- />
- </div>
- </TooltipContent>
- </Tooltip>
- </MiniMetricCard>
-
-   <MiniMetricCard size="compact"
-    icon={CheckCircle2}
-    label="Completadas"
-    value={<AnimatedNumber value={completed} format={formatCount} />}
-    color={POSITIVE_TEXT}
-    onClick={() => toggleEstadoFilter("Completado")}
-    active={estadoFilter.has("Completado")}
-  />
-   <MiniMetricCard size="compact"
-    icon={Clock3}
-    label="En progreso"
-    value={<AnimatedNumber value={inProgress} format={formatCount} />}
-    color={YELLOW_TEXT}
-    onClick={() => toggleEstadoFilter("En progreso")}
-    active={estadoFilter.has("En progreso")}
-  />
-   <MiniMetricCard size="compact"
-    icon={UserX}
-    label="Faltan"
-    value={<AnimatedNumber value={missing} format={formatCount} />}
-    color={NEGATIVE_TEXT}
-    onClick={() => toggleEstadoFilter("Falta")}
-    active={estadoFilter.has("Falta")}
-  />
- </div>
-
- <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
+ <MetricSummaryCard
+  title="Total de participación"
+  hint={
+    <div className="flex flex-col gap-3 items-start leading-relaxed">
+      <p className="text-[12px]"><strong>Participación:</strong><br/>Es el porcentaje de personas invitadas que completaron la encuesta.</p>
+      <FormulaBlock numerator="Personas que completaron" denominator="Personas invitadas" result="% de participación" />
+    </div>
+  }
+  bigValue={formatPercent(results.participation.rate)}
+  caption={`${formatCount(completed)} de ${formatCount(invited)} invitados · meta ${PARTICIPATION_TARGET}%`}
+  ringsLabel="Estado de los invitados"
+  ringsTotal={`${formatCount(invited)} en total`}
+  rings={[
+    {
+      id: "completed",
+      label: "Completadas",
+      percentage: Math.round((completed / invited) * 100),
+      color: POSITIVE,
+      count: formatCount(completed),
+      active: estadoFilter.has("Completado"),
+      onToggle: () => toggleEstadoFilter("Completado"),
+    },
+    {
+      id: "inProgress",
+      label: "En progreso",
+      percentage: Math.round((inProgress / invited) * 100),
+      color: YELLOW,
+      count: formatCount(inProgress),
+      active: estadoFilter.has("En progreso"),
+      onToggle: () => toggleEstadoFilter("En progreso"),
+    },
+    {
+      id: "missing",
+      label: "Faltan",
+      percentage: Math.round((missing / invited) * 100),
+      color: NEGATIVE,
+      count: formatCount(missing),
+      active: estadoFilter.has("Falta"),
+      onToggle: () => toggleEstadoFilter("Falta"),
+    },
+  ]}
+  topAreasTitle="Top 3 área mayor participación"
+  topAreas={[...rows].sort((a, b) => b.rate - a.rate).slice(0, 3).map(r => ({
+    id: r.id,
+    label: r.label,
+    value: r.rate,
+    displayValue: formatPercent(r.rate),
+  }))}
+  chartTitle="Tendencia por medición"
+  chart={
+    <Sparkline
+      points={results.trend.map((point) => ({ id: point.label, name: point.label, value: point.participation }))}
+      target={PARTICIPATION_TARGET}
+      format={formatPercent}
+      ariaLabel={`Participación de las últimas ${results.trend.length} mediciones`}
+      height={56}
+      showPoints
+      fitTarget={false}
+    />
+  }
+/>
+<div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
  <div className="flex flex-wrap items-center gap-4">
  <div className="flex items-center gap-2">
  <h3 className="text-[13px] font-bold text-text-primary">
