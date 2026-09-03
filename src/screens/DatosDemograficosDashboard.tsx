@@ -80,11 +80,11 @@ export const DatosDemograficosDashboard: React.FC = () => {
     setEditingId(id);
   };
 
-  const handleDuplicate = () => {
-    if (selectedRows.length === 0) return;
+  const duplicateRows = (targetRows: readonly DemographicRow[]) => {
+    if (targetRows.length === 0) return;
     let duplicated = 0;
     let lastLabel = "";
-    for (const row of selectedRows) {
+    for (const row of targetRows) {
       const created = duplicateAsLibraryDemographic({
         label: row.name,
         type: row.type,
@@ -103,7 +103,16 @@ export const DatosDemograficosDashboard: React.FC = () => {
     toast.success(duplicated === 1 ? "Demográfico duplicado" : `${duplicated} demográficos duplicados`, {
       description: duplicated === 1 ? `“${lastLabel}” ya está disponible.` : undefined,
     });
+  };
+
+  const handleDuplicate = () => {
+    duplicateRows(selectedRows);
     setSelectedIds(new Set());
+  };
+
+  const handleDuplicateOne = (id: string) => {
+    const row = rowById.get(id);
+    if (row) duplicateRows([row]);
   };
 
   const requestDelete = (ids: readonly string[]) => {
@@ -183,6 +192,14 @@ export const DatosDemograficosDashboard: React.FC = () => {
         onEdit={(id) => {
           setViewingId(null);
           handleEdit(id);
+        }}
+        onDuplicate={(id) => {
+          setViewingId(null);
+          handleDuplicateOne(id);
+        }}
+        onDelete={(id) => {
+          setViewingId(null);
+          requestDelete([id]);
         }}
       />
 

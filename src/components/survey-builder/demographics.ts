@@ -1,4 +1,5 @@
 import { ChevronDownCircle, CircleDot, ListChecks } from "lucide-react";
+import type { Tone } from "@/lib/tone";
 import { MIN_OPTIONS, buildOption, type CatalogEntry } from "./questionCatalog";
 import type {
   DemographicField,
@@ -34,6 +35,20 @@ export const DEMOGRAPHIC_TYPES: readonly CatalogEntry<DemographicType>[] = [
 
 export const demographicTypeLabel = (type: DemographicType): string =>
   DEMOGRAPHIC_TYPES.find((entry) => entry.value === type)?.label ?? "";
+
+/**
+ * The type's own accent — what tells "Opción única" apart from "Desplegable"
+ * apart from "Múltiples respuestas" on a selected tile or the view drawer's
+ * type pill. Independent from a card's plain icon chip, which stays blue no
+ * matter the type (see the `tone="brand"` passed to those `FormSection`s
+ * directly) — that icon is decoration for the card, not a readout of which
+ * type is picked, so the two must not share one tone value.
+ */
+export function demographicTypeTone(type: DemographicType): Tone {
+  if (type === "single") return "brand";
+  if (type === "dropdown") return "neutral";
+  return "warning";
+}
 
 export interface SystemDemographic {
   key: string;

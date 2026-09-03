@@ -3,9 +3,7 @@ import { BadgeCheck, BookPlus, GripVertical, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toneChip } from "@/lib/tone";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { DEMOGRAPHIC_TYPES, demographicTypeLabel } from "./demographics";
-import { questionTypeTone } from "./questionCatalog";
-import type { QuestionType } from "./surveyBuilderTypes";
+import { DEMOGRAPHIC_TYPES, demographicTypeLabel, demographicTypeTone } from "./demographics";
 import { RowVisibilityToggle } from "./demographicVisibility";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
 import { useHoldDeleteConfirmLock } from "./deleteConfirmLock";
@@ -60,7 +58,7 @@ export function DemographicCard({
 
   // Cómo se responde este dato, con la misma marca que una pregunta.
   const TypeIcon = DEMOGRAPHIC_TYPES.find((entry) => entry.value === field.type)?.icon ?? BadgeCheck;
-  const typeTone = questionTypeTone(field.type as QuestionType);
+  const typeTone = demographicTypeTone(field.type);
 
   if (isConfirmingRemove) {
     return (

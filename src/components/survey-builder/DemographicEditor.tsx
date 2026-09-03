@@ -9,8 +9,13 @@ import { useClickOutside } from "@/hooks/useClickOutside";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
 import { useHoldDeleteConfirmLock } from "./deleteConfirmLock";
 import { QuestionOptionsEditor } from "./QuestionOptionsEditor";
-import { DEMOGRAPHIC_TYPES, demographicTypeLabel, findSystemDemographic } from "./demographics";
-import { MIN_OPTIONS, buildOption, questionTypeTone } from "./questionCatalog";
+import {
+  DEMOGRAPHIC_TYPES,
+  demographicTypeLabel,
+  demographicTypeTone,
+  findSystemDemographic,
+} from "./demographics";
+import { MIN_OPTIONS, buildOption } from "./questionCatalog";
 import type { DemographicField, DemographicType } from "./surveyBuilderTypes";
 
 interface DemographicEditorProps {
@@ -226,7 +231,7 @@ export function DemographicEditor({
               <div className="flex flex-wrap gap-2">
                 {DEMOGRAPHIC_TYPES.map(({ value, label, icon: Icon }) => {
                   const selected = field.type === value;
-                  const typeTone = questionTypeTone(value);
+                  const typeTone = demographicTypeTone(value);
                   const accent = toneAccent(typeTone);
                   return (
                     <button

@@ -105,7 +105,7 @@ export function SurveyResults({ draft, item, history = [], onBack }: SurveyResul
 
 return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-background">
-      <div className="flex shrink-0 items-center justify-between gap-3 bg-background px-4 pt-6 pb-6 border-b border-transparent">
+      <div className="flex shrink-0 items-center justify-between gap-3 bg-background px-1 pt-6 pb-6 border-b border-transparent">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -164,7 +164,7 @@ return (
         </Popover>
       </div>
 
-      <div className="flex shrink-0 px-4 pb-2">
+      <div className="flex shrink-0 px-1 pb-2">
         <UbitsTabs
           tabs={[...TABS]}
           activeTabId={activeTab}
@@ -181,7 +181,7 @@ return (
         />
       </div>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+      <main className="min-h-0 flex-1 overflow-y-auto px-1 pb-6">
         {/*
           A persistent breathing room below the nav tabs, present no matter which
           tab is active or how far its content has scrolled. Every tab's own
