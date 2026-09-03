@@ -1,9 +1,7 @@
 import * as React from "react";
-import { ArrowLeft, Users, PieChart, MessageSquare, ListChecks, Target, Sparkles, Tag, ShieldCheck, Lock, CalendarRange, Info, type LucideIcon } from "lucide-react";
-import { type SurveyDraft, SURVEY_KIND_LABELS } from "@/components/survey-builder";
-import { toneChip, type Tone } from "@/lib/tone";
+import { ArrowLeft, Users, PieChart, MessageSquare, ListChecks, Target, Sparkles } from "lucide-react";
+import { type SurveyDraft } from "@/components/survey-builder";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { UbitsTabs, type TabItem } from "@/components/navigation";
 import {
   AiAnalysisTab,
@@ -19,7 +17,7 @@ import {
 import { EmptyState } from "@/components/feedback";
 import { buildSurveyResults, participationBySegment } from "@/mocks/surveyResults";
 import type { SurveyListItem } from "@/mocks/types";
-import { SurveyPreviewDrawer, formatPreviewDate } from "@/components/survey-preview";
+import { SurveyPreviewDrawer } from "@/components/survey-preview";
 
 interface SurveyResultsProps {
   draft: SurveyDraft;
@@ -99,69 +97,21 @@ export function SurveyResults({ draft, item, history = [], onBack }: SurveyResul
     setWidgetDismissed(false);
   }, []);
 
-  const start = formatPreviewDate(draft.startDate);
-  const end = formatPreviewDate(draft.endDate);
-  const isAnonymous = draft.visibility === "anonymous";
-
 return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-background">
-      <div className="flex shrink-0 items-center justify-between gap-3 bg-background px-1 pt-6 pb-6 border-b border-transparent">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            aria-label="Volver al inicio"
-            className="h-9 w-9 shrink-0 bg-surface shadow-card hover:bg-surface-muted"
-          >
-            <ArrowLeft className="h-4 w-4" strokeWidth={2} />
-          </Button>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">
-            Resultados de la encuesta
-          </h1>
-        </div>
-
-        {/* The facts used to sit as a row of cards next to the title, but that
-            row and the tabs row right below it never share a natural width —
-            one always reads as leftover space next to the other. Tucking them
-            behind a single "Detalles" trigger keeps the header itself short,
-            so there is nothing left to balance against the tabs. */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="lg"
-              className="shrink-0 gap-2 bg-surface shadow-card hover:bg-surface-muted"
-            >
-              <Info className="h-4 w-4" strokeWidth={2} />
-              Detalles
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-80">
-            <PopoverTitle>Detalles de la encuesta</PopoverTitle>
-            <div className="flex flex-col gap-1 pt-1">
-              {draft.kind && (
-                <DetailRow tone="brand" icon={Tag} label="Tipo" value={SURVEY_KIND_LABELS[draft.kind]} />
-              )}
-              <DetailRow
-                tone="neutral"
-                icon={isAnonymous ? ShieldCheck : Users}
-                label="Visibilidad"
-                value={isAnonymous ? "Anónima" : "Pública"}
-              />
-              {isAnonymous && (
-                <DetailRow tone="warning" icon={Lock} label="Mínimo de respuestas" value={`${results.threshold} respuestas`} />
-              )}
-              <DetailRow
-                tone="positive"
-                icon={Users}
-                label="Invitados"
-                value={results.participation.invited.toLocaleString("es-CO")}
-              />
-              <DetailRow tone="brand" icon={CalendarRange} label="Período" value={`${start ?? "—"} al ${end ?? "—"}`} />
-            </div>
-          </PopoverContent>
-        </Popover>
+      <div className="flex shrink-0 items-center gap-3 bg-background px-1 pt-6 pb-6 border-b border-transparent">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onBack}
+          aria-label="Volver al inicio"
+          className="h-9 w-9 shrink-0 bg-surface shadow-card hover:bg-surface-muted"
+        >
+          <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+        </Button>
+        <h1 className="text-2xl font-bold text-text-primary tracking-tight">
+          Resultados de la encuesta
+        </h1>
       </div>
 
       <div className="flex shrink-0 px-1 pb-2">
@@ -283,29 +233,6 @@ return (
           onDismiss={() => setWidgetDismissed(true)}
         />
       )}
-    </div>
-  );
-}
-
-/** One fact about the measurement, as a row inside the "Detalles" popover. */
-function DetailRow({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: React.ReactNode;
-  tone: Tone;
-}) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-md px-1.5 py-1.5">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={toneChip(tone)}>
-        <Icon className="h-3.5 w-3.5" strokeWidth={2} />
-      </span>
-      <span className="flex-1 truncate text-[13px] text-text-muted">{label}</span>
-      <span className="truncate text-[13px] font-semibold text-text-primary">{value}</span>
     </div>
   );
 }

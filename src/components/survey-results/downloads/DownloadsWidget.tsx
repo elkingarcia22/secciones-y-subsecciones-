@@ -1,9 +1,21 @@
 import * as React from "react";
-import { Check, ChevronDown, ChevronUp, ExternalLink, Loader2, RotateCcw, Share2, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  GripVertical,
+  Loader2,
+  RotateCcw,
+  Share2,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toneChip } from "@/lib/tone";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { DownloadEntry } from "./downloadTypes";
+
+const DRAG_MARGIN = 12;
 
 interface DownloadsWidgetProps {
   entries: readonly DownloadEntry[];
@@ -33,18 +45,75 @@ export function DownloadsWidget({
   const preparing = entries.filter((entry) => entry.status === "preparing");
   const isBusy = preparing.length > 0;
 
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  // null = todavía en su esquina por defecto (bottom-6 right-6 vía className).
+  const [position, setPosition] = React.useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const dragOrigin = React.useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(
+    null
+  );
+
+  const handleDragPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest("button")) return;
+    const node = containerRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    const origin = position ?? { x: rect.left, y: rect.top };
+    dragOrigin.current = { startX: event.clientX, startY: event.clientY, originX: origin.x, originY: origin.y };
+    setPosition(origin);
+    setIsDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleDragPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = dragOrigin.current;
+    if (!start) return;
+    const node = containerRef.current;
+    const width = node?.offsetWidth ?? 0;
+    const height = node?.offsetHeight ?? 0;
+    const maxX = Math.max(window.innerWidth - width - DRAG_MARGIN, DRAG_MARGIN);
+    const maxY = Math.max(window.innerHeight - height - DRAG_MARGIN, DRAG_MARGIN);
+    const nextX = start.originX + (event.clientX - start.startX);
+    const nextY = start.originY + (event.clientY - start.startY);
+    setPosition({
+      x: Math.min(Math.max(nextX, DRAG_MARGIN), maxX),
+      y: Math.min(Math.max(nextY, DRAG_MARGIN), maxY),
+    });
+  };
+
+  const handleDragPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    dragOrigin.current = null;
+    setIsDragging(false);
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+
   if (entries.length === 0) return null;
 
   return (
     <div
+      ref={containerRef}
       role="status"
       aria-label="Descargas activas"
       // Misma anatomía que una tarjeta del drawer —chip del icono, título,
       // línea de estado y, bajo una divisoria, el cuerpo— sobre la sombra
       // flotante que la separa de la página que sigue debajo.
-      className="fixed bottom-6 right-6 z-50 w-[320px] overflow-hidden rounded-2xl border border-border/60 bg-surface shadow-[0_12px_40px_rgb(0,0,0,0.16)]"
+      className={cn(
+        "fixed z-50 w-[320px] overflow-hidden rounded-2xl border border-border/60 bg-surface shadow-[0_12px_40px_rgb(0,0,0,0.16)]",
+        !position && "bottom-6 right-6"
+      )}
+      style={position ? { left: position.x, top: position.y } : undefined}
     >
-      <div className="flex items-center gap-2.5 p-3.5">
+      <div
+        onPointerDown={handleDragPointerDown}
+        onPointerMove={handleDragPointerMove}
+        onPointerUp={handleDragPointerUp}
+        onPointerCancel={handleDragPointerUp}
+        className={cn(
+          "flex items-center gap-2.5 p-3.5 touch-none",
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        )}
+      >
+        <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden />
         <span
           style={toneChip(isBusy ? "brand" : "positive")}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ring-border/40"

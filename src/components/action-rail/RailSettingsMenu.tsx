@@ -6,6 +6,19 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useRailAutoHide } from "./railAutoHide";
 import { useRailOrientation, useRailPopoutSide, type RailOrientation } from "./railOrientation";
 
+interface RailSettingsMenuProps {
+  /**
+   * Some rails (survey results, the builder) don't read the shared
+   * orientation preference for their own layout — they're pinned to one
+   * axis by the screen, not by this toggle — so showing "Orientación" there
+   * would flip a setting that visibly does nothing on the bar the reader is
+   * looking at (while still silently affecting the rails that *do* honor
+   * it, since the preference is shared). Those rails pass `false` to keep
+   * the menu to the one section they actually control.
+   */
+  showOrientation?: boolean;
+}
+
 /**
  * The bar's own preferences — how it behaves and which way it lies — behind a
  * single button.
@@ -16,7 +29,7 @@ import { useRailOrientation, useRailPopoutSide, type RailOrientation } from "./r
  * its scarce icon slots on settings, and gives each choice room for a label,
  * which a lone pin icon never had.
  */
-export function RailSettingsMenu() {
+export function RailSettingsMenu({ showOrientation = true }: RailSettingsMenuProps = {}) {
   const [autoHide, setAutoHide] = useRailAutoHide();
   const [orientation, setOrientation] = useRailOrientation();
   const [open, setOpen] = React.useState(false);
@@ -49,22 +62,24 @@ export function RailSettingsMenu() {
         collisionPadding={16}
         className="w-[240px] rounded-2xl border-white/10 bg-surface-nav p-2 text-white/60 shadow-rail"
       >
-        <SettingGroup label="Orientación">
-          <ChoiceRow
-            icon={<PanelBottom className="h-[18px] w-[18px]" strokeWidth={2} />}
-            label="Horizontal"
-            active={orientation === "horizontal"}
-            onClick={() => setOrientation("horizontal" satisfies RailOrientation)}
-          />
-          <ChoiceRow
-            icon={<PanelRight className="h-[18px] w-[18px]" strokeWidth={2} />}
-            label="Vertical"
-            active={orientation === "vertical"}
-            onClick={() => setOrientation("vertical" satisfies RailOrientation)}
-          />
-        </SettingGroup>
+        {showOrientation && (
+          <SettingGroup label="Orientación">
+            <ChoiceRow
+              icon={<PanelBottom className="h-[18px] w-[18px]" strokeWidth={2} />}
+              label="Horizontal"
+              active={orientation === "horizontal"}
+              onClick={() => setOrientation("horizontal" satisfies RailOrientation)}
+            />
+            <ChoiceRow
+              icon={<PanelRight className="h-[18px] w-[18px]" strokeWidth={2} />}
+              label="Vertical"
+              active={orientation === "vertical"}
+              onClick={() => setOrientation("vertical" satisfies RailOrientation)}
+            />
+          </SettingGroup>
+        )}
 
-        <SettingGroup label="Visibilidad" className="mt-1.5">
+        <SettingGroup label="Visibilidad" className={showOrientation ? "mt-1.5" : undefined}>
           <ChoiceRow
             icon={<Pin className="h-[18px] w-[18px]" strokeWidth={2} />}
             label="Mantener abierta"

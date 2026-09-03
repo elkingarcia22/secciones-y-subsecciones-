@@ -1,16 +1,18 @@
 import * as React from "react";
-import { Download, Bell, Minimize2, Pin, Info, Tag, ShieldCheck, Users, Lock, CalendarRange, Sparkles, Eye, type LucideIcon } from "lucide-react";
+import { Download, Bell, Info, Tag, ShieldCheck, Users, Lock, CalendarRange, Sparkles, Eye, type LucideIcon } from "lucide-react";
 import { useAiAgentPanel } from "@/components/app-shell/aiAgentPanelContext";
 import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { PopoverTitle } from "@/components/ui/popover";
 import { SURVEY_KIND_LABELS, type SurveyDraft } from "@/components/survey-builder";
 import type { SegmentDefinition, SurveyResults } from "@/mocks/surveyResults";
 import { formatPreviewDate } from "@/components/survey-preview/previewModel";
 import {
   RailDragHandle,
   RailSelectionChip,
+  RailSettingsMenu,
   useDraggableRail,
   useRailAutoHide,
 } from "@/components/action-rail";
@@ -77,7 +79,7 @@ export function ResultsActionRail({
   const start = formatPreviewDate(draft.startDate);
   const end = formatPreviewDate(draft.endDate);
   const isAnonymous = draft.visibility === "anonymous";
-  const [autoHide, setAutoHide] = useRailAutoHide();
+  const [autoHide] = useRailAutoHide();
   const [isExpanded, setIsExpanded] = React.useState(true);
   const { openPanel } = useAiAgentPanel();
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -184,17 +186,18 @@ export function ResultsActionRail({
     <div className="absolute inset-x-0 z-50 flex pointer-events-none bottom-0 flex-col items-center justify-end pb-4">
       {/* Hit area for hover. Switches to fixed positioning once dragged, so
           it can sit anywhere in the viewport instead of only at the bottom
-          centre dock. Centred with flexbox rather than a translate transform
-          — a transformed ancestor becomes the containing block for a fixed-
-          position descendant, which would send the dragged bar's coordinates
-          to the wrong origin and fling it off-screen. */}
+          centre dock. `position.x` is the drop point's *center* (see
+          RailPosition) — `translateX(-50%)` re-centers the bar on it, same as
+          ActionRailShell; without it the bar's left edge lands on the center
+          coordinate instead, so it visibly stops tracking the cursor and
+          drifts right by half its own width. */}
       <div
         ref={barRef}
         className={cn(
           "pointer-events-auto flex items-center justify-end h-16 flex-col px-6 pb-0 w-max",
           position && "fixed z-[60]"
         )}
-        style={position ? { left: position.x, top: position.y } : undefined}
+        style={position ? { left: position.x, top: position.y, transform: "translateX(-50%)" } : undefined}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -218,6 +221,7 @@ export function ResultsActionRail({
             {isExpanded && (
               <>
                 <RailDragHandle isDragging={isDragging} {...gripHandlers} />
+                <RailSettingsMenu showOrientation={false} />
                 <div className="self-stretch bg-white/10 mx-1 my-2 w-px" />
               </>
             )}
@@ -268,6 +272,53 @@ export function ResultsActionRail({
               />
             )}
 
+            {/* Sits right next to the AI trigger — the last thing before
+                reaching for the assistant is a quick check of the survey's
+                own facts. */}
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Detalles de la encuesta"
+                  className="dock-item relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                >
+                  <Info className="h-[20px] w-[20px]" strokeWidth={2} />
+                </button>
+              </HoverCardTrigger>
+              <HoverCardContent
+                side="top"
+                align="center"
+                sideOffset={16}
+                avoidCollisions={false}
+                className="w-72 rounded-2xl p-4 bg-surface-nav border border-white/10 shadow-rail gap-0"
+              >
+                <PopoverTitle className="text-[13px] font-semibold text-white">
+                  Detalles de la encuesta
+                </PopoverTitle>
+
+                <div className="mt-2 mb-3 h-px bg-white/10" />
+
+                <dl className="flex flex-col gap-2.5">
+                  {draft.kind && (
+                    <InfoRow icon={Tag} label="Tipo" value={SURVEY_KIND_LABELS[draft.kind]} />
+                  )}
+                  <InfoRow
+                    icon={isAnonymous ? ShieldCheck : Users}
+                    label="Visibilidad"
+                    value={isAnonymous ? "Anónima" : "Pública"}
+                  />
+                  {isAnonymous && (
+                    <InfoRow icon={Lock} label="Mínimo de respuestas" value={`${results.threshold} respuestas`} />
+                  )}
+                  <InfoRow
+                    icon={Users}
+                    label="Invitados"
+                    value={results.participation.invited.toLocaleString("es-CO")}
+                  />
+                  <InfoRow icon={CalendarRange} label="Período" value={`${start ?? "—"} al ${end ?? "—"}`} />
+                </dl>
+              </HoverCardContent>
+            </HoverCard>
 
             <svg width="0" height="0" className="absolute">
               <defs>
@@ -314,26 +365,6 @@ export function ResultsActionRail({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top">Agente IA</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => setAutoHide(!autoHide)}
-                  aria-label={autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
-                  className="dock-item hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-                >
-                  {!autoHide ? (
-                    <Minimize2 className="h-[20px] w-[20px]" strokeWidth={2} />
-                  ) : (
-                    <Pin className="h-[20px] w-[20px]" strokeWidth={2} />
-                  )}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                {autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
-              </TooltipContent>
             </Tooltip>
           </div>
         </div>

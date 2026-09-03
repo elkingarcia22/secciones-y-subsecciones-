@@ -18,8 +18,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  Pin,
-  Minimize2,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,6 +38,7 @@ import { depthLabel } from "./surveyBuilderTypes";
 import {
   RailDragHandle,
   RailSelectionChip,
+  RailSettingsMenu,
   useDraggableRail,
   useRailAutoHide,
 } from "@/components/action-rail";
@@ -306,7 +305,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
     const [isImporting, setIsImporting] = React.useState(false);
     const importInputRef = React.useRef<HTMLInputElement>(null);
 
-    const [autoHide, setAutoHide] = useRailAutoHide();
+    const [autoHide] = useRailAutoHide();
     const [isExpanded, setIsExpanded] = React.useState(true);
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -510,6 +509,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
               {isExpanded && (
                 <>
                   <RailDragHandle isDragging={isDragging} {...gripHandlers} />
+                  <RailSettingsMenu showOrientation={false} />
                   <div className={cn("self-stretch bg-white/10", isRight ? "mx-2 my-1 h-px w-auto" : "mx-1 my-2 w-px")} />
                 </>
               )}
@@ -894,35 +894,12 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                 </HoverCardContent>
               </HoverCard>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => setAutoHide(!autoHide)}
-                    aria-label={autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
-                    className="dock-item relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-                  >
-                    {!autoHide ? (
-                      <Minimize2 className="h-[20px] w-[20px]" strokeWidth={2} />
-                    ) : (
-                      <Pin className="h-[20px] w-[20px]" strokeWidth={2} />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  {autoHide ? "Mantener barra abierta" : "Ocultar barra automáticamente"}
-                </TooltipContent>
-              </Tooltip>
-
-              <div className={cn("self-stretch bg-white/10", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
-
               {/* Leaving is not a per-step action, but it belongs right next
-                  to "Guardar" — the two ways a session at the dock can end —
-                  and to its left, since leaving is the more final of the
-                  two. Keeps the draft as-is, the same as the header
-                  breadcrumb's "Encuestas" link. Red like the eliminar
-                  buttons elsewhere, since it is the one action here that
-                  leaves the screen. */}
+                  to "Información" and "Guardar" — the info, exit, and save
+                  read as one closing group, so nothing separates them.
+                  Keeps the draft as-is, the same as the header breadcrumb's
+                  "Encuestas" link. Red like the eliminar buttons elsewhere,
+                  since it is the one action here that leaves the screen. */}
               <RailButton
                 tooltipSide={isRight ? "left" : "top"}
                 icon={<LogOut className="h-[20px] w-[20px]" strokeWidth={2} />}

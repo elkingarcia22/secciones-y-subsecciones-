@@ -317,6 +317,10 @@ export function SectionsPanel({
           style={{
             maxWidth: isCollapsed ? 0 : "200px",
             opacity: isCollapsed ? 0 : 1,
+            // Matches the step buttons' own 8px left padding below, so the
+            // title lines up with the step markers instead of sitting flush
+            // against the aside's edge while they don't.
+            paddingLeft: isCollapsed ? 0 : "8px",
             transition: "max-width 0.5s ease-in-out, opacity 0.25s ease-in-out",
             pointerEvents: isCollapsed ? "none" : undefined,
           }}
