@@ -148,8 +148,8 @@ export function DemographicsTable({
   const hasActiveFilters = query !== "" || originFilter.size > 0;
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
-      <div className="flex flex-wrap items-center gap-4 shrink-0">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-2xl border border-border/60 bg-surface shadow-card">
+      <div className="flex flex-wrap items-center gap-4 shrink-0 p-4">
         <div className="flex items-center gap-2">
           <h3 className="text-[13px] font-bold text-text-primary">
             Lista de datos demográficos
@@ -214,7 +214,7 @@ export function DemographicsTable({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-xl border border-border/60">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden border-y border-border/60">
         {visibleRows.length === 0 ? (
           <div className="p-6">
             <EmptyState
@@ -244,7 +244,7 @@ export function DemographicsTable({
             <Table>
               <TableHeader>
                 <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
-                  <TableHead className="pl-7 pr-5">
+                  <TableHead className="w-px pl-4 pr-3">
                     <SelectionHeaderMenu
                       state={headerState}
                       pageCount={pagedRows.length}
@@ -261,21 +261,21 @@ export function DemographicsTable({
                       align="start"
                     />
                   </TableHead>
-                  <TableHead className="w-[30%] px-0 py-3.5">
+                  <TableHead className="w-[30%] px-2 py-3">
                     <SortOnlyHeader
                       label="Nombre"
                       sortActive={sort.key === "name"}
                       onSort={() => toggleSort("name")}
                     />
                   </TableHead>
-                  <TableHead className="w-[17%] px-0 py-3.5">
+                  <TableHead className="w-[17%] px-2 py-3">
                     <SortOnlyHeader
                       label="Tipo"
                       sortActive={sort.key === "type"}
                       onSort={() => toggleSort("type")}
                     />
                   </TableHead>
-                  <TableHead className="w-[17%] px-0 py-3.5">
+                  <TableHead className="w-[17%] px-2 py-3">
                     <FilterSortHeader
                       label="Origen"
                       options={ORIGIN_OPTIONS}
@@ -294,21 +294,21 @@ export function DemographicsTable({
                       onSort={() => toggleSort("origin")}
                     />
                   </TableHead>
-                  <TableHead className="w-[130px] px-2 py-3.5">
+                  <TableHead className="w-[130px] px-2 py-3">
                     <SortOnlyHeader
                       label="Creación"
                       sortActive={sort.key === "createdAt"}
                       onSort={() => toggleSort("createdAt")}
                     />
                   </TableHead>
-                  <TableHead className="w-[160px] px-0 py-3.5">
+                  <TableHead className="w-[160px] px-2 py-3">
                     <SortOnlyHeader
                       label="Creado por"
                       sortActive={sort.key === "createdBy"}
                       onSort={() => toggleSort("createdBy")}
                     />
                   </TableHead>
-                  <TableHead className="w-[110px] py-3.5 pl-0 pr-7 text-right">
+                  <TableHead className="w-[110px] py-3 pl-0 pr-4 text-right">
                     <SortOnlyHeader
                       label="Opciones"
                       sortActive={sort.key === "optionCount"}
@@ -334,7 +334,7 @@ export function DemographicsTable({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 shrink-0 p-4">
         <p className="text-[12px] text-muted-foreground">
           {visibleRows.length === 0
             ? "0 demográficos"
@@ -404,7 +404,7 @@ function DemographicTableRow({
       onClick={onToggle}
       className="group cursor-pointer border-border/60 transition-colors hover:bg-muted/30"
     >
-      <TableCell className="pl-7 pr-5">
+      <TableCell className="pl-4 pr-3">
         <div className="flex items-center">
           <Checkbox
             checked={isSelected}
@@ -437,7 +437,7 @@ function DemographicTableRow({
       <TableCell className="py-3 text-[13px] text-text-secondary">
         {row.createdBy ?? "—"}
       </TableCell>
-      <TableCell className="py-3 pl-0 pr-7 text-right text-[13px] font-semibold tabular-nums text-text-primary">
+      <TableCell className="py-3 pl-0 pr-4 text-right text-[13px] font-semibold tabular-nums text-text-primary">
         {row.optionCount}
       </TableCell>
     </TableRow>

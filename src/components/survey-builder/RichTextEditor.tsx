@@ -37,7 +37,7 @@ const TOGGLE_COMMANDS = [
 ] as const;
 type ToggleCommand = (typeof TOGGLE_COMMANDS)[number];
 
-function isHtmlEmpty(html: string): boolean {
+export function isHtmlEmpty(html: string): boolean {
   const trimmed = html.trim();
   return trimmed === "" || trimmed === "<br>";
 }

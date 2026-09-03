@@ -11,6 +11,7 @@ import {
   Gauge,
   type LucideIcon,
 } from "lucide-react";
+import type { Tone } from "@/lib/tone";
 import type {
   NpsFollowUps,
   QuestionOption,
@@ -109,6 +110,37 @@ const labelOf = <T extends string>(entries: readonly CatalogEntry<T>[], value: T
 export const questionTypeLabel = (type: QuestionType): string => labelOf(QUESTION_TYPES, type);
 export const scaleTypeLabel = (kind: ScaleType | null): string => labelOf(SCALE_TYPES, kind);
 export const ratingTypeLabel = (type: RatingType | null): string => labelOf(RATING_TYPES, type);
+
+const iconOf = <T extends string>(
+  entries: readonly CatalogEntry<T>[],
+  value: T | null
+): LucideIcon | undefined => entries.find((entry) => entry.value === value)?.icon;
+
+/**
+ * A question row's mark: what kind of answer it asks for, as an icon on a
+ * tinted chip. Each of the five types gets its own accent, so the row's tone
+ * alone tells single/multiple/dropdown apart at a glance. A scale shows the
+ * icon of the scale it was set to (a gauge for NPS, stars for a star rating),
+ * since that is the choice the author made.
+ */
+export function questionTypeMark(
+  type: QuestionType,
+  scaleKind: ScaleType | null
+): { icon: LucideIcon; tone: Tone } {
+  const tone = questionTypeTone(type);
+  if (type === "scale") return { icon: iconOf(SCALE_TYPES, scaleKind) ?? SlidersHorizontal, tone };
+  return { icon: iconOf(QUESTION_TYPES, type) ?? CircleDot, tone };
+}
+
+/** The type's accent on its own, for the type chooser inside the editor —
+ *  so the card you pick and the chip the closed row then shows are one color. */
+export function questionTypeTone(type: QuestionType): Tone {
+  if (type === "scale") return "brand";
+  if (type === "open") return "neutral";
+  if (type === "single") return "positive";
+  if (type === "multiple") return "warning";
+  return "ai";
+}
 
 /** Choice types render an editable list of answer options. */
 export const hasOptions = (type: QuestionType): boolean =>

@@ -19,6 +19,12 @@
 export interface DepthTheme {
   /** Numbering pill in the header row. */
   chip: string;
+  /**
+   * Whether that pill is a tinted fill (level 2) rather than an outline
+   * (level 3). Only a tinted chip takes the branch's accent — colouring the
+   * outlined one too would put three weights of the same hue in one row.
+   */
+  tinted: boolean;
   /** Border classes for the rail that holds this level's content. */
   rail: string;
   /** Left margin that aligns the rail under the header's chevron. */
@@ -29,6 +35,7 @@ export interface DepthTheme {
 
 const LEVEL_2: DepthTheme = {
   chip: "bg-primary/10 text-primary",
+  tinted: true,
   rail: "border-l-2 border-border",
   railOffset: "ml-[7px] pl-[17px]",
   title: "text-[14px]",
@@ -36,6 +43,7 @@ const LEVEL_2: DepthTheme = {
 
 const LEVEL_3: DepthTheme = {
   chip: "border border-border bg-surface text-text-secondary",
+  tinted: false,
   rail: "border-l border-border/70",
   railOffset: "ml-2 pl-4",
   title: "text-[12.5px]",

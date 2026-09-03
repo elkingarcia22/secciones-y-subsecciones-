@@ -7,6 +7,9 @@ import { DialGauge, RingGauge, Sparkline } from "@/components/survey-analytics/p
 import { AnimatedNumber, MiniMetricCard, type MiniMetricTone } from "@/components/survey-results/MiniMetricCard";
 import {
   FAVORABILITY_TARGET,
+  NEGATIVE,
+  POSITIVE,
+  YELLOW,
   deltaTone,
   formatDelta,
   formatNpsScore,
@@ -14,6 +17,7 @@ import {
   toneForFavorability,
   toneForNps,
   toneForParticipation,
+  type MetricTone,
 } from "@/components/survey-results/favorabilityScale";
 import {
   NO_FILTERS,
@@ -28,16 +32,14 @@ import { buildHomePulse, formatNpsDelta, formatSurveyCount, type PulseMetric } f
 
 interface HomePulseStripProps {
   surveys: readonly SurveyListItem[];
-  /** The table's current column filters, so an alert can tell it is the one in force. */
-  filters: SurveyListFilters;
-  onFiltersChange: (filters: SurveyListFilters) => void;
   className?: string;
 }
 
 /**
  * The block between the templates shelf and the home tabs: three averaged
- * readings, each drawn as the chart its own scale calls for, and under them
- * one alert row with the list's actionable shortcuts.
+ * readings, each drawn as the chart its own scale calls for. The alerts that
+ * used to live under them now sit inside the Encuestas tab, right above the
+ * list they filter — see `AlertsRow` below.
  *
  * The cards are the same `MiniMetricCard` the results tabs use, so the home
  * and a survey's own results speak one visual language. Participation is a
@@ -45,69 +47,77 @@ interface HomePulseStripProps {
  * move between measurements, so it gets a sparkline with the target drawn in.
  * eNPS lives on a -100..+100 dial with three zones, so it gets a gauge.
  */
-export function HomePulseStrip({ surveys, filters, onFiltersChange, className }: HomePulseStripProps) {
+/** The ring's stroke color, matching the rings a survey's own results tabs
+ *  draw — not the home cards' generic status palette — so the same reading
+ *  is the same green everywhere it appears as a ring. */
+const RING_COLOR_BY_TONE: Readonly<Record<MetricTone, string>> = {
+  positive: POSITIVE,
+  warning: YELLOW,
+  negative: NEGATIVE,
+};
+
+export function HomePulseStrip({ surveys, className }: HomePulseStripProps) {
   const pulse = React.useMemo(() => buildHomePulse(surveys), [surveys]);
+  const participationTone =
+    pulse.participation.value === null ? null : toneForParticipation(pulse.participation.value);
 
   return (
-    <section aria-label="Pulso de encuestas y alertas" className={cn("flex flex-col gap-2.5", className)}>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <PulseCard
-          icon={Users}
-          label="Participación"
-          hint="Promedio de la tasa de respuesta de todas las encuestas lanzadas, en curso o finalizadas."
-          metric={pulse.participation}
-          format={formatPercent}
-          formatDelta={formatDelta}
-          tone={pulse.participation.value === null ? "brand" : toneForParticipation(pulse.participation.value)}
-          chart={
-            pulse.participation.value !== null && (
-              <RingGauge
-                value={pulse.participation.value}
-                ariaLabel={`${formatPercent(pulse.participation.value)} de participación promedio`}
-              />
-            )
-          }
-        />
-
-        <PulseCard
-          icon={ThumbsUp}
-          label="Favorabilidad"
-          hint={`Promedio de la favorabilidad de cada encuesta lanzada. La línea recorre las últimas mediciones por fecha de cierre; la guía punteada marca la meta de ${FAVORABILITY_TARGET}%.`}
-          metric={pulse.favorability}
-          format={formatPercent}
-          formatDelta={formatDelta}
-          tone={pulse.favorability.value === null ? "brand" : toneForFavorability(pulse.favorability.value)}
-          chartPlacement="bottom"
-          chart={
-            <Sparkline
-              points={pulse.favorability.series}
-              target={FAVORABILITY_TARGET}
-              format={formatPercent}
-              ariaLabel={`Favorabilidad de las últimas ${pulse.favorability.series.length} mediciones`}
+    <section aria-label="Pulso de encuestas" className={cn("grid grid-cols-1 gap-3 sm:grid-cols-3", className)}>
+      <PulseCard
+        icon={Users}
+        label="Participación"
+        hint="Promedio de la tasa de respuesta de todas las encuestas lanzadas, en curso o finalizadas."
+        metric={pulse.participation}
+        format={formatPercent}
+        formatDelta={formatDelta}
+        tone={participationTone === null ? "brand" : participationTone}
+        color={participationTone === null ? undefined : RING_COLOR_BY_TONE[participationTone]}
+        chart={
+          pulse.participation.value !== null && (
+            <RingGauge
+              value={pulse.participation.value}
+              ariaLabel={`${formatPercent(pulse.participation.value)} de participación promedio`}
             />
-          }
-        />
+          )
+        }
+      />
 
-        <PulseCard
-          icon={Gauge}
-          label="eNPS"
-          hint="Promedio del eNPS de las encuestas que incluyeron una pregunta de recomendación. El dial va de -100 a +100: zona de riesgo bajo 0, neutra de 0 a 19 y favorable desde 20."
-          metric={pulse.nps}
-          format={formatNpsScore}
-          formatDelta={formatNpsDelta}
-          tone={pulse.nps.value === null ? "brand" : toneForNps(pulse.nps.value)}
-          chart={
-            pulse.nps.value !== null && (
-              <DialGauge
-                value={pulse.nps.value}
-                ariaLabel={`eNPS ${formatNpsScore(pulse.nps.value)} en un dial de -100 a +100`}
-              />
-            )
-          }
-        />
-      </div>
+      <PulseCard
+        icon={ThumbsUp}
+        label="Favorabilidad"
+        hint={`Promedio de la favorabilidad de cada encuesta lanzada. La línea recorre las últimas mediciones por fecha de cierre; la guía punteada marca la meta de ${FAVORABILITY_TARGET}%.`}
+        metric={pulse.favorability}
+        format={formatPercent}
+        formatDelta={formatDelta}
+        tone={pulse.favorability.value === null ? "brand" : toneForFavorability(pulse.favorability.value)}
+        chartPlacement="bottom"
+        chart={
+          <Sparkline
+            points={pulse.favorability.series}
+            target={FAVORABILITY_TARGET}
+            format={formatPercent}
+            ariaLabel={`Favorabilidad de las últimas ${pulse.favorability.series.length} mediciones`}
+          />
+        }
+      />
 
-      <AlertsRow surveys={surveys} filters={filters} onFiltersChange={onFiltersChange} />
+      <PulseCard
+        icon={Gauge}
+        label="eNPS"
+        hint="Promedio del eNPS de las encuestas que incluyeron una pregunta de recomendación. El dial va de -100 a +100: zona de riesgo bajo 0, neutra de 0 a 19 y favorable desde 20."
+        metric={pulse.nps}
+        format={formatNpsScore}
+        formatDelta={formatNpsDelta}
+        tone={pulse.nps.value === null ? "brand" : toneForNps(pulse.nps.value)}
+        chart={
+          pulse.nps.value !== null && (
+            <DialGauge
+              value={pulse.nps.value}
+              ariaLabel={`eNPS ${formatNpsScore(pulse.nps.value)} en un dial de -100 a +100`}
+            />
+          )
+        }
+      />
     </section>
   );
 }
@@ -124,6 +134,7 @@ function PulseCard({
   format,
   formatDelta: formatDeltaValue,
   tone,
+  color,
   chart,
   chartPlacement,
 }: {
@@ -134,6 +145,8 @@ function PulseCard({
   format: (value: number) => string;
   formatDelta: (value: number) => string;
   tone: MiniMetricTone;
+  /** Overrides the tone palette with the results tabs' own ring colors. */
+  color?: string;
   chart: React.ReactNode;
   chartPlacement?: "side" | "bottom";
 }) {
@@ -145,6 +158,7 @@ function PulseCard({
       icon={icon}
       label={`${label} promedio`}
       tone={value === null ? "neutral" : tone}
+      color={value !== null ? color : undefined}
       value={value !== null ? <AnimatedNumber value={value} format={format} /> : <span className="text-text-muted">—</span>}
       valueAside={
         delta !== null && (
@@ -197,7 +211,7 @@ const PRESET_TONE: Readonly<Record<NonNullable<MetricPreset["tone"]> | "default"
 };
 
 /** Alerts first, plain state last: what needs a hand should be the first button. */
-const ALERT_ORDER: readonly string[] = ["closing", "low", "risk", "open"];
+const ALERT_ORDER: readonly string[] = ["closing", "low", "open"];
 
 /**
  * One notice row: it says how many surveys need a hand and offers a button
@@ -205,15 +219,20 @@ const ALERT_ORDER: readonly string[] = ["closing", "low", "risk", "open"];
  * the column menus run, so a button's count and the rows its click reveals
  * can never disagree. A reason with nothing behind it is not shown — an alert
  * for zero surveys is not an alert.
+ *
+ * Lives inside the Encuestas tab, right above the list it filters — its
+ * buttons set the same column filters the table reads.
  */
-function AlertsRow({
+export function AlertsRow({
   surveys,
   filters,
   onFiltersChange,
+  className,
 }: {
   surveys: readonly SurveyFilterableRow[];
   filters: SurveyListFilters;
   onFiltersChange: (filters: SurveyListFilters) => void;
+  className?: string;
 }) {
   // Resolved once per render so every button judges the date buckets against
   // the same instant the table does.
@@ -237,7 +256,10 @@ function AlertsRow({
       aria-label="Alertas de encuestas"
       // Same surface as the cards above, so the buttons sit on clean white;
       // the mood lives in the side accent and the badge, not in a wash.
-      className="relative flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border/60 bg-surface py-2.5 pl-5 pr-3.5 shadow-card"
+      className={cn(
+        "relative flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border/60 bg-surface py-2.5 pl-5 pr-3.5 shadow-card",
+        className
+      )}
     >
       <span
         aria-hidden
@@ -267,7 +289,7 @@ function AlertsRow({
           </span>
           <span className="truncate text-[11px] font-medium text-text-muted">
             {calm
-              ? "Ninguna encuesta por cerrar, con participación baja ni en riesgo por tendencia"
+              ? "Ninguna encuesta por cerrar ni con participación baja"
               : "Toca una alerta para ver solo esas encuestas en la lista"}
           </span>
         </div>

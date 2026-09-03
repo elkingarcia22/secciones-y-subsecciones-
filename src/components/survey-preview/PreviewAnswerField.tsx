@@ -13,7 +13,11 @@ import {
   NPS_MAX,
   NPS_MIN,
   STAR_STEPS,
+  bandForStep,
+  bandInk,
+  bandSolid,
   likertSteps,
+  npsBand,
   type QuestionOption,
   type QuestionType,
   type SurveyQuestion,
@@ -196,20 +200,28 @@ function ScaleField({
 
     return (
       <div className="flex flex-wrap gap-2">
-        {options.map((step) => {
+        {options.map((step, index) => {
           const isSelected = selected === step;
           const isOptOut = step === "No sabe / no responde";
+          // "No sabe / no responde" is an opt-out, not a sentiment — it never
+          // takes a band. Every real step does, so picking one reads as the
+          // same red-to-green a respondent's answer will read as later, in
+          // the heatmap and the distribution bars.
+          const band = isOptOut ? null : bandForStep(index, steps.length);
           return (
             <button
               key={step}
               type="button"
               onClick={() => onChange(isSelected ? null : step)}
               aria-pressed={isSelected}
+              style={isSelected && band ? bandSolid(band) : undefined}
               className={cn(
                 "flex-1 sm:flex-none inline-flex items-center justify-center rounded-xl border px-4 py-2.5 text-center text-[13px] font-medium leading-tight transition-all duration-150",
                 isOptOut && "border-dashed",
                 isSelected
-                  ? "border-primary bg-primary text-white shadow-card"
+                  ? isOptOut
+                    ? "border-primary bg-primary text-white shadow-card"
+                    : "shadow-card"
                   : "border-border/70 bg-surface text-text-secondary hover:-translate-y-px hover:border-primary/40 hover:text-text-primary"
               )}
             >
@@ -228,17 +240,22 @@ function ScaleField({
           {Array.from({ length: NPS_MAX - NPS_MIN + 1 }, (_, index) => {
             const step = String(NPS_MIN + index);
             const isSelected = selected === step;
+            const band = npsBand(NPS_MIN + index);
             return (
               <button
                 key={step}
                 type="button"
                 onClick={() => onChange(isSelected ? null : step)}
                 aria-pressed={isSelected}
+                style={
+                  isSelected
+                    ? { ...bandSolid(band), boxShadow: `0 6px 16px -8px color-mix(in srgb, ${bandInk(band)} 90%, transparent)` }
+                    : undefined
+                }
                 className={cn(
                   "h-11 w-11 rounded-xl border text-[13px] font-bold tabular-nums transition-all duration-150",
-                  isSelected
-                    ? "border-primary bg-primary text-white shadow-[0_6px_16px_-8px_hsl(var(--primary)/0.9)]"
-                    : "border-border/70 bg-surface text-text-secondary hover:-translate-y-px hover:border-primary/40 hover:text-text-primary"
+                  !isSelected &&
+                    "border-border/70 bg-surface text-text-secondary hover:-translate-y-px hover:border-primary/40 hover:text-text-primary"
                 )}
               >
                 {step}
@@ -294,6 +311,8 @@ function ScaleField({
             const step = index + 1;
             const Face = EMOJI_FACES[index] ?? Meh;
             const isSelected = picked === step;
+            const band = bandForStep(index, EMOJI_STEPS);
+            const ink = bandInk(band);
             return (
               <button
                 key={step}
@@ -301,14 +320,22 @@ function ScaleField({
                 onClick={() => onChange(isSelected ? null : String(step))}
                 aria-label={`${step} de ${EMOJI_STEPS}`}
                 aria-pressed={isSelected}
+                style={isSelected ? { backgroundColor: band.background, borderColor: band.border } : undefined}
                 className={cn(
-                  "rounded-2xl border p-2.5 transition-all duration-150",
-                  isSelected
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-transparent text-text-muted hover:-translate-y-px hover:border-border/70 hover:text-text-secondary"
+                  "relative overflow-hidden rounded-2xl border p-2.5 transition-all duration-150",
+                  !isSelected && "border-transparent text-text-muted hover:-translate-y-px hover:border-border/70 hover:text-text-secondary"
                 )}
               >
-                <Face className="h-7 w-7" strokeWidth={2} />
+                {isSelected && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      backgroundImage: `radial-gradient(120% 100% at 25% 0%, color-mix(in srgb, ${ink} 25%, transparent), transparent 65%)`,
+                    }}
+                  />
+                )}
+                <Face className="relative h-7 w-7" strokeWidth={2} style={isSelected ? { color: ink } : undefined} />
               </button>
             );
           })}
@@ -326,17 +353,22 @@ function ScaleField({
           {Array.from({ length: LINEAR_STEPS }, (_, index) => {
             const step = index + 1;
             const isSelected = picked === step;
+            const band = bandForStep(index, LINEAR_STEPS);
             return (
               <button
                 key={step}
                 type="button"
                 onClick={() => onChange(isSelected ? null : String(step))}
                 aria-pressed={isSelected}
+                style={
+                  isSelected
+                    ? { ...bandSolid(band), boxShadow: `0 6px 16px -8px color-mix(in srgb, ${bandInk(band)} 90%, transparent)` }
+                    : undefined
+                }
                 className={cn(
                   "h-11 min-w-[44px] rounded-xl border px-3 text-[13px] font-bold tabular-nums transition-all duration-150",
-                  isSelected
-                    ? "border-primary bg-primary text-white shadow-[0_6px_16px_-8px_hsl(var(--primary)/0.9)]"
-                    : "border-border/70 bg-surface text-text-secondary hover:-translate-y-px hover:border-primary/40 hover:text-text-primary"
+                  !isSelected &&
+                    "border-border/70 bg-surface text-text-secondary hover:-translate-y-px hover:border-primary/40 hover:text-text-primary"
                 )}
               >
                 {step}

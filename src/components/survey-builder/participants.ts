@@ -68,6 +68,7 @@ export const SEGMENT_LABELS: Readonly<Record<SegmentKey, string>> = {
   country: "País",
   age: "Edad",
   gender: "Sexo",
+  customGroup: "Grupos personalizados",
 };
 
 /**

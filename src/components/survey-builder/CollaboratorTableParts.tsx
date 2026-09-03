@@ -182,12 +182,10 @@ export function CollaboratorRow({ person }: { person: Collaborator }) {
           >
             {initials(person.name)}
           </span>
-          <div className="min-w-0">
-            <p className="truncate text-[13px] font-semibold text-text-primary">{person.name}</p>
-            <p className="truncate text-[12px] text-muted-foreground">{person.username}</p>
-          </div>
+          <p className="min-w-0 truncate text-[13px] font-semibold text-text-primary">{person.name}</p>
         </div>
       </TableCell>
+      <TableCell className="text-[13px] text-text-secondary">{person.username}</TableCell>
       <TableCell className="text-[13px] text-text-secondary">{person.email}</TableCell>
       <TableCell className="text-[13px] text-text-secondary">{person.area}</TableCell>
       <TableCell className="pr-4 text-[13px] text-text-secondary">{person.leader ?? "—"}</TableCell>

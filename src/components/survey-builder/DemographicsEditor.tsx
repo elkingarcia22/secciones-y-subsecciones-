@@ -12,12 +12,14 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toneAccent, toneChip, type Tone } from "@/lib/tone";
 import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { moveItemById } from "@/lib/reorder";
 import { cascadeContainer, cascadeItem } from "@/lib/cascadeAnimation";
 import { Switch } from "@/components/ui/switch";
 import { DemographicCard, SaveToModuleButton } from "./DemographicCard";
+import { useDeleteConfirmLock } from "./deleteConfirmLock";
 import {
   GroupActionDivider,
   GroupActionsBar,
@@ -116,6 +118,13 @@ export function DemographicsEditor({
   // that field's editor card anchors instead — see `isDefaultAnchor`.
   const isEditingAny = editingId !== null;
   const setEditingId = onEditingIdChange;
+
+  // True while a custom field's inline "¿eliminar esto?" banner is open, or
+  // a field's full editor has replaced its row — every other row and every
+  // add/toggle action here goes inert until that's resolved. Sections and
+  // questions are a different panel entirely, so this is self-contained.
+  const isDeletingItem = useDeleteConfirmLock();
+  const isLocked = isDeletingItem || isEditingAny;
 
   const toggleSection = (id: DemographicSectionId) => {
     onToggleSection(id);
@@ -243,6 +252,7 @@ export function DemographicsEditor({
           <span>Usar datos demográficos</span>
           <Switch
             checked={enabled}
+            disabled={isLocked}
             onCheckedChange={(next) => onChange({ enabled: next })}
             aria-label="Usar datos demográficos"
             className="data-[state=checked]:bg-status-positive"
@@ -265,16 +275,19 @@ export function DemographicsEditor({
             {customFields.length > 0 && (
               <AccordionSection
                 icon={PenLine}
+                tone="brand"
                 title="Datos creados solo para esta encuesta"
                 description="Datos demográficos nuevos, que se usarán solo en esta encuesta."
                 countLabel={`${customFields.length} creados`}
                 isOpen={openSections.has("custom")}
                 onToggle={() => toggleSection("custom")}
                 isDefaultAnchor={!isEditingAny}
+                isLocked={isLocked}
               >
                 <CustomAccordionContent
                   customFields={customFields}
                   editingId={editingId}
+                  isLocked={isLocked}
                   draggingId={draggingId}
                   overId={overId}
                   getHandleProps={getHandleProps}
@@ -292,6 +305,7 @@ export function DemographicsEditor({
 
             <AccordionSection
               icon={BookOpen}
+              tone="brand"
               title="Datos creados en el módulo de encuestas"
               description="Datos demográficos reutilizables, ya creados dentro de la plataforma."
               countLabel={`${library.filter((entry) => findFieldByCatalogKey(fields, entry.key)).length}/${library.length} agregados`}
@@ -307,11 +321,13 @@ export function DemographicsEditor({
                   if (openSections.has("library")) toggleSection("library");
                 }
               }}
+              isLocked={isLocked}
             >
               <LibraryAccordionContent
                 library={library}
                 fields={fields}
                 editingId={editingId}
+                isLocked={isLocked}
                 onToggleField={toggleLibraryField}
                 onActivateAll={activateAllLibrary}
                 onDeactivateAll={deactivateAllLibrary}
@@ -326,6 +342,7 @@ export function DemographicsEditor({
             {importedNewCount > 0 && importedDemographics.length > 0 && (
               <AccordionSection
                 icon={FileSpreadsheet}
+                tone="brand"
                 title="Datos demográficos en usuarios nuevos"
                 description="Área, líder y las demás columnas que trae el archivo de los nuevos."
                 countLabel={`${importedDemographics.filter((entry) => importedIsActive(entry.key)).length}/${importedDemographics.length} activos`}
@@ -341,11 +358,13 @@ export function DemographicsEditor({
                     if (openSections.has("import")) toggleSection("import");
                   }
                 }}
+                isLocked={isLocked}
               >
                 <ImportedAccordionContent
                   entries={importedDemographics}
                   fields={fields}
                   editingId={editingId}
+                  isLocked={isLocked}
                   bulk={importedBulk}
                   onToggleField={toggleImportedField}
                   onActivateAll={activateAllImported}
@@ -363,6 +382,7 @@ export function DemographicsEditor({
 
             <AccordionSection
               icon={Database}
+              tone="brand"
               title="Datos precargados del sistema"
               description="Los que ya tenemos de cada colaborador en la plataforma."
               countLabel={`${SYSTEM_DEMOGRAPHICS.filter((entry) => findFieldByCatalogKey(fields, entry.key)).length}/${SYSTEM_DEMOGRAPHICS.length} activos`}
@@ -378,10 +398,12 @@ export function DemographicsEditor({
                   if (openSections.has("system")) toggleSection("system");
                 }
               }}
+              isLocked={isLocked}
             >
               <SystemAccordionContent
                 fields={fields}
                 editingId={editingId}
+                isLocked={isLocked}
                 bulk={systemBulk}
                 onToggleField={toggleSystemField}
                 onVisibleChange={setPreloadedVisible}
@@ -418,6 +440,7 @@ export function DemographicsEditor({
  */
 function AccordionSection({
   icon: Icon,
+  tone,
   title,
   description,
   countLabel,
@@ -427,8 +450,12 @@ function AccordionSection({
   isDefaultAnchor = false,
   isModuleActive,
   onToggleModule,
+  isLocked = false,
 }: {
   icon: LucideIcon;
+  /** Where this data comes from, as a color: the three sources are three
+   *  different origins, not three copies of the same block. */
+  tone: Tone;
   title: string;
   description: string;
   countLabel: string | null;
@@ -441,6 +468,10 @@ function AccordionSection({
   /** Toggle state for the whole module */
   isModuleActive?: boolean;
   onToggleModule?: (active: boolean) => void;
+  /** True while a field anywhere in "Datos demográficos" is mid delete-confirm
+   *  or mid-edit — this accordion can't be expanded/collapsed or bulk-toggled
+   *  until that's resolved (its rows lock themselves the same way). */
+  isLocked?: boolean;
 }) {
   return (
     <div
@@ -449,22 +480,27 @@ function AccordionSection({
     >
       <div
         role="button"
-        tabIndex={0}
+        tabIndex={isLocked ? -1 : 0}
+        aria-disabled={isLocked}
         onKeyDown={(e) => {
+          if (isLocked) return;
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onToggle();
           }
         }}
-        onClick={onToggle}
+        onClick={isLocked ? undefined : onToggle}
         aria-expanded={isOpen}
         className={cn(
           "flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors",
-          "hover:bg-border/10",
+          isLocked ? "cursor-not-allowed" : "hover:bg-border/10",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
         )}
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <span
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+          style={toneChip(tone)}
+        >
           <Icon className="h-4 w-4" strokeWidth={2} />
         </span>
 
@@ -485,6 +521,7 @@ function AccordionSection({
           <div className="shrink-0 pl-2 pr-1" onClick={(e) => e.stopPropagation()}>
             <Switch
               checked={isModuleActive}
+              disabled={isLocked}
               onCheckedChange={onToggleModule}
               aria-label={`Activar todo en ${title}`}
               className="data-[state=checked]:bg-status-positive"
@@ -537,6 +574,7 @@ function CatalogRow({
   onToggle,
   onOpen,
   extra,
+  locked = false,
 }: {
   label: string;
   description?: string;
@@ -544,17 +582,21 @@ function CatalogRow({
   onToggle: (active: boolean) => void;
   onOpen: () => void;
   extra?: React.ReactNode;
+  /** True while a field elsewhere is mid delete-confirm or mid-edit — this
+   *  row's own toggle and open button go inert until that's resolved. */
+  locked?: boolean;
 }) {
   return (
     <motion.li
       variants={cascadeItem}
       className={cn(
         "group flex items-center gap-3 bg-surface px-3.5 py-2.5 transition-all",
-        isActive && "hover:bg-border/20"
+        isActive && !locked && "hover:bg-border/20"
       )}
     >
       <Switch
         checked={isActive}
+        disabled={locked}
         onCheckedChange={onToggle}
         aria-label={`Usar ${label}`}
       />
@@ -562,7 +604,7 @@ function CatalogRow({
       <button
         type="button"
         onClick={onOpen}
-        disabled={!isActive}
+        disabled={!isActive || locked}
         data-click-outside-ignore
         className="min-w-0 flex-1 text-left outline-none focus-visible:underline disabled:cursor-default"
       >
@@ -587,11 +629,15 @@ function CatalogRow({
 }
 
 /** Wraps the inline card an open row turns into, in every accordion alike. */
-function EditorCard({ children }: { children: React.ReactNode }) {
+function EditorCard({ tone, children }: { tone: Tone; children: React.ReactNode }) {
   return (
     <div
       {...{ [ANCHOR_ATTRIBUTE]: true }}
-      className="rounded-xl border border-primary bg-surface p-4 shadow-card ring-2 ring-primary/20 animate-in fade-in zoom-in-[0.99] duration-200"
+      className="rounded-xl border bg-surface p-4 shadow-card animate-in fade-in zoom-in-[0.99] duration-200"
+      style={{
+        borderColor: toneAccent(tone),
+        boxShadow: `0 0 0 2px color-mix(in srgb, ${toneAccent(tone)} 18%, transparent)`,
+      }}
     >
       {children}
     </div>
@@ -601,6 +647,7 @@ function EditorCard({ children }: { children: React.ReactNode }) {
 interface SystemAccordionContentProps {
   fields: readonly DemographicField[];
   editingId: string | null;
+  isLocked: boolean;
   bulk: boolean | "mixed" | null;
   onToggleField: (key: string, active: boolean) => void;
   onVisibleChange: (key: string, visible: boolean) => void;
@@ -615,6 +662,7 @@ interface SystemAccordionContentProps {
 function SystemAccordionContent({
   fields,
   editingId,
+  isLocked,
   bulk,
   onToggleField,
   onVisibleChange,
@@ -657,11 +705,13 @@ function SystemAccordionContent({
             isActive={field !== null}
             onToggle={(active) => onToggleField(entry.key, active)}
             onOpen={() => field && onOpen(field.id)}
+            locked={isLocked}
             extra={
               field ? (
                 <RowVisibilityToggle
                   visible={field.visible}
                   onChange={(visible) => onVisibleChange(entry.key, visible)}
+                  disabled={isLocked}
                 />
               ) : null
             }
@@ -681,7 +731,7 @@ function SystemAccordionContent({
 
         <GroupActionsBar>
           {activeCount > 0 && (
-            <VisibilityBulkRow bulk={bulk} onVisibleChange={onBulkVisible} />
+            <VisibilityBulkRow bulk={bulk} onVisibleChange={onBulkVisible} disabled={isLocked} />
           )}
         </GroupActionsBar>
       </div>
@@ -690,8 +740,9 @@ function SystemAccordionContent({
         {rowsBefore.length > 0 && renderEntries(rowsBefore)}
 
         {isEditingHere && editingField && (
-          <EditorCard>
+          <EditorCard tone="positive">
             <DemographicEditor
+              tone="positive"
               field={editingField}
               index={editingIndex}
               onChange={onChangeField}
@@ -712,6 +763,7 @@ interface LibraryAccordionContentProps {
   library: readonly LibraryDemographic[];
   fields: readonly DemographicField[];
   editingId: string | null;
+  isLocked: boolean;
   onToggleField: (key: string, active: boolean) => void;
   onActivateAll: () => void;
   onDeactivateAll: () => void;
@@ -724,6 +776,7 @@ function LibraryAccordionContent({
   library,
   fields,
   editingId,
+  isLocked,
   onToggleField,
   onActivateAll,
   onDeactivateAll,
@@ -759,6 +812,7 @@ function LibraryAccordionContent({
             isActive={field !== null}
             onToggle={(active) => onToggleField(entry.key, active)}
             onOpen={() => field && onOpen(field.id)}
+            locked={isLocked}
           />
         );
       })}
@@ -779,8 +833,9 @@ function LibraryAccordionContent({
         {rowsBefore.length > 0 && renderEntries(rowsBefore)}
 
         {isEditingHere && editingField && (
-          <EditorCard>
+          <EditorCard tone="brand">
             <DemographicEditor
+              tone="brand"
               field={editingField}
               index={editingIndex}
               onChange={onChangeField}
@@ -801,6 +856,7 @@ interface ImportedAccordionContentProps {
   entries: readonly ImportedDemographic[];
   fields: readonly DemographicField[];
   editingId: string | null;
+  isLocked: boolean;
   bulk: boolean | "mixed" | null;
   onToggleField: (key: string, active: boolean) => void;
   onActivateAll: () => void;
@@ -824,6 +880,7 @@ function ImportedAccordionContent({
   entries,
   fields,
   editingId,
+  isLocked,
   bulk,
   onToggleField,
   onActivateAll,
@@ -878,12 +935,13 @@ function ImportedAccordionContent({
             isActive={field !== null}
             onToggle={(active) => onToggleField(entry.key, active)}
             onOpen={() => field && onOpen(field.id)}
+            locked={isLocked}
             extra={
               field ? (
                 <div className="flex shrink-0 items-center gap-1.5">
                   <SaveToModuleButton
                     saved={isSavedInModule(field.label)}
-                    disabled={field.label.trim() === ""}
+                    disabled={isLocked || field.label.trim() === ""}
                     onSave={() => onSaveToModule(field)}
                   />
                   <RowVisibilityToggle
@@ -891,6 +949,7 @@ function ImportedAccordionContent({
                     onChange={(visible) =>
                       onChangeField({ ...field, visible })
                     }
+                    disabled={isLocked}
                   />
                 </div>
               ) : null
@@ -912,13 +971,13 @@ function ImportedAccordionContent({
         <GroupActionsBar>
           <TextToggleButton
             label="Guardar todas para reutilizar"
-            disabled={savableCount === 0}
+            disabled={isLocked || savableCount === 0}
             onSelect={onSaveAllToModule}
           />
           {activeCount > 0 && (
             <>
               <GroupActionDivider />
-              <VisibilityBulkRow bulk={bulk} onVisibleChange={onBulkVisible} />
+              <VisibilityBulkRow bulk={bulk} onVisibleChange={onBulkVisible} disabled={isLocked} />
             </>
           )}
         </GroupActionsBar>
@@ -928,8 +987,9 @@ function ImportedAccordionContent({
         {rowsBefore.length > 0 && renderEntries(rowsBefore)}
 
         {isEditingHere && editingField && (
-          <EditorCard>
+          <EditorCard tone="ai">
             <DemographicEditor
+              tone="ai"
               field={editingField}
               index={editingIndex}
               onChange={onChangeField}
@@ -948,6 +1008,10 @@ function ImportedAccordionContent({
 interface CustomAccordionContentProps {
   customFields: readonly DemographicField[];
   editingId: string | null;
+  /** True while a field's delete-confirm or full editor is open anywhere in
+   *  this list — every row except the active one, and "Crear dato
+   *  demográfico", go inert until that's resolved. */
+  isLocked: boolean;
   draggingId: string | null;
   overId: string | null;
   getHandleProps: (id: string) => React.HTMLAttributes<HTMLElement> & { draggable: true };
@@ -969,6 +1033,7 @@ interface CustomAccordionContentProps {
 function CustomAccordionContent({
   customFields,
   editingId,
+  isLocked,
   draggingId,
   overId,
   getHandleProps,
@@ -993,6 +1058,7 @@ function CustomAccordionContent({
           key={field.id}
           field={field}
           index={offset + index}
+          locked={isLocked}
           isDragging={draggingId === field.id}
           isDropTarget={overId === field.id && draggingId !== field.id}
           onOpen={() => onOpen(field.id)}
@@ -1024,8 +1090,9 @@ function CustomAccordionContent({
             {rowsBefore.length > 0 && renderRows(rowsBefore, 0)}
 
             {isEditingHere && (
-              <EditorCard>
+              <EditorCard tone="brand">
                 <DemographicEditor
+                  tone="brand"
                   field={customFields[editingIndex]}
                   index={editingIndex}
                   onChange={onChangeField}
@@ -1043,11 +1110,13 @@ function CustomAccordionContent({
       <button
         type="button"
         onClick={onAdd}
+        disabled={isLocked}
         data-click-outside-ignore
         className={cn(
           "flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border/70 px-3 py-2.5 text-[12px] font-semibold text-muted-foreground transition-all",
           "hover:border-primary/40 hover:bg-primary/5 hover:text-primary",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+          "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border/70 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
         )}
       >
         <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />

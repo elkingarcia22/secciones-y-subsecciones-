@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { bandForStep, bandInk } from "@/components/survey-builder";
 import type { SurveyQuestion } from "@/components/survey-builder";
 import type { PreviewAnswer } from "./PreviewAnswerField";
 
@@ -60,23 +61,26 @@ export function PreviewScaleMatrix({
           {questions.map((question, index) => {
             const value = answers[question.id];
             const selected = typeof value === "string" ? value : "";
+            const selectedIndex = selected ? steps.indexOf(selected) : -1;
+            const selectedInk = selectedIndex >= 0 ? bandInk(bandForStep(selectedIndex, steps.length)) : null;
 
             return (
               <div
                 key={question.id}
-                style={columns}
+                style={{
+                  ...columns,
+                  ...(selectedInk ? { backgroundColor: `color-mix(in srgb, ${selectedInk} 4%, transparent)` } : undefined),
+                }}
                 className={cn(
                   "group/row grid items-center gap-x-1 px-5 py-3.5 transition-colors",
                   index > 0 && "border-t border-border/60",
-                  selected ? "bg-primary/[0.035]" : "hover:bg-surface-muted"
+                  !selected && "hover:bg-surface-muted"
                 )}
               >
                 <div className="flex min-w-0 items-start gap-2.5 pr-6">
                   <span
-                    className={cn(
-                      "mt-px shrink-0 text-[11px] font-bold tabular-nums transition-colors",
-                      selected ? "text-primary" : "text-text-muted"
-                    )}
+                    className="mt-px shrink-0 text-[11px] font-bold tabular-nums transition-colors"
+                    style={selectedInk ? { color: selectedInk } : undefined}
                   >
                     {startIndex + index}
                   </span>
@@ -92,8 +96,9 @@ export function PreviewScaleMatrix({
                   </p>
                 </div>
 
-                {steps.map((step) => {
+                {steps.map((step, stepIndex) => {
                   const isSelected = selected === step;
+                  const ink = bandInk(bandForStep(stepIndex, steps.length));
                   return (
                     <button
                       key={step}
@@ -107,10 +112,9 @@ export function PreviewScaleMatrix({
                       <span
                         className={cn(
                           "flex h-[19px] w-[19px] items-center justify-center rounded-full border-2 transition-all duration-150",
-                          isSelected
-                            ? "border-primary bg-primary"
-                            : "border-border bg-surface group-hover/row:border-text-muted"
+                          !isSelected && "border-border bg-surface group-hover/row:border-text-muted"
                         )}
+                        style={isSelected ? { borderColor: ink, backgroundColor: ink } : undefined}
                       >
                         {isSelected && <span className="h-[7px] w-[7px] rounded-full bg-white" />}
                       </span>

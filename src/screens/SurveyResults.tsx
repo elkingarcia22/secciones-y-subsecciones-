@@ -1,9 +1,9 @@
 import * as React from "react";
-import { Users, PieChart, MessageSquare, ListChecks, Target, Sparkles, Tag, ShieldCheck, Lock, CalendarRange, Info } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ArrowLeft, Users, PieChart, MessageSquare, ListChecks, Target, Sparkles, Tag, ShieldCheck, Lock, CalendarRange, Info, type LucideIcon } from "lucide-react";
 import { type SurveyDraft, SURVEY_KIND_LABELS } from "@/components/survey-builder";
+import { toneChip, type Tone } from "@/lib/tone";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { UbitsTabs, type TabItem } from "@/components/navigation";
 import {
   AiAnalysisTab,
@@ -26,6 +26,9 @@ interface SurveyResultsProps {
   item: SurveyListItem;
   /** Earlier measurements of the same type, newest first. Drives the trend. */
   history?: readonly SurveyListItem[];
+  /** Back to the home list — the breadcrumb already does this, but a button
+   *  right on the screen is the one a reader actually reaches for. */
+  onBack: () => void;
 }
 
 type TabId = "participation" | "favorability" | "questions" | "nps" | "ai";
@@ -49,7 +52,7 @@ const TABS: readonly TabItem[] = [
  * "participación por área" to "heatmap por área" is one thought, and having to
  * re-pick the segment on arrival breaks it.
  */
-export function SurveyResults({ draft, item, history = [] }: SurveyResultsProps) {
+export function SurveyResults({ draft, item, history = [], onBack }: SurveyResultsProps) {
   const [activeTab, setActiveTab] = React.useState<TabId>("participation");
 
   const results = React.useMemo(
@@ -58,8 +61,8 @@ export function SurveyResults({ draft, item, history = [] }: SurveyResultsProps)
   );
 
   const [segmentKey, setSegmentKey] = React.useState(() => {
-    const hasArea = results.segments.some((s) => s.key === "area");
-    return hasArea ? "area" : (results.segments[0]?.key ?? "");
+    const perPersonSegment = results.segments.find((s) => s.perPerson);
+    return perPersonSegment ? perPersonSegment.key : (results.segments[0]?.key ?? "");
   });
   const segment =
     results.segments.find((candidate) => candidate.key === segmentKey) ?? results.segments[0];
@@ -90,7 +93,6 @@ export function SurveyResults({ draft, item, history = [] }: SurveyResultsProps)
   const [downloadsOpen, setDownloadsOpen] = React.useState(false);
   const [widgetDismissed, setWidgetDismissed] = React.useState(false);
   const [previewOpen, setPreviewOpen] = React.useState(false);
-  const [infoExpanded, setInfoExpanded] = React.useState(false);
 
   const openDownloads = React.useCallback(() => {
     setDownloadsOpen(true);
@@ -103,82 +105,66 @@ export function SurveyResults({ draft, item, history = [] }: SurveyResultsProps)
 
 return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-background">
-      {/* The measurement's name, status and way back all live in the app shell's
-          header now, so this screen starts straight at its tabs. */}
-      <div className="flex shrink-0 flex-col bg-background px-1 pt-6 pb-6 gap-4 border-b border-transparent">
-        <div className="flex flex-wrap items-center gap-4">
+      <div className="flex shrink-0 items-center justify-between gap-3 bg-background px-4 pt-6 pb-6 border-b border-transparent">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            aria-label="Volver al inicio"
+            className="h-9 w-9 shrink-0 bg-surface shadow-card hover:bg-surface-muted"
+          >
+            <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+          </Button>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">
             Resultados de la encuesta
           </h1>
+        </div>
 
-          <div
-            className="flex items-center gap-3"
-            onMouseEnter={() => setInfoExpanded(true)}
-            onMouseLeave={() => setInfoExpanded(false)}
-          >
-            <button
-              type="button"
-              aria-label="Información de la encuesta"
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-surface text-text-muted shadow-sm transition-colors hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                infoExpanded && "bg-surface-muted text-text-primary border-border"
-              )}
+        {/* The facts used to sit as a row of cards next to the title, but that
+            row and the tabs row right below it never share a natural width —
+            one always reads as leftover space next to the other. Tucking them
+            behind a single "Detalles" trigger keeps the header itself short,
+            so there is nothing left to balance against the tabs. */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="lg"
+              className="shrink-0 gap-2 bg-surface shadow-card hover:bg-surface-muted"
             >
               <Info className="h-4 w-4" strokeWidth={2} />
-            </button>
-
-            <AnimatePresence>
-              {infoExpanded && (
-                <motion.div
-                  initial="hidden"
-                  animate="show"
-                  exit="hidden"
-                  variants={{
-                    hidden: { opacity: 0, width: 0, transition: { staggerChildren: 0.05, staggerDirection: -1, when: "afterChildren" } },
-                    show: { opacity: 1, width: "auto", transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
-                  }}
-                  className="flex items-center gap-2.5 overflow-hidden whitespace-nowrap"
-                >
-                  {draft.kind && (
-                    <motion.div variants={{ hidden: { opacity: 0, y: 15, scale: 0.8, filter: "blur(2px)" }, show: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } }} transition={{ type: "spring", bounce: 0.5 }} className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-surface px-2.5 py-1 text-xs font-semibold text-text-secondary shadow-sm">
-                      <Tag className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
-                      <span>{SURVEY_KIND_LABELS[draft.kind]}</span>
-                    </motion.div>
-                  )}
-                  <motion.div variants={{ hidden: { opacity: 0, y: 15, scale: 0.8, filter: "blur(2px)" }, show: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } }} transition={{ type: "spring", bounce: 0.5 }} className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-surface px-2.5 py-1 text-xs font-semibold text-text-secondary shadow-sm">
-                    {isAnonymous ? (
-                      <ShieldCheck className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
-                    ) : (
-                      <Users className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
-                    )}
-                    <span>{isAnonymous ? "Anónima" : "Pública"}</span>
-                  </motion.div>
-                  {isAnonymous && (
-                    <motion.div variants={{ hidden: { opacity: 0, y: 15, scale: 0.8, filter: "blur(2px)" }, show: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } }} transition={{ type: "spring", bounce: 0.5 }} className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-surface px-2.5 py-1 text-xs font-semibold text-text-secondary shadow-sm">
-                      <Lock className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
-                      <span>
-                        Mín. <span className="font-bold text-text-primary">{results.threshold}</span> respuestas
-                      </span>
-                    </motion.div>
-                  )}
-                  <motion.div variants={{ hidden: { opacity: 0, y: 15, scale: 0.8, filter: "blur(2px)" }, show: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } }} transition={{ type: "spring", bounce: 0.5 }} className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-surface px-2.5 py-1 text-xs font-semibold text-text-secondary shadow-sm">
-                    <Users className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
-                    <span>
-                      <span className="font-bold text-text-primary">{results.participation.invited.toLocaleString("es-CO")}</span> invitados
-                    </span>
-                  </motion.div>
-                  <motion.div variants={{ hidden: { opacity: 0, y: 15, scale: 0.8, filter: "blur(2px)" }, show: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } }} transition={{ type: "spring", bounce: 0.5 }} className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-surface px-2.5 py-1 text-xs font-semibold text-text-secondary shadow-sm">
-                    <CalendarRange className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
-                    <span>{start ?? "—"} al {end ?? "—"}</span>
-                  </motion.div>
-                </motion.div>
+              Detalles
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80">
+            <PopoverTitle>Detalles de la encuesta</PopoverTitle>
+            <div className="flex flex-col gap-1 pt-1">
+              {draft.kind && (
+                <DetailRow tone="brand" icon={Tag} label="Tipo" value={SURVEY_KIND_LABELS[draft.kind]} />
               )}
-            </AnimatePresence>
-          </div>
-        </div>
+              <DetailRow
+                tone="neutral"
+                icon={isAnonymous ? ShieldCheck : Users}
+                label="Visibilidad"
+                value={isAnonymous ? "Anónima" : "Pública"}
+              />
+              {isAnonymous && (
+                <DetailRow tone="warning" icon={Lock} label="Mínimo de respuestas" value={`${results.threshold} respuestas`} />
+              )}
+              <DetailRow
+                tone="positive"
+                icon={Users}
+                label="Invitados"
+                value={results.participation.invited.toLocaleString("es-CO")}
+              />
+              <DetailRow tone="brand" icon={CalendarRange} label="Período" value={`${start ?? "—"} al ${end ?? "—"}`} />
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
-      <div className="flex shrink-0 px-1 pb-4">
+      <div className="flex shrink-0 px-4 pb-2">
         <UbitsTabs
           tabs={[...TABS]}
           activeTabId={activeTab}
@@ -195,7 +181,7 @@ return (
         />
       </div>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-1 pb-6">
+      <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
         {/*
           A persistent breathing room below the nav tabs, present no matter which
           tab is active or how far its content has scrolled. Every tab's own
@@ -297,6 +283,29 @@ return (
           onDismiss={() => setWidgetDismissed(true)}
         />
       )}
+    </div>
+  );
+}
+
+/** One fact about the measurement, as a row inside the "Detalles" popover. */
+function DetailRow({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: React.ReactNode;
+  tone: Tone;
+}) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-md px-1.5 py-1.5">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={toneChip(tone)}>
+        <Icon className="h-3.5 w-3.5" strokeWidth={2} />
+      </span>
+      <span className="flex-1 truncate text-[13px] text-text-muted">{label}</span>
+      <span className="truncate text-[13px] font-semibold text-text-primary">{value}</span>
     </div>
   );
 }

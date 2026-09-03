@@ -190,6 +190,12 @@ function CalendarDayButton({
     if (modifiers.focused) ref.current?.focus()
   }, [modifiers.focused])
 
+  // Outside days rendered as the trailing/leading edge of a neighboring
+  // visible month duplicate a date already shown in that month's own grid
+  // (common with numberOfMonths > 1); skip range/selection styling on them
+  // so the same date isn't visually highlighted twice.
+  const isOutsideDay = modifiers.outside
+
   return (
     <Button
       ref={ref}
@@ -200,11 +206,12 @@ function CalendarDayButton({
         modifiers.selected &&
         !modifiers.range_start &&
         !modifiers.range_end &&
-        !modifiers.range_middle
+        !modifiers.range_middle &&
+        !isOutsideDay
       }
-      data-range-start={modifiers.range_start}
-      data-range-end={modifiers.range_end}
-      data-range-middle={modifiers.range_middle}
+      data-range-start={modifiers.range_start && !isOutsideDay}
+      data-range-end={modifiers.range_end && !isOutsideDay}
+      data-range-middle={modifiers.range_middle && !isOutsideDay}
       className={cn(
         "relative isolate z-10 flex aspect-square h-full w-full flex-col items-center justify-center gap-1 border-0 leading-none font-normal rounded-[var(--cell-radius)] transition-all hover:bg-muted/60 group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-2 group-data-[focused=true]/day:ring-primary/60 data-[range-end=true]:rounded-[var(--cell-radius)] data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-end=true]:hover:bg-primary/90 data-[range-end=true]:font-bold data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-primary/10 data-[range-middle=true]:text-foreground data-[range-middle=true]:hover:bg-primary/20 data-[range-start=true]:rounded-[var(--cell-radius)] data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-start=true]:hover:bg-primary/90 data-[range-start=true]:font-bold data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground data-[selected-single=true]:hover:bg-primary/90 data-[selected-single=true]:font-bold [&>span]:text-[10px] [&>span]:opacity-70",
         defaultClassNames.day,

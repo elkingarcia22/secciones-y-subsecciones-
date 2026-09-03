@@ -417,7 +417,7 @@ export function CollaboratorTable({
                   behind a filter, "select the page" and "select everything
                   that matches" are different actions, not one checkbox
                   overloaded to mean both. */}
-              <TableHead className="w-16 px-0">
+              <TableHead className="w-[50px] pl-4 pr-0">
                 {/* No hover background here: the header row already carries
                     one (bg-muted/40), and a second, smaller one under just
                     part of the row. The chevron darkening on hover is
@@ -428,12 +428,7 @@ export function CollaboratorTable({
                       type="button"
                       disabled={filtered.length === 0}
                       aria-label="Opciones de selección"
-                      // Not `justify-center`: that centers the checkbox+chevron
-                      // pair as one block, which sits the checkbox 8px left of
-                      // where the row checkboxes land (they center alone, with
-                      // nothing beside them). `pl-6` puts it at that same 24px
-                      // inset instead, so the column reads as one straight line.
-                      className="group flex h-8 w-full items-center gap-1 pl-6"
+                      className="group flex h-8 w-full items-center gap-1 pl-0"
                     >
                       <HeaderSelectionMark state={headerState} />
                       <ChevronDown
@@ -490,6 +485,9 @@ export function CollaboratorTable({
                   onToggle={() => toggleSort("name")}
                 />
               </TableHead>
+              <TableHead className="py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Username
+              </TableHead>
               <TableHead
                 aria-sort={sortKey === "email" ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
                 className="py-3"
@@ -539,7 +537,7 @@ export function CollaboratorTable({
                   onClick={() => toggleOne(person.id)}
                   className="cursor-pointer border-border/60"
                 >
-                  <TableCell className="px-0">
+                  <TableCell className="w-[50px] pl-4 pr-0">
                     <Popover
                       open={pendingGroupConfirmId === person.id}
                       onOpenChange={(open) => {
@@ -547,7 +545,7 @@ export function CollaboratorTable({
                       }}
                     >
                       <PopoverAnchor asChild>
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center">
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={() => toggleOne(person.id)}

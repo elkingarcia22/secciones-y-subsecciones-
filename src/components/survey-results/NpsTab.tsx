@@ -15,9 +15,10 @@ import { npsDepthBySection, npsDepthTotals } from "@/mocks/npsDepth";
 import type { SurveyDraft } from "@/components/survey-builder";
 import { NpsDepthView } from "./NpsDepthView";
 import { depthTheme, SECTION_HEADER_DIVIDER, SIBLING_DIVIDER } from "@/components/survey-builder/depthTheme";
-import { MetricSummaryCard } from "./MetricSummaryCard";
-import { BarStrip, DialGauge } from "@/components/survey-analytics/pulseCharts";
-import { NPS_SCORE_LEGEND, NPS_SCORE_BANDS, npsBandForScore, toneForNps, POSITIVE, YELLOW, NEGATIVE } from "./favorabilityScale";
+import { deriveTrendSeries } from "./deriveTrend";
+import { MetricReadingBadge, MetricSummaryCard } from "./MetricSummaryCard";
+import { Sparkline } from "@/components/survey-analytics/pulseCharts";
+import { NPS_SCORE_LEGEND, NPS_SCORE_BANDS, npsBandForScore, toneForNps, ACCENT_CLASS_BY_TONE, POSITIVE, YELLOW, NEGATIVE, type MetricTone } from "./favorabilityScale";
 import { type ResultLevel } from "./resultLevels";
 import { MeasurementScaleButton } from "./MeasurementScaleButton";
 import { ResultsFilterChips, ResultsFilterControls, type HighlightScale } from "./ResultsFilterToolbar";
@@ -26,6 +27,13 @@ import { cascadeContainer, cascadeItem, cascadeItemSettleTime, CASCADE_CONTENT_G
 
 /** Stable identity: the hook keys its reset on this list. */
 const NPS_BAND_IDS = NPS_SCORE_BANDS.map((band) => band.id);
+
+/** The plain-language reading beside the big eNPS score. */
+const NPS_READING: Readonly<Record<MetricTone, string>> = {
+ positive: "Bueno",
+ warning: "Neutro",
+ negative: "Crítico",
+};
 
 const NPS_HIGHLIGHT: HighlightScale = {
  title: "Resaltar por eNPS",
@@ -417,7 +425,7 @@ tierBands: ReadonlySet<string>;
  }
 
  return (
- <div className="flex flex-col gap-4 mt-6">
+ <div className="flex flex-col gap-4 mt-4">
  {sections.map((section) => (
  <NpsSectionRoot 
  key={section.id} 
@@ -546,7 +554,7 @@ tierBands: ReadonlySet<string>;
  );
 
  return (
- <div className="mt-6">
+ <div className="mt-4">
  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
  {data.columns.map((col, index) => (
  <SegmentCard 
@@ -633,6 +641,13 @@ export function NpsTab({ draft, results }: NpsTabProps) {
 
  const { nps } = results;
  const counts: Record<NpsBand, number> = { detractor: nps.detractors, passive: nps.passives, promoter: nps.promoters };
+ const npsTone = toneForNps(nps.score);
+
+ // No real measurement-over-measurement eNPS record exists, so the trend is
+ // deterministically derived around today's score — same quarters the other
+ // tabs' trends use.
+ const trendLabels = results.trend.map((point) => point.label);
+ const npsTrend = deriveTrendSeries(trendLabels, `${draft.name}:nps`, nps.score, 8, [-100, 100]);
 
  const dimensionsData = React.useMemo(() => npsBySection(results, filtersState.filters), [results, filtersState.filters]);
  const totalQuestions = React.useMemo(() => {
@@ -652,6 +667,25 @@ export function NpsTab({ draft, results }: NpsTabProps) {
  );
  const totalSegments = segmentData?.columns.length ?? 0;
 
+ // "Top 3 áreas más detractoras" reads real organizational areas — the same
+ // "Área" demographic Participación ranks by — not eNPS's own content
+ // dimensions, so it always ranks off "Área" regardless of whatever segment
+ // "Por segmento" below happens to be showing.
+ const areaSegment = gridSegments.find((s) => s.key === "area") ?? gridSegments[0];
+ const areaSegmentData = React.useMemo(
+ () => areaSegment ? npsBySegmentData(results, areaSegment, filtersState.filters) : null,
+ [results, areaSegment, filtersState.filters]
+ );
+ const topDetractorAreas = areaSegmentData
+ ? areaSegmentData.columns
+ .map((column, index) => ({ column, cell: areaSegmentData.totalRow.cells[index] }))
+ .filter((entry): entry is { column: typeof entry.column; cell: NpsSegmentCell } =>
+ entry.cell !== null && !entry.cell.belowThreshold && entry.cell.n > 0
+ )
+ .sort((a, b) => a.cell.score - b.cell.score)
+ .slice(0, 3)
+ : [];
+
  return (
  // `pb-6` and `gap-6` are the frame Participación sets and every
  // other tab repeats. Horizontal padding stays with the screen so every
@@ -661,7 +695,7 @@ export function NpsTab({ draft, results }: NpsTabProps) {
  second card was what set eNPS apart, and what pushed the detail below
  it further down than anywhere else. */}
  <MetricSummaryCard
-  accentColor={toneForNps(nps.score) === "positive" ? "bg-status-positive" : toneForNps(nps.score) === "warning" ? "bg-status-warning" : "bg-status-negative"}
+  accentColor={ACCENT_CLASS_BY_TONE[npsTone]}
   title="Puntaje eNPS"
   hint={
     <div className="flex flex-col gap-3 items-start leading-relaxed">
@@ -679,6 +713,7 @@ export function NpsTab({ draft, results }: NpsTabProps) {
     </div>
   }
   bigValue={`${nps.score > 0 ? "+" : ""}${nps.score}`}
+  bigValueBadge={<MetricReadingBadge tone={npsTone} label={NPS_READING[npsTone]} />}
   caption={`${formatCount(nps.n)} respuestas · escala de -100 a +100`}
   ringsLabel="Distribución de respuestas"
   ringsTotal={`${formatCount(nps.n)} en total`}
@@ -713,21 +748,28 @@ export function NpsTab({ draft, results }: NpsTabProps) {
   ]}
   topAreasTitle="Top 3 áreas más detractoras"
   topAreas={
-    dimensionsData
-      .filter(s => s.n > 0)
-      .sort((a, b) => a.score - b.score)
-      .slice(0, 3)
-      .map(s => ({
-        id: s.id,
-        label: s.title,
-        value: Math.max(0, 100 + s.score),
-        displayValue: `${s.score > 0 ? "+" : ""}${Math.round(s.score)}`,
-      }))
+    topDetractorAreas.map(({ column, cell }) => ({
+      id: column.id,
+      label: column.label,
+      value: Math.max(0, 100 + cell.score),
+      displayValue: `${cell.score > 0 ? "+" : ""}${cell.score}`,
+    }))
+  }
+  chartTitle="Tendencia por medición"
+  chart={
+    <Sparkline
+      points={trendLabels.map((label, index) => ({ id: label, name: label, value: npsTrend[index] }))}
+      format={(value) => `${value > 0 ? "+" : ""}${Math.round(value)}`}
+      ariaLabel={`Puntaje eNPS de las últimas ${trendLabels.length} mediciones`}
+      height={56}
+      showPoints
+      fitTarget={false}
+    />
   }
 />
 
- <div className="rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
- <div className="sticky top-3 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
+ <div className="rounded-2xl border border-border/60 bg-surface p-4 shadow-card">
+ <div className="sticky top-3 z-30 -mt-4 pt-4 pb-2 bg-surface">
  <div className="flex flex-wrap items-center justify-between gap-4 pb-2">
  <div className="flex items-center gap-2">
  <h3 className="text-[13px] font-bold text-text-primary">

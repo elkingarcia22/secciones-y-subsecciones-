@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { AiAnalyzingState } from "@/components/ai-interaction";
 import { UploadZone } from "@/components/upload";
 import { MagicCard } from "@/components/ui/magic-card";
+import { toneChip, toneSolid, toneText, type Tone } from "@/lib/tone";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -53,6 +54,7 @@ import {
   groupMemberIds,
   humanizeColumn,
   participantCountForMode,
+  participantsGroupBreakdown,
   resolveImportedRows,
   segmentCounts,
   totalParticipantCount,
@@ -188,6 +190,32 @@ export function ParticipantsEditor({
   const [analyzingProgress, setAnalyzingProgress] = React.useState(0);
   const total = totalParticipantCount(participants);
 
+  // Compact source breakdown shown under the running total — how many groups,
+  // ad-hoc individuals, and imported users feed the total above, so it isn't
+  // one flat number whenever more than one source is in play.
+  const breakdown = React.useMemo(() => participantsGroupBreakdown(participants), [participants]);
+  const breakdownLabel = React.useMemo(() => {
+    const parts: string[] = [];
+    if (breakdown.groups.length > 0) {
+      parts.push(breakdown.groups.length === 1 ? "1 grupo" : `${formatCount(breakdown.groups.length)} grupos`);
+    }
+    if (breakdown.outsideCount > 0) {
+      parts.push(
+        breakdown.outsideCount === 1
+          ? "1 individual"
+          : `${formatCount(breakdown.outsideCount)} individuales`
+      );
+    }
+    if (breakdown.importedCount > 0) {
+      parts.push(
+        breakdown.importedCount === 1
+          ? "1 usuario importado"
+          : `${formatCount(breakdown.importedCount)} usuarios importados`
+      );
+    }
+    return parts.join(" · ");
+  }, [breakdown]);
+
   // "Por colaborador" checked set = group carry-over union with ad-hoc picks
   // — see the class doc above.
   const individualEffectiveIds = React.useMemo(
@@ -311,15 +339,22 @@ export function ParticipantsEditor({
         </h2>
 
         {/* The running total is the one number that survives every mode, so it
-            lives in the header rather than inside whichever panel is open. */}
-        <span
-          className={cn(
-            "shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold tabular-nums",
-            total > 0 ? "bg-status-positive/10 text-status-positive" : "bg-border/40 text-muted-foreground"
+            lives in the header rather than inside whichever panel is open. The
+            source breakdown underneath only appears once more than one source
+            is actually feeding the total. */}
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span
+            className={cn(
+              "shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold tabular-nums",
+              total > 0 ? "bg-status-positive/10 text-status-positive" : "bg-border/40 text-muted-foreground"
+            )}
+          >
+            {total === 1 ? "1 participante" : `${formatCount(total)} participantes`}
+          </span>
+          {breakdownLabel && (
+            <span className="truncate text-[11px] font-medium text-muted-foreground">{breakdownLabel}</span>
           )}
-        >
-          {total === 1 ? "1 participante" : `${formatCount(total)} participantes`}
-        </span>
+        </div>
       </div>
 
       {/* `cascade-enter` staggers this step's own pieces in one at a time —
@@ -452,28 +487,43 @@ function AnalyzingState({ progress }: { progress: number }) {
   );
 }
 
-/** The one line under each card's description: what that mode holds right now. */
-function modeState(mode: ParticipantMode, participants: ParticipantsSelection): string {
+/** What the state pill under each card shows: a quiet label while the mode
+ * isn't picked, and — once it is — a bigger, tone-colored `selectedLabel` (or
+ * `label` itself, when a mode has nothing extra to say once selected). */
+interface ModeStateDisplay {
+  /** Plain-text summary shown while this mode isn't the picked one. */
+  label: string;
+  /** Prominent summary shown once this mode is selected — falls back to
+   * `label` for modes with nothing extra to say once picked. */
+  selectedLabel?: string;
+}
+
+function modeState(mode: ParticipantMode, participants: ParticipantsSelection): ModeStateDisplay {
   switch (mode) {
     case "company":
-      return `${formatCount(COLLABORATOR_COUNT)} colaboradores`;
+      return {
+        label: `${formatCount(COLLABORATOR_COUNT)} colaboradores`,
+        selectedLabel: `${formatCount(COLLABORATOR_COUNT)} colaboradores seleccionados`,
+      };
     case "groups":
       return participants.selectedGroups.length === 0
-        ? "Ningún grupo seleccionado"
-        : `${formatCount(participants.selectedGroups.length)} grupos · ${formatCount(participantCountForMode("groups", participants))} personas`;
+        ? { label: "Ningún grupo seleccionado" }
+        : {
+            label: `${formatCount(participants.selectedGroups.length)} grupos · ${formatCount(participantCountForMode("groups", participants))} personas`,
+          };
     case "individual": {
       const total = participantCountForMode("individual", participants);
-      if (total === 0) return "Sin seleccionar";
+      if (total === 0) return { label: "Sin seleccionar" };
       const groupCount = participants.selectedGroups.length;
       // No groups feeding in: the plain, pre-existing reading.
-      if (groupCount === 0) return `${formatCount(total)} de ${formatCount(COLLABORATOR_COUNT)} seleccionados`;
+      if (groupCount === 0) return { label: `${formatCount(total)} de ${formatCount(COLLABORATOR_COUNT)} seleccionados` };
       const fromGroups = groupMemberIds(participants.groupSegmentBy, participants.selectedGroups).size;
       const extra = total - fromGroups;
       const groupsLabel = `${formatCount(groupCount)} ${groupCount === 1 ? "grupo" : "grupos"} (${formatCount(fromGroups)})`;
-      return extra > 0 ? `${groupsLabel} + ${formatCount(extra)} individuales` : groupsLabel;
+      return { label: extra > 0 ? `${groupsLabel} + ${formatCount(extra)} individuales` : groupsLabel };
     }
     case "import":
-      return participants.importedFileName ?? "Ningún archivo cargado";
+      return { label: participants.importedFileName ?? "Ningún archivo cargado" };
   }
 }
 
@@ -499,6 +549,19 @@ function hasModeSelection(mode: ParticipantMode, participants: ParticipantsSelec
   }
 }
 
+/**
+ * One brand blue for every plain mode — a picked audience is a picked
+ * audience, not a category worth its own hue. The file import keeps the
+ * app's AI gradient because that is what reads the file, not because it
+ * needs telling apart from the other three.
+ */
+const MODE_TONE: Readonly<Record<ParticipantMode, Tone>> = {
+  company: "brand",
+  groups: "brand",
+  individual: "brand",
+  import: "ai",
+};
+
 function ModeCard({
   mode,
   isActive,
@@ -513,29 +576,33 @@ function ModeCard({
    * checked even while a different mode's panel is open, so mixing several
    * ways of adding participants stays visible. */
   hasSelection: boolean;
-  state: string;
+  state: ModeStateDisplay;
   onSelect: () => void;
 }) {
   const { icon: Icon, title, description } = PARTICIPANT_MODE_COPY[mode];
   const isAI = mode === "import";
   const isMarked = isActive || hasSelection;
+  const tone = MODE_TONE[mode];
 
   return (
     <MagicCard
       isSelected={isMarked}
       variant={isAI ? "ai" : "primary"}
+      tone={tone}
       onClick={onSelect}
       className={cn("w-full", isAI && isMarked ? "p-[14px]" : "")}
       contentClassName="flex-col gap-3 h-full text-left w-full"
     >
       <div className="flex items-start justify-between gap-2 w-full">
+        {/* Neutral until picked or hovered, then the mode's own tone — the
+            AI card is the one exception, since its mesh surface is always on
+            and the chip should match that. */}
         <span
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors",
-            isMarked && !isAI ? "bg-primary/10 text-primary" : "",
-            !isMarked && !isAI ? "bg-muted/60 text-muted-foreground" : "",
-            isAI ? "bg-ai-bg text-primary" : ""
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105",
+            !isMarked && !isAI && "tone-reveal-chip"
           )}
+          style={isMarked || isAI ? toneChip(tone) : undefined}
         >
           {isAI ? <Sparkles className="h-[18px] w-[18px]" strokeWidth={2} /> : <Icon className="h-[18px] w-[18px]" strokeWidth={2} />}
         </span>
@@ -547,17 +614,24 @@ function ModeCard({
           aria-hidden
           className={cn(
             "flex size-5 shrink-0 items-center justify-center rounded-sm border transition-colors",
-            isMarked
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-input bg-surface"
+            isMarked ? "border-transparent" : "border-input bg-surface"
           )}
+          style={isMarked ? toneSolid(tone) : undefined}
         >
           {isMarked && <CheckIcon className="size-3.5" strokeWidth={2.5} />}
         </span>
       </div>
 
       <div className="w-full">
-        <h3 className={cn("text-[13px] font-bold leading-none tracking-tight", isAI ? "text-ai-gradient-start" : isMarked ? "text-text-primary" : "text-text-secondary")}>
+        <h3
+          className={cn(
+            "text-[13px] font-bold leading-none tracking-tight",
+            !isMarked && !isAI && "tone-reveal-text"
+          )}
+          // The AI card's mesh surface is always on, so its title keeps its
+          // gradient blue whether or not the card is the one picked.
+          style={isMarked || isAI ? toneText(tone) : undefined}
+        >
           {isAI ? "Importar con IA" : title}
         </h3>
         <p className="mt-1.5 text-[11px] font-medium leading-[1.35] text-text-muted line-clamp-2">
@@ -566,9 +640,23 @@ function ModeCard({
       </div>
 
       <div className="mt-auto pt-1 w-full">
-        <span className="inline-flex rounded-full bg-surface-muted px-2 py-0.5 text-[9.5px] font-bold tracking-tight text-text-secondary">
-          {state}
-        </span>
+        {isMarked ? (
+          <span
+            className="inline-flex items-center gap-2 rounded-full py-1.5 pl-2 pr-3"
+            style={toneChip(tone)}
+          >
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full" style={toneSolid(tone)}>
+              <CheckIcon className="size-3" strokeWidth={3} />
+            </span>
+            <span className="text-[12.5px] font-extrabold leading-none tracking-tight" style={toneText(tone)}>
+              {state.selectedLabel ?? state.label}
+            </span>
+          </span>
+        ) : (
+          <span className="inline-flex rounded-full bg-surface-muted px-2 py-0.5 text-[9.5px] font-bold tracking-tight text-text-secondary">
+            {state.label}
+          </span>
+        )}
       </div>
     </MagicCard>
   );
@@ -660,18 +748,21 @@ function CompanySummary({
         description="Si alguien se une a la empresa después de lanzar la encuesta, se agrega solo a la lista de participantes."
       />
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-2">
-        <div className="shrink-0">
-          <p className="text-[13px] text-text-secondary font-medium mb-1">
-            Se asignarán
-          </p>
-          <p className="text-3xl font-bold tracking-tight text-primary leading-none">
-            {formatCount(COLLABORATOR_COUNT)}{" "}
-            <span className="text-[16px] font-semibold text-text-secondary">colaboradores</span>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 rounded-xl border border-border/60 bg-muted/20 px-5 py-4">
+        <div className="flex shrink-0 items-center gap-2.5 rounded-lg border border-primary/15 bg-primary/10 px-3 py-2">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <Users className="h-3.5 w-3.5" strokeWidth={2.5} />
+          </span>
+          <p className="leading-tight">
+            <span className="block text-[10px] font-medium text-text-secondary">Se asignarán</span>
+            <span className="text-[15px] font-bold tracking-tight text-primary">
+              {formatCount(COLLABORATOR_COUNT)}{" "}
+              <span className="text-[11px] font-semibold text-text-secondary">colaboradores</span>
+            </span>
           </p>
         </div>
         <div className="hidden sm:block w-px h-10 bg-border/60" />
-        <p className="text-[13px] leading-relaxed text-muted-foreground max-w-2xl">
+        <p className="flex-1 text-[13px] leading-relaxed text-muted-foreground">
           La lista de destinatarios se cerrará de forma automática al momento de lanzar la encuesta. Quienes entren a la empresa antes de esa fecha también la recibirán.
         </p>
       </div>
@@ -704,7 +795,7 @@ function CompanySummary({
               <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
                 <TableHead
                   aria-sort={sortKey === "segment" ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
-                  className="py-3 pl-6"
+                  className="py-3 pl-4"
                 >
                   <div className="flex items-center gap-2">
                     <SortableHeader
@@ -735,7 +826,7 @@ function CompanySummary({
                     />
                   </div>
                 </TableHead>
-                <TableHead className="w-[80px] py-3 pr-6 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <TableHead className="w-[80px] py-3 pr-4 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   %
                 </TableHead>
               </TableRow>
@@ -745,13 +836,13 @@ function CompanySummary({
                 const share = Math.round((count / COLLABORATOR_COUNT) * 100);
                 return (
                   <TableRow key={segment} className="border-border/60 bg-surface hover:bg-border/20 transition-colors">
-                    <TableCell className="py-2.5 pl-7 text-[13px] text-text-secondary">
+                    <TableCell className="py-2.5 pl-4 text-[13px] text-text-secondary">
                       {segment}
                     </TableCell>
                     <TableCell className="w-[120px] py-2.5 text-right tabular-nums text-[13px] text-text-secondary">
                       {formatCount(count)}
                     </TableCell>
-                    <TableCell className="w-[80px] py-2.5 pr-6 text-right tabular-nums text-[13px] text-text-secondary">
+                    <TableCell className="w-[80px] py-2.5 pr-4 text-right tabular-nums text-[13px] text-text-secondary">
                       {share}%
                     </TableCell>
                   </TableRow>
@@ -894,22 +985,6 @@ function GroupsPanel({
         description="Si alguien se une a uno de los grupos seleccionados después de lanzar la encuesta, se agrega solo a la lista de participantes."
       />
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-2">
-        <div className="shrink-0">
-          <p className="text-[13px] text-text-secondary font-medium mb-1">
-            Se asignarán
-          </p>
-          <p className="text-3xl font-bold tracking-tight text-primary leading-none">
-            {formatCount(selectedCount)}{" "}
-            <span className="text-[16px] font-semibold text-text-secondary">colaboradores</span>
-          </p>
-        </div>
-        <div className="hidden sm:block w-px h-10 bg-border/60" />
-        <p className="text-[13px] leading-relaxed text-muted-foreground max-w-2xl">
-          Elige cómo agrupar a tus colaboradores y marca los grupos que deben responder la encuesta.
-        </p>
-      </div>
-
       <div className="flex flex-col gap-4 pt-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -1027,14 +1102,14 @@ function GroupsPanel({
             <Table>
               <TableHeader>
                 <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
-                  <TableHead className="w-16 px-0">
+                  <TableHead className="w-[50px] pl-4 pr-0">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button
                           type="button"
                           disabled={filtered.length === 0}
                           aria-label="Opciones de selección"
-                          className="group flex h-8 w-full items-center gap-1 pl-6"
+                          className="group flex h-8 w-full items-center gap-1 pl-0"
                         >
                           <HeaderSelectionMark state={headerState} />
                           <ChevronDown
@@ -1072,13 +1147,13 @@ function GroupsPanel({
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableHead>
-                  <TableHead className="min-w-[200px] py-3 text-[12px] font-semibold text-muted-foreground">
+                  <TableHead className="min-w-[200px] py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Grupo
                   </TableHead>
-                  <TableHead className="w-[120px] py-3 text-right text-[12px] font-semibold text-muted-foreground">
+                  <TableHead className="w-[120px] py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Cantidad
                   </TableHead>
-                  <TableHead className="w-[80px] py-3 pr-6 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <TableHead className="w-[80px] py-3 pr-4 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     %
                   </TableHead>
                 </TableRow>
@@ -1094,8 +1169,8 @@ function GroupsPanel({
                       onClick={() => onToggleGroup(group)}
                       className="cursor-pointer border-border/60 transition-colors"
                     >
-                      <TableCell className="px-0">
-                        <div className="flex items-center justify-center">
+                      <TableCell className="w-[50px] pl-4 pr-0">
+                        <div className="flex items-center">
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={() => onToggleGroup(group)}
@@ -1110,7 +1185,7 @@ function GroupsPanel({
                       <TableCell className="w-[120px] py-2.5 text-right tabular-nums text-[13px] text-text-secondary">
                         {formatCount(count)}
                       </TableCell>
-                      <TableCell className="w-[80px] py-2.5 pr-6 text-right tabular-nums text-[13px] text-muted-foreground">
+                      <TableCell className="w-[80px] py-2.5 pr-4 text-right tabular-nums text-[13px] text-muted-foreground">
                         {share}%
                       </TableCell>
                     </TableRow>

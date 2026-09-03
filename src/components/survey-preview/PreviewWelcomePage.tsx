@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isHtmlBlank } from "@/lib/sanitizeHtml";
+import { toneChip, type Tone } from "@/lib/tone";
 import {
   SURVEY_KIND_LABELS,
   SURVEY_VISIBILITY_LABELS,
@@ -128,24 +129,28 @@ export function PreviewWelcomePage({
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
           icon={Layers}
+          tone="brand"
           value={String(summary.rootSections)}
           label={summary.rootSections === 1 ? "Sección" : "Secciones"}
           delayMs={300}
         />
         <StatTile
           icon={ListChecks}
+          tone="positive"
           value={String(summary.questionCount)}
           label={summary.questionCount === 1 ? "Pregunta" : "Preguntas"}
           delayMs={400}
         />
         <StatTile 
           icon={Clock3} 
+          tone="warning"
           value={`${summary.estimatedMinutes} min`} 
           label="Tiempo estimado" 
           delayMs={500}
         />
         <StatTile
           icon={isAnonymous ? Lock : Eye}
+          tone="neutral"
           value={SURVEY_VISIBILITY_LABELS[draft.visibility]}
           label={isAnonymous ? `Mínimo ${draft.anonymityThreshold} respuestas` : "Respuestas con nombre"}
           delayMs={600}
@@ -175,13 +180,32 @@ export function PreviewWelcomePage({
   );
 }
 
-function StatTile({ icon: Icon, value, label, delayMs }: { icon: LucideIcon; value: string; label: string; delayMs?: number }) {
+function StatTile({
+  icon: Icon,
+  tone,
+  value,
+  label,
+  delayMs,
+}: {
+  icon: LucideIcon;
+  /** Cuatro datos distintos, cuatro acentos: la tira se lee de un vistazo en
+   *  vez de como cuatro cajas iguales con el mismo icono azul. */
+  tone: Tone;
+  value: string;
+  label: string;
+  delayMs?: number;
+}) {
   return (
     <div 
       className="group rounded-2xl border border-border/60 bg-surface px-4 py-4 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out fill-mode-both"
       style={delayMs !== undefined ? { animationDelay: `${delayMs}ms` } : undefined}
     >
-      <Icon className="mb-2.5 h-4 w-4 text-primary transition-transform duration-300 group-hover:scale-125 group-hover:rotate-6" strokeWidth={2} />
+      <span
+        className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
+        style={toneChip(tone)}
+      >
+        <Icon className="h-4 w-4" strokeWidth={2} />
+      </span>
       <p className="text-[20px] font-bold leading-none tracking-tight text-text-primary">
         <span 
           className="inline-block animate-in fade-in slide-in-from-bottom-1.5 duration-700 ease-out fill-mode-both"

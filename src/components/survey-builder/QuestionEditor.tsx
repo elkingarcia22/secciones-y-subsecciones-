@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ChevronUp, Copy, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toneAccent, toneBorder, toneChip, toneText, type Tone } from "@/lib/tone";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -14,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AiStatementField } from "./AiStatementField";
+import { useHoldDeleteConfirmLock } from "./deleteConfirmLock";
 import { QuestionOptionsEditor } from "./QuestionOptionsEditor";
 import { ScalePreview } from "./ScalePreview";
 import {
@@ -25,6 +27,7 @@ import {
   hasEndLabels,
   hasOptions,
   needsRatingType,
+  questionTypeTone,
   supportsDontKnow,
   supportsFollowUps,
   type CatalogEntry,
@@ -55,6 +58,10 @@ interface QuestionEditorProps {
   /** La pregunta nació de "crear pregunta con IA": el enunciado se abre ya
    * pidiendo contexto en vez de en blanco. */
   startWithAi?: boolean;
+  /** El acento de la sección a la que pertenece la pregunta. El formulario
+   * abierto se contornea con él, así el "esto es lo que estoy editando" se
+   * lee como parte de su rama y no como un recuadro azul suelto. */
+  tone?: Tone;
 }
 
 const REQUIRED_FIELD_HINT = "Este campo es obligatorio";
@@ -77,8 +84,13 @@ export function QuestionEditor({
   onDuplicate,
   onRemove,
   startWithAi = false,
+  tone = "brand",
 }: QuestionEditorProps) {
   const [isConfirmingRemove, setIsConfirmingRemove] = React.useState(false);
+  // Collapses and locks the floating rail for as long as this banner is up —
+  // a bulk rail action landing mid-delete-confirmation would be easy to fire
+  // by mistake.
+  useHoldDeleteConfirmLock(isConfirmingRemove);
   const rootRef = React.useRef<HTMLDivElement>(null);
   // While the removal banner is up, a click outside answers that decision
   // rather than closing the whole form underneath it.
@@ -123,12 +135,20 @@ export function QuestionEditor({
     <div
       ref={rootRef}
       {...{ [ANCHOR_ATTRIBUTE]: true }}
-      className="flex flex-col gap-4 rounded-xl border border-primary bg-surface p-4 shadow-card ring-2 ring-primary/20 animate-in fade-in zoom-in-[0.99] duration-200"
+      className="flex flex-col gap-4 rounded-xl border bg-surface p-4 shadow-card animate-in fade-in zoom-in-[0.99] duration-200"
+      style={{
+        "--tone": toneAccent(tone),
+        ...toneBorder(tone, 100),
+        boxShadow: `0 0 0 2px color-mix(in srgb, ${toneAccent(tone)} 18%, transparent)`,
+      } as React.CSSProperties}
       onKeyDown={handleKeyDown}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold tracking-tight text-primary">
+        <p
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold tracking-tight"
+          style={toneText(tone)}
+        >
           Pregunta {index + 1}
           <span className="font-semibold text-muted-foreground">
             ({question.required ? "obligatoria" : "opcional"})
@@ -141,8 +161,9 @@ export function QuestionEditor({
               <button
                 type="button"
                 onClick={() => setIsConfirmingRemove(true)}
+                disabled={isConfirmingRemove}
                 aria-label={`Eliminar pregunta ${index + 1}`}
-                className="shrink-0 rounded-md border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-status-negative/30 hover:bg-status-negative/5 hover:text-status-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:opacity-40"
+                className="shrink-0 rounded-md border border-status-negative/30 bg-status-negative/5 p-1.5 text-status-negative transition-all hover:border-status-negative/40 hover:bg-status-negative/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:border-border/70 disabled:bg-transparent disabled:text-muted-foreground/70 disabled:opacity-40"
               >
                 <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
               </button>
@@ -155,8 +176,9 @@ export function QuestionEditor({
               <button
                 type="button"
                 onClick={onClose}
+                disabled={isConfirmingRemove}
                 aria-label="Contraer edición de la pregunta"
-                className="shrink-0 rounded-md border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="shrink-0 rounded-md border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border/70 disabled:hover:bg-transparent disabled:hover:text-muted-foreground/70"
               >
                 <ChevronUp className="h-3.5 w-3.5" strokeWidth={2.5} />
               </button>
@@ -166,152 +188,162 @@ export function QuestionEditor({
         </div>
       </div>
 
-      {/* Statement. Lleva la IA al lado: con texto escrito mejora la
-          redacción, y en blanco pide una frase de contexto y escribe la
-          pregunta entera —incluido su tipo de respuesta—. */}
-      <AiStatementField
-        value={question.statement}
-        onChange={(statement) => onChange({ ...question, statement })}
-        onGenerated={({ statement, type }) =>
-          onChange(changeQuestionType({ ...question, statement }, type))
-        }
-        error={statementError}
-        autoStart={startWithAi}
-      />
-      {/* Type selectors as Cards. */}
-      <div className="flex flex-col gap-4">
-        <Field label="Tipo de pregunta">
-          <CatalogCards
-            entries={QUESTION_TYPES}
-            value={question.type}
-            onChange={(type: QuestionType) => onChange(changeQuestionType(question, type))}
-          />
-        </Field>
+      {/* Everything editable is locked behind this fieldset while the removal
+          banner is up — a keystroke or a stray click landing on the form
+          underneath a decision that big is worse than making the author
+          click "Cancelar" first. `contents` keeps it a layout no-op so the
+          parent's own `gap-4` still spaces these as direct children. */}
+      <fieldset disabled={isConfirmingRemove} className="contents">
+        {/* Statement. Lleva la IA al lado: con texto escrito mejora la
+            redacción, y en blanco pide una frase de contexto y escribe la
+            pregunta entera —incluido su tipo de respuesta—. */}
+        <AiStatementField
+          value={question.statement}
+          onChange={(statement) => onChange({ ...question, statement })}
+          onGenerated={({ statement, type }) =>
+            onChange(changeQuestionType({ ...question, statement }, type))
+          }
+          error={statementError}
+          autoStart={startWithAi}
+          disabled={isConfirmingRemove}
+        />
+        {/* Type selectors as Cards. */}
+        <div className="flex flex-col gap-4">
+          <Field label="Tipo de pregunta">
+            <CatalogCards
+              entries={QUESTION_TYPES}
+              value={question.type}
+              toneFor={questionTypeTone}
+              onChange={(type: QuestionType) => onChange(changeQuestionType(question, type))}
+            />
+          </Field>
 
-        {isScale && (
-          <div className={cn("grid gap-3", needsRatingType(scale.kind) && "sm:grid-cols-2")}>
-            <Field label="Tipo de escala">
-              <CatalogSelect
-                entries={SCALE_TYPES}
-                value={scale.kind}
-                placeholder="Tipo de escala"
-                ariaLabel="Tipo de escala"
-                onChange={(kind: ScaleType) => onChange(changeScaleType(question, kind))}
-              />
-            </Field>
-
-            {needsRatingType(scale.kind) && (
-              <Field label="Tipo de valoración">
+          {isScale && (
+            <div className={cn("grid gap-3", needsRatingType(scale.kind) && "sm:grid-cols-2")}>
+              <Field label="Tipo de escala">
                 <CatalogSelect
-                  entries={RATING_TYPES}
-                  value={scale.ratingType}
-                  placeholder="Tipo de valoración"
-                  ariaLabel="Tipo de valoración"
-                  onChange={(ratingType: RatingType) => patchScale({ ratingType })}
+                  entries={SCALE_TYPES}
+                  value={scale.kind}
+                  placeholder="Tipo de escala"
+                  ariaLabel="Tipo de escala"
+                  onChange={(kind: ScaleType) => onChange(changeScaleType(question, kind))}
                 />
               </Field>
-            )}
+
+              {needsRatingType(scale.kind) && (
+                <Field label="Tipo de valoración">
+                  <CatalogSelect
+                    entries={RATING_TYPES}
+                    value={scale.ratingType}
+                    placeholder="Tipo de valoración"
+                    ariaLabel="Tipo de valoración"
+                    onChange={(ratingType: RatingType) => patchScale({ ratingType })}
+                  />
+                </Field>
+              )}
+            </div>
+          )}
+        </div>
+
+        {isScale && <ScalePreview question={question} />}
+
+        {isScale && hasEndLabels(scale.kind) && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Etiqueta mínima">
+              <TextField
+                value={scale.minLabel}
+                placeholder="Escribe aquí la etiqueta mínima"
+                onChange={(minLabel) => patchScale({ minLabel })}
+              />
+            </Field>
+            <Field label="Etiqueta máxima">
+              <TextField
+                value={scale.maxLabel}
+                placeholder="Escribe aquí la etiqueta máxima"
+                onChange={(maxLabel) => patchScale({ maxLabel })}
+              />
+            </Field>
           </div>
         )}
-      </div>
 
-      {isScale && <ScalePreview question={question} />}
-
-      {isScale && hasEndLabels(scale.kind) && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Etiqueta mínima">
-            <TextField
-              value={scale.minLabel}
-              placeholder="Escribe aquí la etiqueta mínima"
-              onChange={(minLabel) => patchScale({ minLabel })}
-            />
-          </Field>
-          <Field label="Etiqueta máxima">
-            <TextField
-              value={scale.maxLabel}
-              placeholder="Escribe aquí la etiqueta máxima"
-              onChange={(maxLabel) => patchScale({ maxLabel })}
-            />
-          </Field>
-        </div>
-      )}
-
-      {hasOptions(question.type) && (
-        <QuestionOptionsEditor
-          options={question.options}
-          showValidation={showValidation}
-          onChange={(options) => onChange({ ...question, options })}
-        />
-      )}
-
-      {showFollowUps && (
-        <section className="flex flex-col gap-3 rounded-md border border-border/70 p-3.5">
-          <h4 className="text-[12px] font-bold tracking-tight text-text-primary">
-            Preguntas de profundidad
-          </h4>
-          <Field label="Pregunta para detractores">
-            <TextField
-              value={scale.followUps.detractors}
-              placeholder="Escribe aquí la pregunta o enunciado"
-              onChange={(detractors) => patchFollowUp({ detractors })}
-            />
-          </Field>
-          <Field label="Pregunta para neutrales">
-            <TextField
-              value={scale.followUps.neutrals}
-              placeholder="Escribe aquí la pregunta o enunciado"
-              onChange={(neutrals) => patchFollowUp({ neutrals })}
-            />
-          </Field>
-          <Field label="Pregunta para promotores">
-            <TextField
-              value={scale.followUps.promoters}
-              placeholder="Escribe aquí la pregunta o enunciado"
-              onChange={(promoters) => patchFollowUp({ promoters })}
-            />
-          </Field>
-        </section>
-      )}
-
-      {/* Footer. Swapped out wholesale by the removal prompt below, so the
-          decision lands exactly where the author was looking. */}
-      <div
-        className={cn(
-          "flex flex-wrap items-center justify-end gap-x-5 gap-y-3 border-t border-border/60 pt-3.5",
-          isConfirmingRemove && "hidden"
-        )}
-      >
-        {isScale && supportsDontKnow(scale.kind) && (
-          <ToggleField
-            label="Añadir opción no sabe / no responde"
-            checked={scale.allowDontKnow}
-            onChange={(allowDontKnow) => patchScale({ allowDontKnow })}
+        {hasOptions(question.type) && (
+          <QuestionOptionsEditor
+            options={question.options}
+            showValidation={showValidation}
+            onChange={(options) => onChange({ ...question, options })}
           />
         )}
 
-        {isScale && supportsFollowUps(scale.kind) && (
-          <ToggleField
-            label="Preguntas de profundidad"
-            checked={scale.followUpEnabled}
-            onChange={(followUpEnabled) => patchScale({ followUpEnabled })}
-          />
+        {showFollowUps && (
+          <section className="flex flex-col gap-3 rounded-md border border-border/70 p-3.5">
+            <h4 className="text-[12px] font-bold tracking-tight text-text-primary">
+              Preguntas de profundidad
+            </h4>
+            <Field label="Pregunta para detractores">
+              <TextField
+                value={scale.followUps.detractors}
+                placeholder="Escribe aquí la pregunta o enunciado"
+                onChange={(detractors) => patchFollowUp({ detractors })}
+              />
+            </Field>
+            <Field label="Pregunta para neutrales">
+              <TextField
+                value={scale.followUps.neutrals}
+                placeholder="Escribe aquí la pregunta o enunciado"
+                onChange={(neutrals) => patchFollowUp({ neutrals })}
+              />
+            </Field>
+            <Field label="Pregunta para promotores">
+              <TextField
+                value={scale.followUps.promoters}
+                placeholder="Escribe aquí la pregunta o enunciado"
+                onChange={(promoters) => patchFollowUp({ promoters })}
+              />
+            </Field>
+          </section>
         )}
 
-        <ToggleField
-          label="Obligatoria"
-          checked={question.required}
-          onChange={(required) => onChange({ ...question, required })}
-        />
-
-        <button
-          type="button"
-          onClick={onDuplicate}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-semibold text-text-primary transition-all hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        {/* Footer. Swapped out wholesale by the removal prompt below, so the
+            decision lands exactly where the author was looking. Hidden rather
+            than merely disabled while confirming, same as the fieldset above. */}
+        <div
+          className={cn(
+            "flex flex-wrap items-center justify-end gap-x-5 gap-y-3 border-t border-border/60 pt-3.5",
+            isConfirmingRemove && "hidden"
+          )}
         >
-          <Copy className="h-3.5 w-3.5" strokeWidth={2} />
-          Duplicar
-        </button>
-      </div>
+          {isScale && supportsDontKnow(scale.kind) && (
+            <ToggleField
+              label="Añadir opción no sabe / no responde"
+              checked={scale.allowDontKnow}
+              onChange={(allowDontKnow) => patchScale({ allowDontKnow })}
+            />
+          )}
+
+          {isScale && supportsFollowUps(scale.kind) && (
+            <ToggleField
+              label="Preguntas de profundidad"
+              checked={scale.followUpEnabled}
+              onChange={(followUpEnabled) => patchScale({ followUpEnabled })}
+            />
+          )}
+
+          <ToggleField
+            label="Obligatoria"
+            checked={question.required}
+            onChange={(required) => onChange({ ...question, required })}
+          />
+
+          <button
+            type="button"
+            onClick={onDuplicate}
+            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] font-semibold text-text-primary transition-all hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          >
+            <Copy className="h-3.5 w-3.5" strokeWidth={2} />
+            Duplicar
+          </button>
+        </div>
+      </fieldset>
 
       {/* The removal prompt takes the footer's place rather than stacking under
           it: the decision lands exactly where the author was looking, and the
@@ -333,7 +365,7 @@ export function QuestionEditor({
               size="sm"
               variant="outline"
               onClick={() => setIsConfirmingRemove(false)}
-              className="rounded-full px-4"
+              className="px-4"
             >
               Cancelar
             </Button>
@@ -341,7 +373,7 @@ export function QuestionEditor({
               size="sm"
               variant="destructive"
               onClick={onRemove}
-              className="rounded-full px-4 font-semibold"
+              className="border border-destructive/40 px-4 font-semibold"
             >
               Eliminar
             </Button>
@@ -413,16 +445,22 @@ function ToggleField({
 function CatalogCards<T extends string>({
   entries,
   value,
+  toneFor,
   onChange,
 }: {
   entries: readonly CatalogEntry<T>[];
   value: T | null;
+  /** The accent each option is drawn in. Omitted, every card stays brand blue
+   *  — right for a list whose options carry no colour of their own. */
+  toneFor?: (value: T) => Tone;
   onChange: (value: T) => void;
 }) {
   return (
     <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Seleccionar opción">
       {entries.map(({ value: entryValue, label, icon: Icon }) => {
         const isSelected = value === entryValue;
+        const tone = toneFor?.(entryValue) ?? "brand";
+        const accent = toneAccent(tone);
         return (
           <button
             key={entryValue}
@@ -430,22 +468,44 @@ function CatalogCards<T extends string>({
             role="radio"
             aria-checked={isSelected}
             onClick={() => onChange(entryValue as T)}
+            style={
+              {
+                "--tone": accent,
+                ...(isSelected
+                  ? {
+                      borderColor: `color-mix(in srgb, ${accent} 55%, transparent)`,
+                      backgroundColor: `color-mix(in srgb, ${accent} 7%, transparent)`,
+                      color: accent,
+                    }
+                  : null),
+              } as React.CSSProperties
+            }
             className={cn(
-              "relative flex flex-1 min-w-[100px] flex-col items-center justify-center gap-1.5 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+              "relative flex flex-1 min-w-[100px] flex-col items-center justify-center gap-1.5 rounded-lg border p-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
               isSelected
-                ? "border-primary bg-primary/10 text-primary shadow-sm"
-                : "border-border bg-surface text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                ? "shadow-sm"
+                : "tone-hover border-border bg-surface text-text-secondary"
             )}
           >
             <div
               className={cn(
                 "absolute right-2 top-2 flex size-3.5 items-center justify-center rounded-full border transition-colors",
-                isSelected ? "border-primary" : "border-border/60"
+                !isSelected && "border-border/60"
               )}
+              style={isSelected ? { borderColor: "currentColor" } : undefined}
             >
-              {isSelected && <div className="size-1.5 rounded-full bg-primary" />}
+              {isSelected && <div className="size-1.5 rounded-full bg-current" />}
             </div>
-            <Icon className="h-4 w-4 mt-1" strokeWidth={isSelected ? 2.5 : 2} />
+            <span
+              aria-hidden
+              className={cn(
+                "mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg",
+                !isSelected && "tone-reveal-chip"
+              )}
+              style={isSelected ? toneChip(tone) : undefined}
+            >
+              <Icon className="h-4 w-4" strokeWidth={2} />
+            </span>
             <span className="text-[10px] font-semibold leading-tight">{label}</span>
           </button>
         );

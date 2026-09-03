@@ -124,6 +124,10 @@ export const DualDateRangePicker = React.forwardRef<
   };
 
   const handleDayClick = (day: Date) => {
+    // Block selection while the calendar is still sliding between the
+    // start/end views, so a click mid-animation can't register against
+    // the step it hasn't visually landed on yet.
+    if (transitionEnabled) return;
     if (minDate && day < minDate) return;
     if (maxDate && day > maxDate) return;
 
@@ -375,7 +379,10 @@ export const DualDateRangePicker = React.forwardRef<
 
             {/* Dual Month Calendar */}
             <div
-              className="p-3 overflow-y-auto min-h-0"
+              className={cn(
+                "p-3 overflow-y-auto min-h-0",
+                transitionEnabled && "pointer-events-none"
+              )}
               style={{ paddingRight: "0.5rem" }}
               onMouseLeave={() => setHoverDate(undefined)}
             >

@@ -28,3 +28,5 @@ export * from "./sectionFileImport";
 export * from "./sectionTree";
 export * from "./stepper";
 export * from "./surveyBuilderTypes";
+export * from "./kindVisual";
+export * from "./scaleBands";

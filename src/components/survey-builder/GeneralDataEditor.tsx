@@ -1,18 +1,14 @@
 import * as React from "react";
 import {
-  BrainCircuit,
   EyeOff,
-  Gauge,
   Globe,
-  Heart,
-  Info,
   Minus,
   Plus,
-  Shapes,
-  Sprout,
+  Settings2,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toneChip, toneText, type Tone } from "@/lib/tone";
 import { DualDateRangePicker } from "@/components/date";
 import { MagicCard } from "@/components/ui/magic-card";
 import { Switch } from "@/components/ui/switch";
@@ -34,6 +30,7 @@ import {
   type SurveyKind,
   type SurveyVisibility,
 } from "./surveyBuilderTypes";
+import { KIND_VISUAL } from "./kindVisual";
 
 interface GeneralDataEditorProps {
   draft: SurveyDraft;
@@ -46,13 +43,14 @@ interface GeneralDataEditorProps {
 
 const REQUIRED_FIELD_HINT = "Este campo es obligatorio";
 
-/** One icon per survey kind, so the list is scannable by shape, not just text. */
-const KIND_ICONS: Readonly<Record<SurveyKind, LucideIcon>> = {
-  cultura: Heart,
-  clima: Sprout,
-  enps: Gauge,
-  otros: Shapes,
-  ia: BrainCircuit,
+/**
+ * The two visibility choices are a toggle between two equally valid ways to
+ * run a survey, not a warning/safe pair — so both take the same brand blue
+ * rather than singling one out in its own accent.
+ */
+const VISIBILITY_TONE: Readonly<Record<SurveyVisibility, Tone>> = {
+  public: "brand",
+  anonymous: "brand",
 };
 
 const KIND_OPTIONS = Object.entries(SURVEY_KIND_LABELS) as [SurveyKind, string][];
@@ -100,6 +98,9 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
 
   const startDate = parseISODate(draft.startDate);
   const isAnonymous = draft.visibility === "anonymous";
+  // The header wears whatever the survey is about — brand blue until the
+  // author has decided.
+  const kindTone = draft.kind ? KIND_VISUAL[draft.kind].tone : "brand";
 
   // Local to the form: whether the description field is shown at all. Starts
   // on when the draft already carries a description (editing an existing
@@ -129,11 +130,34 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
   };
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
+    <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/60 bg-surface shadow-card">
+      {/* The same header the participants and demographics steps carry — icon
+          chip, title, and the one figure worth reading from here — so the five
+          panels of the wizard read as five pages of one document. */}
+      <div className="flex items-center gap-3 border-b border-border/60 px-6 py-4">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+          style={toneChip(kindTone)}
+        >
+          <Settings2 className="h-[18px] w-[18px]" strokeWidth={2} />
+        </span>
+        <h2 className="min-w-0 flex-1 truncate text-[14px] font-bold tracking-tight text-text-primary">
+          Datos generales
+        </h2>
+        {draft.kind && (
+          <span
+            className="shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold"
+            style={toneChip(kindTone)}
+          >
+            {SURVEY_KIND_LABELS[draft.kind]}
+          </span>
+        )}
+      </div>
+
       {/* `cascade-enter` here staggers this step's own fields in one at a
           time — name, then description, then dates, and so on — the same
           settle-in language the preview cascade uses for a page's pieces. */}
-      <div className="flex flex-col gap-5 cascade-enter">
+      <div className="flex flex-col gap-5 px-6 py-6 cascade-enter">
         {/* Name leads: it is the first thing the author decides and the one
             field that shows up outside this form, in the header title. The
             description toggle rides alongside it — turning it on reveals the
@@ -193,7 +217,7 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
         <Field label="Tipo de encuesta" error={kindError}>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5" role="radiogroup" aria-label="Tipo de encuesta">
             {KIND_OPTIONS.map(([optionValue, label]) => {
-              const Icon = KIND_ICONS[optionValue];
+              const { icon: Icon, tone } = KIND_VISUAL[optionValue];
               const isSelected = draft.kind === optionValue;
               return (
                 <MagicCard
@@ -201,20 +225,34 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
                   role="radio"
                   aria-checked={isSelected}
                   isSelected={isSelected}
+                  tone={tone}
                   onClick={() => onChange({ kind: optionValue })}
                   className={cn(kindError && !isSelected && "border-destructive/50")}
-                  contentClassName="flex-col items-center justify-center gap-2.5 h-full"
+                  contentClassName="flex-col items-center justify-center gap-2 h-full"
                 >
                   <div
                     className={cn(
                       "absolute -right-2 -top-2 flex size-3.5 items-center justify-center rounded-full border transition-colors",
-                      isSelected ? "border-primary" : "border-border/60"
+                      !isSelected && "border-border/60"
                     )}
+                    style={isSelected ? { borderColor: "currentColor" } : undefined}
                   >
-                    {isSelected && <div className="size-1.5 rounded-full bg-primary" />}
+                    {isSelected && <div className="size-1.5 rounded-full bg-current" />}
                   </div>
-                  <Icon className="size-6 mt-1" strokeWidth={2} />
-                  <span className="text-center text-[12px] font-medium leading-tight">
+                  {/* The kind's own mark, on the tinted chip the home draws
+                      its template badges on — so "Cultura" is the same green
+                      heart in the shelf and here. */}
+                  <span
+                    aria-hidden
+                    className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
+                    style={toneChip(tone)}
+                  >
+                    <Icon className="size-[18px]" strokeWidth={2} />
+                  </span>
+                  <span
+                    className="text-center text-[12px] font-semibold leading-tight"
+                    style={isSelected ? undefined : { color: "var(--color-text-secondary)" }}
+                  >
                     {label}
                   </span>
                 </MagicCard>
@@ -243,16 +281,30 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
             {VISIBILITY_OPTIONS.map(([optionValue, label]) => {
               const isSelected = draft.visibility === optionValue;
               const Icon = optionValue === "public" ? Globe : EyeOff;
+              const tone = VISIBILITY_TONE[optionValue];
               return (
                 <MagicCard
                   key={optionValue}
                   isSelected={isSelected}
+                  tone={tone}
                   onClick={() => onChange({ visibility: optionValue })}
                   contentClassName="flex-col items-start gap-3"
                 >
-                  <div className="flex w-full items-center gap-2">
-                    <Icon className={cn("size-5", isSelected ? "text-primary" : "text-muted-foreground")} strokeWidth={2} />
-                    <span className={cn("text-[14px] font-semibold", isSelected ? "text-primary" : "text-text-primary")}>
+                  <div className="flex w-full items-center gap-2.5">
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
+                        !isSelected && "tone-reveal-chip"
+                      )}
+                      style={isSelected ? toneChip(tone) : undefined}
+                    >
+                      <Icon className="size-[17px]" strokeWidth={2} />
+                    </span>
+                    <span
+                      className={cn("text-[14px] font-semibold", !isSelected && "tone-reveal-text")}
+                      style={isSelected ? toneText(tone) : undefined}
+                    >
                       {label}
                     </span>
                   </div>

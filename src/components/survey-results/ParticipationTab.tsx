@@ -16,13 +16,21 @@ import { PARTICIPATION_TARGET } from "@/components/survey-list/surveyListFilters
 import { Sparkline } from "@/components/survey-analytics/pulseCharts";
 import { useAnimatedValue } from "@/lib/useAnimatedValue";
 import { COLLABORATORS } from "@/mocks/collaborators";
+import { avatarColor, initials } from "@/components/survey-builder/collaboratorTableShared";
 import { participationBySegment, type ParticipationRow, type SegmentDefinition, type SurveyResults } from "@/mocks/surveyResults";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PagerButton } from "@/components/survey-builder/CollaboratorTableParts";
 import { FilterSortHeader, SelectionHeaderMenu, SortOnlyHeader } from "@/components/data-display";
-import { formatPercent, toneForParticipation, POSITIVE, YELLOW, NEGATIVE } from "./favorabilityScale";
+import { formatPercent, toneForParticipation, ACCENT_CLASS_BY_TONE, POSITIVE, YELLOW, NEGATIVE, type MetricTone } from "./favorabilityScale";
 import { FormulaBlock } from "./FormulaBlock";
-import { MetricSummaryCard } from "./MetricSummaryCard";
+import { MetricReadingBadge, MetricSummaryCard } from "./MetricSummaryCard";
+
+/** The plain-language reading beside the big participation percentage. */
+const PARTICIPATION_READING: Readonly<Record<MetricTone, string>> = {
+ positive: "Buena",
+ warning: "Regular",
+ negative: "Baja",
+};
 
 interface ParticipationTabProps {
  results: SurveyResults;
@@ -273,11 +281,14 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  const { completed, inProgress, invited } = results.participation;
  const missing = Math.max(0, invited - completed - inProgress);
 
+ const participationTone = toneForParticipation(results.participation.rate);
+
  return (
  <div className="flex flex-col gap-8">
  <div className="flex flex-col gap-6 pb-6">
  {/* Métricas de participación — mismas tarjetas que las de favorabilidad */}
  <MetricSummaryCard
+  accentColor={ACCENT_CLASS_BY_TONE[participationTone]}
   title="Total de participación"
   hint={
     <div className="flex flex-col gap-3 items-start leading-relaxed">
@@ -286,6 +297,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
     </div>
   }
   bigValue={formatPercent(results.participation.rate)}
+  bigValueBadge={<MetricReadingBadge tone={participationTone} label={PARTICIPATION_READING[participationTone]} />}
   caption={`${formatCount(completed)} de ${formatCount(invited)} invitados · meta ${PARTICIPATION_TARGET}%`}
   ringsLabel="Estado de los invitados"
   ringsTotal={`${formatCount(invited)} en total`}
@@ -338,8 +350,8 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
     />
   }
 />
-<div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
- <div className="flex flex-wrap items-center gap-4">
+<div className="overflow-hidden rounded-2xl border border-border/60 bg-surface shadow-card">
+ <div className="flex flex-wrap items-center gap-4 p-4">
  <div className="flex items-center gap-2">
  <h3 className="text-[13px] font-bold text-text-primary">
  Detalle de la participación por {segment.label.toLowerCase()}
@@ -453,7 +465,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  </div>
  </div>
  </div>
- <div className="overflow-hidden rounded-xl border border-border/60">
+ <div className="border-y border-border/60">
  {visibleRows.length === 0 ? (
  <div className="p-8">
  <EmptyState
@@ -485,7 +497,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  <Table>
  <TableHeader>
  <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
- <TableHead className="w-16 px-0">
+ <TableHead className="w-px pl-4 pr-2">
  <SelectionHeaderMenu
  state={headerState}
  pageCount={pagedRows.length}
@@ -499,9 +511,10 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  onDeselectPage={deselectPage}
  onDeselectAll={clearSelection}
  formatCount={formatCount}
+ align="start"
  />
  </TableHead>
- <TableHead className={cn("py-3.5 px-0", segment.perPerson ? "w-[34%]" : "w-[25%]")}>
+ <TableHead className={cn("py-3 px-2", segment.perPerson ? "w-[26%]" : "w-[25%]")}>
  <FilterSortHeader
  label={segment.label}
  options={availableGroupLabels}
@@ -515,7 +528,10 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  </TableHead>
  {segment.perPerson && (
  <>
- <TableHead className="w-[23%] py-3.5 px-0">
+ <TableHead className="w-[22%] py-3 px-2">
+ <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Correo</span>
+ </TableHead>
+ <TableHead className="w-[19%] py-3 px-2">
  <FilterSortHeader
  label="Líder"
  options={availableLeaders}
@@ -526,7 +542,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  onSort={() => toggleSort("leader")}
  />
  </TableHead>
- <TableHead className="w-[23%] py-3.5 px-0">
+ <TableHead className="w-[23%] py-3 px-2">
  <FilterSortHeader
  label="Área"
  options={availableAreas}
@@ -542,7 +558,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  <TableHead
  className={cn(
  "py-3.5",
- segment.perPerson ? "pl-0 pr-6" : "w-[140px] px-0"
+ segment.perPerson ? "pl-0 pr-4" : "w-[140px] px-2"
  )}
  >
  <FilterSortHeader
@@ -558,7 +574,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  </TableHead>
  {!segment.perPerson && (
  <>
- <TableHead className="w-[120px] py-3.5 px-2 text-right">
+ <TableHead className="w-[120px] py-3 px-2 text-right">
  <SortOnlyHeader
  label="Respondieron"
  sortActive={sort.key === "invited"}
@@ -566,7 +582,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  align="right"
  />
  </TableHead>
- <TableHead className="w-[100px] py-3.5 px-2 text-right">
+ <TableHead className="w-[100px] py-3 px-2 text-right">
  <SortOnlyHeader
  label="En progreso"
  sortActive={sort.key === "inProgress"}
@@ -574,7 +590,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  align="right"
  />
  </TableHead>
- <TableHead className="w-[90px] py-3.5 px-2 text-right">
+ <TableHead className="w-[90px] py-3 px-2 text-right">
  <SortOnlyHeader
  label="Faltan"
  sortActive={sort.key === "missing"}
@@ -582,7 +598,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  align="right"
  />
  </TableHead>
- <TableHead className="w-[220px] py-3.5 pl-0 pr-6">
+ <TableHead className="w-[220px] py-3 pl-0 pr-4">
  <SortOnlyHeader
  label="Participación"
  sortActive={sort.key === "rate"}
@@ -618,7 +634,7 @@ export function ParticipationTab({ results, segment, onSegmentChange, selectedId
  )}
  </div>
 
- <div className="flex flex-wrap items-center justify-between gap-3">
+ <div className="flex flex-wrap items-center justify-between gap-3 p-4">
  <p className="text-[12px] text-muted-foreground">
  {visibleRows.length === 0
  ? "0 grupos"
@@ -685,8 +701,8 @@ function GroupRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSele
  onClick={onToggle}
  className="cursor-pointer border-border/60 hover:bg-muted/30 transition-colors group"
  >
- <TableCell className="px-0">
- <div className="flex items-center justify-center">
+ <TableCell className="pl-4 pr-2">
+ <div className="flex items-center">
  <Checkbox
  checked={isSelected}
  onCheckedChange={onToggle}
@@ -732,7 +748,7 @@ function GroupRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSele
  <TableCell className="w-[100px] py-3 text-right tabular-nums text-[13px] text-muted-foreground">
  {missing === 0 ? "—" : missing}
  </TableCell>
- <TableCell className="w-[220px] py-3 pr-6">
+ <TableCell className="w-[220px] py-3 pr-4">
  <div className="flex items-center justify-end gap-3">
  <Progress value={animatedRate} color="primary" className="h-1.5 w-32 shrink-0 [&>div]:transition-none" />
  <span className="min-w-[44px] text-right text-[12px] tabular-nums text-text-secondary">
@@ -760,8 +776,8 @@ function PersonRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSel
  onClick={onToggle}
  className="cursor-pointer border-border/60 hover:bg-muted/30 transition-colors group"
  >
- <TableCell className="px-0">
- <div className="flex items-center justify-center">
+ <TableCell className="pl-4 pr-2">
+ <div className="flex items-center">
  <Checkbox
  checked={isSelected}
  onCheckedChange={onToggle}
@@ -771,7 +787,16 @@ function PersonRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSel
  </div>
  </TableCell>
  <TableCell className="py-3">
- <div className="flex items-center gap-2">
+ <div className="flex min-w-0 items-center gap-2">
+ <span
+ aria-hidden
+ className={cn(
+ "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+ avatarColor(person?.id ?? row.id)
+ )}
+ >
+ {initials(row.label)}
+ </span>
  <span className="truncate text-[13px] text-text-secondary">{row.label}</span>
  {!isCompleted && (
  <button
@@ -789,12 +814,15 @@ function PersonRow({ row, isSelected, onToggle }: { row: ParticipationRow; isSel
  </div>
  </TableCell>
  <TableCell className="py-3 text-[13px] text-muted-foreground">
+ <span className="block truncate">{person?.email ?? "—"}</span>
+ </TableCell>
+ <TableCell className="py-3 text-[13px] text-muted-foreground">
  <span className="block truncate">{person?.leader ?? "—"}</span>
  </TableCell>
  <TableCell className="py-3 text-[13px] text-muted-foreground">
  <span className="block truncate">{person?.area ?? "—"}</span>
  </TableCell>
- <TableCell className="py-3 pl-0 pr-6">
+ <TableCell className="py-3 pl-0 pr-4">
  <div className="flex justify-end">
  {isCompleted ? (
  <StatusBadge state="success" labels={{ success: "Completado" }} />

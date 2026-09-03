@@ -7,8 +7,11 @@ import {
   NEGATIVE,
   NSNR,
   FAVORABILITY_TARGET,
+  toneForFavorability,
+  ACCENT_CLASS_BY_TONE,
+  type MetricTone,
 } from "./favorabilityScale";
-import { MetricSummaryCard } from "./MetricSummaryCard";
+import { MetricReadingBadge, MetricSummaryCard } from "./MetricSummaryCard";
 import { Sparkline } from "@/components/survey-analytics/pulseCharts";
 import { FormulaBlock } from "./FormulaBlock";
 import { QuestionsTab } from "./QuestionsTab";
@@ -19,6 +22,13 @@ import { useResultsFilters } from "./useResultsFilters";
 function formatCount(n: number) {
  return new Intl.NumberFormat("es-CO").format(Math.round(n));
 }
+
+/** The plain-language reading beside the big favorability percentage. */
+const FAVORABILITY_READING: Readonly<Record<MetricTone, string>> = {
+ positive: "Favorable",
+ warning: "Neutral",
+ negative: "Desfavorable",
+};
 
 interface FavorabilityTabProps {
  results: SurveyResults;
@@ -46,14 +56,17 @@ export function FavorabilityTab({ results, segment, onSegmentChange }: Favorabil
  const favorableCount = distribution[3] + distribution[4];
  const nsNrCount = results.rankedQuestions.reduce((sum, question) => sum + question.nsnr, 0);
 
+ const favorabilityTone = toneForFavorability(results.favorability);
+ const favorabilityReading = FAVORABILITY_READING[favorabilityTone];
+
  return (
  <div className="flex h-full min-h-0 flex-col">
   <MetricSummaryCard
-    accentColor="bg-status-positive"
-    title="Sentimiento general"
+    accentColor={ACCENT_CLASS_BY_TONE[favorabilityTone]}
+    title="Favorabilidad general"
     hint={
       <div className="flex flex-col gap-3 items-start leading-relaxed">
-        <p className="text-[12px]"><strong>Sentimiento:</strong><br/>Distribución de respuestas favorables, neutrales y desfavorables en la escala de 1 a 5.</p>
+        <p className="text-[12px]"><strong>Favorabilidad:</strong><br/>Distribución de respuestas favorables, neutrales y desfavorables en la escala de 1 a 5.</p>
         <FormulaBlock
           numerator="Respuestas favorables"
           denominator="Total de respuestas"
@@ -62,6 +75,7 @@ export function FavorabilityTab({ results, segment, onSegmentChange }: Favorabil
       </div>
     }
     bigValue={formatPercent(results.favorability)}
+    bigValueBadge={<MetricReadingBadge tone={favorabilityTone} label={favorabilityReading} />}
     caption={`Meta ${FAVORABILITY_TARGET}% · ${results.trend.length} mediciones`}
     ringsLabel="Distribución de respuestas"
     ringsTotal={`${formatCount(favorableCount + neutralCount + unfavorableCount + nsNrCount)} en total`}
@@ -103,7 +117,7 @@ export function FavorabilityTab({ results, segment, onSegmentChange }: Favorabil
         onToggle: () => filtersState.toggleTierBand("nsnr"),
       },
     ]}
-    topAreasTitle="Top 3 áreas con más sentimiento negativo"
+    topAreasTitle="Top 3 áreas más desfavorables"
     topAreas={
       results.sections
         .filter(s => s.n > 0)

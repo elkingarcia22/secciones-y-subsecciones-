@@ -26,6 +26,10 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface SectionsPanelProps {
   readOnly?: boolean;
+  /** True while a row anywhere in the main panel is mid delete-confirm or
+   *  mid-edit — the whole stepper and section tree go inert until that's
+   *  resolved, so jumping to another step can't abandon it mid-flight. */
+  isLocked?: boolean;
   sections: readonly SurveySection[];
   selection: BuilderSelection;
   /** Shared with the main panel: one open branch, the same one on both sides. */
@@ -255,6 +259,7 @@ function RailStep({
  */
 export function SectionsPanel({
   readOnly,
+  isLocked = false,
   sections,
   selection,
   expandedIds,
@@ -348,7 +353,10 @@ export function SectionsPanel({
         {STEPPER_ORDER.map((step, index) => {
           const state = stateOf(step);
           const err = hasError(step);
-          const isLocked = state === "locked";
+          // Unreachable on its own merits, or every step is inert because a
+          // row elsewhere is mid delete-confirm or mid-edit — either way this
+          // step can't be jumped to right now.
+          const isStepLocked = state === "locked" || isLocked;
 
           return (
             <React.Fragment key={step}>
@@ -373,16 +381,16 @@ export function SectionsPanel({
                   <TooltipTrigger asChild>
                     <button
                       type="button"
-                      onClick={isLocked ? undefined : () => onSelectStep(step)}
-                      disabled={isLocked}
+                      onClick={isStepLocked ? undefined : () => onSelectStep(step)}
+                      disabled={isStepLocked}
                       aria-current={state === "active" ? "step" : undefined}
                       className={cn(
                         "group relative flex w-full items-center rounded-xl py-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
                         // Collapsed: hover lands on the marker itself (below),
                         // not this whole row — a rounded-xl box behind a lone
                         // circle reads as a stray highlight, not a hover.
-                        !isLocked && state !== "active" && !isCollapsed && "hover:bg-surface-muted",
-                        isLocked && "cursor-not-allowed"
+                        !isStepLocked && state !== "active" && !isCollapsed && "hover:bg-surface-muted",
+                        isStepLocked && "cursor-not-allowed"
                       )}
                       style={{
                         paddingLeft: isCollapsed ? 0 : "8px",
@@ -401,7 +409,7 @@ export function SectionsPanel({
                       {/* Collapsed hover: a halo centered on the marker
                           (left: 14px = the marker's own center, same math as
                           the connector line) instead of the row background. */}
-                      {isCollapsed && !isLocked && state !== "active" && (
+                      {isCollapsed && !isStepLocked && state !== "active" && (
                         <span
                           aria-hidden
                           className="absolute top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors group-hover:bg-surface-muted"
@@ -465,6 +473,7 @@ export function SectionsPanel({
                             key={id}
                             entry={entry}
                             readOnly={readOnly}
+                            isLocked={isLocked}
                             isActive={selection.kind === "section" && selection.id === id}
                             isCollapsed={!expandedIds.has(id)}
                             isDragging={draggingId === id}

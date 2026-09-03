@@ -1,4 +1,5 @@
-import { ChevronRight, Search, Sparkles, X } from "lucide-react";
+import * as React from "react";
+import { ChevronRight, LayoutGrid, Rows3, Search, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,11 @@ interface TemplateGalleryProps {
   cascadeClassName: string;
 }
 
+/** `card`: the tinted-stage grid. `list`: dense, full-width rows — the same
+ *  choice the home strip's tiles vs. this gallery already embody, just made
+ *  explicit so either one can browse many templates at once. */
+type GalleryView = "card" | "list";
+
 /**
  * The picker's "home": a spotlight on the template to start with, then every
  * template laid out as a tile, shelf by shelf, the way the home strip shows
@@ -43,6 +49,9 @@ export function TemplateGallery({
   onUseTemplate,
   cascadeClassName,
 }: TemplateGalleryProps) {
+  // Local and ephemeral — the drawer already remounts this whole component
+  // on every open, same as `query`, so there is nothing to persist here.
+  const [view, setView] = React.useState<GalleryView>("card");
   const totalCount = TEMPLATE_SHELVES.reduce((sum, shelf) => sum + shelf.items.length, 0);
   const visibleShelves = TEMPLATE_SHELVES.map((shelf) => ({
     ...shelf,
@@ -60,25 +69,46 @@ export function TemplateGallery({
             secciones y preguntas antes de crear la encuesta.
           </p>
         </div>
-        <div className="relative w-full sm:w-[280px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-          <Input
-            aria-label="Buscar plantilla"
-            placeholder="Buscar por nombre u objetivo…"
-            value={query}
-            onChange={(event) => onQueryChange(event.target.value)}
-            className="border-border/60 bg-surface pl-9 pr-8 text-[13px]"
-          />
-          {isSearching && (
-            <button
-              type="button"
-              aria-label="Limpiar búsqueda"
-              onClick={() => onQueryChange("")}
-              className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
-            >
-              <X className="h-3.5 w-3.5" strokeWidth={2} />
-            </button>
-          )}
+        <div className="flex items-center gap-2">
+          <div
+            role="group"
+            aria-label="Tipo de vista"
+            className="inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-border/60 bg-surface p-0.5"
+          >
+            <ViewToggleButton
+              label="Ver en tarjetas"
+              icon={LayoutGrid}
+              isActive={view === "card"}
+              onClick={() => setView("card")}
+            />
+            <ViewToggleButton
+              label="Ver en lista"
+              icon={Rows3}
+              isActive={view === "list"}
+              onClick={() => setView("list")}
+            />
+          </div>
+
+          <div className="relative w-full sm:w-[280px]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+            <Input
+              aria-label="Buscar plantilla"
+              placeholder="Buscar por nombre u objetivo…"
+              value={query}
+              onChange={(event) => onQueryChange(event.target.value)}
+              className="border-border/60 bg-surface pl-9 pr-8 text-[13px]"
+            />
+            {isSearching && (
+              <button
+                type="button"
+                aria-label="Limpiar búsqueda"
+                onClick={() => onQueryChange("")}
+                className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={2} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -95,7 +125,7 @@ export function TemplateGallery({
               />
             )}
             {visibleShelves.map((shelf) => (
-              <Shelf key={shelf.id} shelf={shelf} onOpenTemplate={onOpenTemplate} />
+              <Shelf key={shelf.id} shelf={shelf} view={view} onOpenTemplate={onOpenTemplate} />
             ))}
           </div>
         ) : (
@@ -172,7 +202,15 @@ function FeaturedTemplateCard({ template, onOpen, onUse }: FeaturedTemplateCardP
   );
 }
 
-function Shelf({ shelf, onOpenTemplate }: { shelf: TemplateShelf; onOpenTemplate: (template: SurveyDraft) => void }) {
+function Shelf({
+  shelf,
+  view,
+  onOpenTemplate,
+}: {
+  shelf: TemplateShelf;
+  view: GalleryView;
+  onOpenTemplate: (template: SurveyDraft) => void;
+}) {
   const Icon = shelf.icon;
 
   return (
@@ -197,26 +235,56 @@ function Shelf({ shelf, onOpenTemplate }: { shelf: TemplateShelf; onOpenTemplate
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={view === "card" ? "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" : "flex flex-col gap-2"}>
         {shelf.items.map((template) => {
           const { icon, tone } = getTemplateVisual(template);
           const size = measureTemplate(template);
+          const meta = describeTemplateSize(size);
           return (
             <TemplateTile
               key={template.name}
-              variant="card"
+              variant={view}
               icon={icon}
               tone={tone}
               label={getTemplateDisplayName(template)}
-              meta={describeTemplateSize(size)}
+              meta={meta}
               size={size}
               description={template.description || "Esta plantilla no tiene un objetivo descrito."}
-              title={`${template.name} · ${describeTemplateSize(size)}`}
+              title={`${template.name} · ${meta}`}
               onClick={() => onOpenTemplate(template)}
             />
           );
         })}
       </div>
     </section>
+  );
+}
+
+function ViewToggleButton({
+  label,
+  icon: Icon,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      aria-pressed={isActive}
+      onClick={onClick}
+      className={cn(
+        "flex h-7 w-7 items-center justify-center rounded-md transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+        isActive ? "bg-primary/10 text-primary" : "text-text-muted hover:bg-surface-muted hover:text-text-primary"
+      )}
+    >
+      <Icon className="h-4 w-4" strokeWidth={2} />
+    </button>
   );
 }

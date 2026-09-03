@@ -38,7 +38,9 @@ export function SectionsEmptyState({
           >
             Crear primera sección
           </EmptyStateActionButton>
-          {!readOnly && <AiCreateChip onClick={onGenerateWithAi} />}
+          {!readOnly && (
+            <AiCreateChip onClick={onGenerateWithAi} className="h-11 rounded-xl px-4" />
+          )}
         </div>
       }
     />

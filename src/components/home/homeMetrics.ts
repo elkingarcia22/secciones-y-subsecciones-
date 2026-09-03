@@ -1,11 +1,5 @@
-import { AlertTriangle, CalendarClock, PlayCircle, TrendingDown, type LucideIcon } from "lucide-react";
-import {
-  CLOSING_SOON_DAYS,
-  NO_FILTERS,
-  PARTICIPATION_TARGET,
-  RISK_BUCKETS,
-  type SurveyListFilters,
-} from "@/components/survey-list/surveyListFilters";
+import { AlertTriangle, CalendarClock, PlayCircle, type LucideIcon } from "lucide-react";
+import { CLOSING_SOON_DAYS, NO_FILTERS, type SurveyListFilters } from "@/components/survey-list/surveyListFilters";
 
 /**
  * What each home card counts, expressed as the column filters it applies.
@@ -57,17 +51,6 @@ export const METRIC_PRESETS: readonly MetricPreset[] = [
       progress: ["Menos de 50%"],
     },
   },
-  {
-    id: "risk",
-    label: "Riesgo por tendencia",
-    hint: `Encuestas en curso que, al ritmo de respuesta actual, cerrarán por debajo del ${PARTICIPATION_TARGET}% de participación.`,
-    tone: "warning",
-    filters: {
-      ...NO_FILTERS,
-      status: [OPEN_STATUS],
-      risk: [...RISK_BUCKETS],
-    },
-  },
 ];
 
 export const formatCount = (value: number): string => value.toLocaleString("es-CO");
@@ -77,5 +60,4 @@ export const PRESET_ICONS: Readonly<Record<string, LucideIcon>> = {
   open: PlayCircle,
   closing: CalendarClock,
   low: AlertTriangle,
-  risk: TrendingDown,
 };

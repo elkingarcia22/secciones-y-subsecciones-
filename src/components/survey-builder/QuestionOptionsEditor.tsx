@@ -62,10 +62,10 @@ export function QuestionOptionsEditor({
                   disabled={!canRemove}
                   aria-label={`Eliminar opción ${index + 1}`}
                   className={cn(
-                    "shrink-0 rounded-md border border-border/70 p-2 text-muted-foreground/70 transition-all",
-                    "hover:border-status-negative/30 hover:bg-status-negative/5 hover:text-status-negative",
+                    "shrink-0 rounded-md border border-status-negative/30 bg-status-negative/5 p-2 text-status-negative transition-all",
+                    "hover:border-status-negative/40 hover:bg-status-negative/10",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30",
-                    "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border/70 disabled:hover:bg-transparent disabled:hover:text-muted-foreground/70"
+                    "disabled:cursor-not-allowed disabled:border-border/70 disabled:bg-transparent disabled:text-muted-foreground/70 disabled:opacity-40"
                   )}
                 >
                   <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />

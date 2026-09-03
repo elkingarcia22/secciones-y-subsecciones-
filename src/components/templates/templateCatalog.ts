@@ -1,16 +1,7 @@
-import {
-  BrainCircuit,
-  Building2,
-  Gauge,
-  Heart,
-  Scale,
-  Shapes,
-  ShieldCheck,
-  Sprout,
-  type LucideIcon,
-} from "lucide-react";
+import { Building2, Scale, ShieldCheck, type LucideIcon } from "lucide-react";
+import type { Tone } from "@/lib/tone";
 import { templates } from "@/lib/templates/nom035Templates";
-import { MINUTES_PER_QUESTION, countQuestions, type SurveyDraft } from "@/components/survey-builder";
+import { KIND_VISUAL, MINUTES_PER_QUESTION, countQuestions, type SurveyDraft } from "@/components/survey-builder";
 
 /**
  * Everything the app needs to *show* a template — icon, color tone, short
@@ -18,7 +9,9 @@ import { MINUTES_PER_QUESTION, countQuestions, type SurveyDraft } from "@/compon
  * strip and the picker drawer draw the same template the same way.
  */
 
-export type TemplateTone = "positive" | "brand" | "warning" | "neutral" | "ai";
+/** The app-wide accent palette — a template's tone is one of the same five
+ *  every other surface picks from. */
+export type TemplateTone = Tone;
 
 export const NOM035_PREFIX = "NOM 035";
 
@@ -28,22 +21,13 @@ export interface TemplateVisual {
 }
 
 /** One icon and tone per template family, so a shelf is scannable by shape
- *  and color as well as by name. NOM 035 gets its own mark since every guide
- *  in that family shares the generic "otros" kind. */
+ *  and color as well as by name. Read from the same `KIND_VISUAL` map the
+ *  builder's "Tipo de encuesta" cards use, so a kind looks identical on the
+ *  home shelf and inside the wizard. NOM 035 gets its own mark since every
+ *  guide in that family shares the generic "otros" kind. */
 export function getTemplateVisual(template: SurveyDraft): TemplateVisual {
   if (template.name.startsWith(NOM035_PREFIX)) return { icon: ShieldCheck, tone: "neutral" };
-  switch (template.kind) {
-    case "cultura":
-      return { icon: Heart, tone: "positive" };
-    case "clima":
-      return { icon: Sprout, tone: "brand" };
-    case "enps":
-      return { icon: Gauge, tone: "warning" };
-    case "ia":
-      return { icon: BrainCircuit, tone: "ai" };
-    default:
-      return { icon: Shapes, tone: "neutral" };
-  }
+  return KIND_VISUAL[template.kind ?? "otros"];
 }
 
 /** The name without the family prefix — inside a "NOM 035" shelf the prefix

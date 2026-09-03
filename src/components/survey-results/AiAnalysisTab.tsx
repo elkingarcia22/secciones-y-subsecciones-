@@ -14,11 +14,13 @@ import { AiGapsSection } from "./AiGapsSection";
 import { AiPrioritiesSection } from "./AiPrioritiesSection";
 import { AiStrengthsSection } from "./AiStrengthsSection";
 import { AiVoiceSection } from "./AiVoiceSection";
+import { deriveTrendSeries } from "./deriveTrend";
 import { InsightConfidenceFilter, useConfidenceFilter } from "./InsightConfidenceFilter";
-import { CONFIDENCE_LEGEND, CONFIDENCE_ORDER, CONFIDENCE_STYLES, type InsightConfidence } from "./insightConfidence";
+import { CONFIDENCE_LEGEND, CONFIDENCE_ORDER, type InsightConfidence } from "./insightConfidence";
 import { InsightGroupList, type InsightGroup } from "./InsightGroupList";
 import { MeasurementScaleButton } from "./MeasurementScaleButton";
 import { MetricSummaryCard } from "./MetricSummaryCard";
+import { Sparkline } from "@/components/survey-analytics/pulseCharts";
 import { NEGATIVE, POSITIVE, formatPercent } from "./favorabilityScale";
 import { SCOPE_ALL, buildPriorities, buildStrengths, defaultFindingLevel, findingsAtLevel, resolveScope, sentimentRollup, confidenceFor, type AlertTarget } from "./summaryModel";
 
@@ -201,8 +203,14 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
 
  const visibleCount = visibleGroups.reduce((sum, group) => sum + group.items.length, 0);
 
+ // No real measurement-over-measurement record of the AI's own confidence
+ // exists, so the trend is deterministically derived around today's share —
+ // same quarters the other tabs' trends use.
+ const trendLabels = results.trend.map((point) => point.label);
+ const solidShareTrend = deriveTrendSeries(trendLabels, `${draft.name}:ai-confidence`, counts.solidShare, 8, [0, 100]);
+
  return (
- <div className="flex h-full min-h-0 flex-col">
+ <div className="flex h-full min-h-0 flex-col gap-6">
  {/* The same KPI row every other tab opens with. What the analysis is made
  of, so the reader knows the size of the reading before entering it. */}
  <MetricSummaryCard
@@ -259,13 +267,24 @@ export function AiAnalysisTab({ draft, results, onNavigate }: AiAnalysisTabProps
  displayValue: formatPercent(100 - s.favorability),
  }))
  }
+ chartTitle="Tendencia por medición"
+ chart={
+ <Sparkline
+ points={trendLabels.map((label, index) => ({ id: label, name: label, value: solidShareTrend[index] }))}
+ format={(value) => `${Math.round(value)}%`}
+ ariaLabel={`Confiabilidad alta de las últimas ${trendLabels.length} mediciones`}
+ height={56}
+ showPoints
+ fitTarget={false}
+ />
+ }
  />
 
  {/* pb-20: the screen's floating action rail hovers over the last ~80px. */}
  <div className="min-h-0 flex-1 pb-20 ">
- <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
+ <div className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-surface p-4 shadow-card">
  {/* Same sticky toolbar the Preguntas and Favorabilidad views use. */}
- <div className="sticky top-3 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
+ <div className="sticky top-3 z-30 -mt-4 pt-4 pb-2 bg-surface">
  <div className="flex flex-wrap items-center gap-4 pb-2">
  <div className="flex items-center gap-2">
  <h3 className="text-[13px] font-bold text-text-primary">Lectura de la IA</h3>

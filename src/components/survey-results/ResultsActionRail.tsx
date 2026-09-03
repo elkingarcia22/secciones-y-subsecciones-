@@ -8,7 +8,12 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { SURVEY_KIND_LABELS, type SurveyDraft } from "@/components/survey-builder";
 import type { SegmentDefinition, SurveyResults } from "@/mocks/surveyResults";
 import { formatPreviewDate } from "@/components/survey-preview/previewModel";
-import { RailSelectionChip, useRailAutoHide } from "@/components/action-rail";
+import {
+  RailDragHandle,
+  RailSelectionChip,
+  useDraggableRail,
+  useRailAutoHide,
+} from "@/components/action-rail";
 
 interface ResultsActionRailProps {
   draft: SurveyDraft;
@@ -77,6 +82,11 @@ export function ResultsActionRail({
   const [aiDrawerOpen, setAiDrawerOpen] = React.useState(false);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const forceOpenTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // The pin toggle's "keep the bar open" state doubles as its "fixed" state —
+  // only while autoHide won't yank the rail away is picking it up safe.
+  const isFixed = !autoHide;
+  const { barRef, position, isDragging, gripHandlers } = useDraggableRail(isFixed);
 
   // ── Step-change detection (contextual actions) ──────────
   const prevSelectedRef = React.useRef(selectedCount > 0);
@@ -165,10 +175,20 @@ export function ResultsActionRail({
   };
 
   return (
-    <div className="absolute z-50 flex pointer-events-none bottom-0 left-1/2 -translate-x-1/2 flex-col items-center justify-end pb-4 w-max">
-      {/* Hit area for hover */}
+    <div className="absolute inset-x-0 z-50 flex pointer-events-none bottom-0 flex-col items-center justify-end pb-4">
+      {/* Hit area for hover. Switches to fixed positioning once dragged, so
+          it can sit anywhere in the viewport instead of only at the bottom
+          centre dock. Centred with flexbox rather than a translate transform
+          — a transformed ancestor becomes the containing block for a fixed-
+          position descendant, which would send the dragged bar's coordinates
+          to the wrong origin and fling it off-screen. */}
       <div
-        className="pointer-events-auto flex items-center justify-end h-16 flex-col px-6 pb-0 w-max"
+        ref={barRef}
+        className={cn(
+          "pointer-events-auto flex items-center justify-end h-16 flex-col px-6 pb-0 w-max",
+          position && "fixed z-[60]"
+        )}
+        style={position ? { left: position.x, top: position.y } : undefined}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -189,6 +209,13 @@ export function ResultsActionRail({
               isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
             )}
           >
+            {isFixed && (
+              <>
+                <RailDragHandle isDragging={isDragging} {...gripHandlers} />
+                <div className="self-stretch bg-white/10 mx-1 my-2 w-px" />
+              </>
+            )}
+
             {selectedCount > 0 && (
               <>
                 <div

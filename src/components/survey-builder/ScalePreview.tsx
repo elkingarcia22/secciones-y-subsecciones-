@@ -1,3 +1,4 @@
+import type * as React from "react";
 import { Frown, Meh, Smile, Star, Angry, Laugh } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -14,6 +15,12 @@ import type { SurveyQuestion } from "./surveyBuilderTypes";
  * Read-only sketch of what the respondent will see. It is a preview, not an
  * input: nothing here is clickable, so the author never wonders whether they
  * just answered their own survey.
+ *
+ * Plain and neutral on purpose, in the same gray every option starts in over
+ * in the live drawer preview (`PreviewAnswerField`) before anyone picks one —
+ * this sketch is what the question looks like, not a coloured guess at how
+ * people might answer it. Color on an answer is earned by actually being
+ * chosen; see `scaleBands.ts` for where that happens instead.
  */
 
 const EMOJI_FACES = [Angry, Frown, Meh, Smile, Laugh];

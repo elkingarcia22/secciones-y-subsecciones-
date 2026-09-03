@@ -50,15 +50,18 @@ export interface FavorabilityBand {
  * `*_BG` / `*_BORDER` / `*_TEXT` resolve through the `--fav-*` CSS custom
  * properties (defined in globals.css) rather than literal HSL, so every
  * on-screen consumer — badges, heatmap cells, legend chips — re-tunes itself
- * for `.dark` for free. The mid-tone `*` constants (dots, bars) stay literal:
- * already saturated enough to read on both surfaces. The results PDF is the
- * one exception — it prints from an isolated iframe that never sees this
- * stylesheet, so `downloads/pdf/pdfPalette.ts` keeps its own literal copy of
- * the light values below instead of importing these.
+ * for `.dark` for free. The mid-tone `*` constants (dots, bars, rings) stay
+ * literal, and are pinned to the exact same hue as `StatusBadge`'s
+ * success/pending/failed colors (Tailwind's emerald-600 / amber-600 /
+ * red-600) — a ring reporting "Completadas" must be the same green as the
+ * "Completado" badge in the table it summarizes, not a nearby green. The
+ * results PDF is the one exception — it prints from an isolated iframe that
+ * never sees this stylesheet, so `downloads/pdf/pdfPalette.ts` keeps its own
+ * literal copy of the light values below instead of importing these.
  */
 export const NEGATIVE_BG = "hsl(var(--fav-negative-bg))";
 export const NEGATIVE_BORDER = "hsl(var(--fav-negative-border))";
-export const NEGATIVE = "hsl(354 76% 48%)";
+export const NEGATIVE = "hsl(0 72.2% 50.6%)"; // Tailwind red-600, same as StatusBadge's "failed"
 export const NEGATIVE_TEXT = "hsl(var(--fav-negative-fg))"; // Lighter text
 
 export const SOFTER_NEGATIVE_BG = "hsl(var(--fav-softer-negative-bg))";
@@ -68,12 +71,12 @@ export const SOFTER_NEGATIVE_TEXT = "hsl(var(--fav-softer-negative-fg))"; // Lig
 
 export const YELLOW_BG = "hsl(var(--fav-yellow-bg))";
 export const YELLOW_BORDER = "hsl(var(--fav-yellow-border))";
-export const YELLOW = "hsl(48 92% 50%)";
+export const YELLOW = "hsl(32.1 94.6% 43.7%)"; // Tailwind amber-600, same as StatusBadge's "pending"
 export const YELLOW_TEXT = "hsl(var(--fav-yellow-fg))"; // Lighter text
 
 export const POSITIVE_BG = "hsl(var(--fav-positive-bg))";
 export const POSITIVE_BORDER = "hsl(var(--fav-positive-border))";
-export const POSITIVE = "hsl(116 48% 48%)";
+export const POSITIVE = "hsl(161.4 93.5% 30.4%)"; // Tailwind emerald-600, same as StatusBadge's "success"
 export const POSITIVE_TEXT = "hsl(var(--fav-positive-fg))"; // Lighter text
 
 /** "5" earns a visibly richer green than the "4" band: pale mint vs deep forest. */
@@ -411,6 +414,15 @@ const NPS_BAND_TONE: Readonly<Record<string, MetricTone>> = {
 
 export const toneForNps = (score: number): MetricTone =>
   NPS_BAND_TONE[npsBandForScore(score).id] ?? "warning";
+
+/** The `MetricSummaryCard` accent bar for each tone, shared so a card's left
+ * edge always agrees with its own reading badge instead of staying a fixed
+ * color no matter what the number says. */
+export const ACCENT_CLASS_BY_TONE: Readonly<Record<MetricTone, string>> = {
+  positive: "bg-status-positive",
+  warning: "bg-status-warning",
+  negative: "bg-status-negative",
+};
 
 /** `+12` / `-4` / `0` — an eNPS score reads with its sign. */
 export const formatNpsScore = (value: number): string =>

@@ -331,10 +331,10 @@ export function SurveyListTable({
   const hasActiveFilters = query !== "" || hasAnyFilter(filters);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card">
-      <div className="flex flex-wrap items-center gap-4 shrink-0">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-2xl border border-border/60 bg-surface shadow-card">
+      <div className="flex flex-wrap items-center gap-4 shrink-0 p-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-[13px] font-bold text-text-primary">Lista de encuestas</h3>
+          <h3 className="text-[13px] font-bold text-text-primary">Lista de encuestas creadas</h3>
           <Badge variant="neutral" className="h-5 px-1.5 text-[11px] font-semibold tabular-nums">
             {visibleRows.length}
           </Badge>
@@ -436,7 +436,7 @@ export function SurveyListTable({
       {/* Names what the dimmed table is waiting for, and offers the way out
           that clicking a greyed row no longer can. */}
       {editingSurvey && (
-        <div className="flex flex-wrap shrink-0 items-center gap-x-3 gap-y-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+        <div className="mx-4 mb-4 flex flex-wrap shrink-0 items-center gap-x-3 gap-y-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
           <CalendarClock className="h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
           <p className="text-[13px] text-text-secondary">
             {dateEdit?.mode === "reopen" ? "Reabriendo " : "Editando la fecha de cierre de "}
@@ -456,7 +456,7 @@ export function SurveyListTable({
         </div>
       )}
 
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-xl border border-border/60">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden border-y border-border/60">
         {visibleRows.length === 0 ? (
           <div className="p-8">
             <EmptyState
@@ -490,7 +490,7 @@ export function SurveyListTable({
             <Table>
               <TableHeader>
                 <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
-                  <TableHead className="pl-7 pr-5">
+                  <TableHead className="w-px pl-4 pr-3">
                     <SelectionHeaderMenu
                       state={headerState}
                       pageCount={pagedRows.length}
@@ -507,7 +507,7 @@ export function SurveyListTable({
                       align="start"
                     />
                   </TableHead>
-                  <TableHead className="w-[30%] px-0 py-3.5">
+                  <TableHead className="w-[30%] px-2 py-3">
                     {/* No filter menu: every name is unique, so a checklist of
                         them would just be the table again. Search covers it. */}
                     <SortOnlyHeader
@@ -516,7 +516,7 @@ export function SurveyListTable({
                       onSort={() => toggleSort("name")}
                     />
                   </TableHead>
-                  <TableHead className="w-[13%] px-0 py-3.5">
+                  <TableHead className="w-[13%] px-2 py-3">
                     <FilterSortHeader
                       label="Tipo"
                       options={availableTypes}
@@ -527,7 +527,7 @@ export function SurveyListTable({
                       onSort={() => toggleSort("type")}
                     />
                   </TableHead>
-                  <TableHead className="w-[14%] px-0 py-3.5">
+                  <TableHead className="w-[14%] px-2 py-3">
                     <FilterSortHeader
                       label="Estado"
                       options={availableStatuses}
@@ -538,14 +538,14 @@ export function SurveyListTable({
                       onSort={() => toggleSort("status")}
                     />
                   </TableHead>
-                  <TableHead className="w-[110px] px-2 py-3.5">
+                  <TableHead className="w-[110px] px-2 py-3">
                     <SortOnlyHeader
                       label="Inicio"
                       sortActive={sort.key === "startDate"}
                       onSort={() => toggleSort("startDate")}
                     />
                   </TableHead>
-                  <TableHead className="w-[110px] px-2 py-3.5">
+                  <TableHead className="w-[110px] px-2 py-3">
                     <FilterSortHeader
                       label="Cierre"
                       options={CLOSE_BUCKETS}
@@ -556,15 +556,20 @@ export function SurveyListTable({
                       onSort={() => toggleSort("endDate")}
                     />
                   </TableHead>
-                  <TableHead className="w-[90px] px-2 py-3.5 text-right">
+                  <TableHead className="w-[90px] px-2 py-3 text-right xl:w-[150px]">
                     <SortOnlyHeader
-                      label="Part."
+                      label={
+                        <>
+                          <span className="hidden xl:inline">Participantes</span>
+                          <span className="xl:hidden">Part.</span>
+                        </>
+                      }
                       sortActive={sort.key === "participants"}
                       onSort={() => toggleSort("participants")}
                       align="right"
                     />
                   </TableHead>
-                  <TableHead className="w-[220px] py-3.5 pl-0 pr-7">
+                  <TableHead className="w-[220px] py-3 pl-0 pr-4">
                     <FilterSortHeader
                       label="Avance"
                       options={PROGRESS_BUCKETS}
@@ -603,7 +608,7 @@ export function SurveyListTable({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 shrink-0 p-4">
         <p className="text-[12px] text-muted-foreground">
           {visibleRows.length === 0
             ? "0 encuestas"
@@ -711,7 +716,7 @@ function SurveyRow({
         (isNew || survey.id === "survey-forced") && "animate-highlight-row transition-none"
       )}
     >
-      <TableCell className="pl-7 pr-5">
+      <TableCell className="pl-4 pr-3">
         <div className="flex items-center">
           <Checkbox
             checked={isSelected}
@@ -790,7 +795,7 @@ function SurveyRow({
       <TableCell className="px-2 py-3 text-right text-[13px] font-semibold tabular-nums text-text-primary">
         {survey.participants}
       </TableCell>
-      <TableCell className="w-[220px] py-3 pr-7">
+      <TableCell className="w-[220px] py-3 pr-4">
         <div className="flex items-center justify-end gap-3">
           <Progress
             value={animatedProgress}

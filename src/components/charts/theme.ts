@@ -83,7 +83,7 @@ export function getUbitsChartTheme(): UbitsChartTheme {
   // and neutral gray provide a semantically grounded 5-color palette.
   // If a chart requires more than 5 series, override option.color directly.
   const brand    = get('--color-brand')          // #0c5bef  primary blue
-  const positive = get('--color-positive')       // #17b16d  green
+  const positive = get('--color-positive')       // #059669  green
   const warning  = get('--color-warning')        // #ffa920  amber
   const negative = get('--color-negative')       // #cf0e34  red
   const neutral  = get('--color-text-secondary') // #5c646f  neutral gray

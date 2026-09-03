@@ -2,6 +2,7 @@ import type * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toneChip, type Tone } from "@/lib/tone";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AiGeneratedBadge } from "@/components/ai-interaction";
 import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
@@ -50,6 +51,9 @@ export interface SubsectionAccordionHandlers extends QuestionListHandlers {
 interface SubsectionAccordionProps extends SubsectionAccordionHandlers {
   readOnly?: boolean;
   entry: SectionTreeEntry;
+  /** The accent of the root section this row belongs to — inherited all the
+   *  way down, so a whole branch reads as one color. */
+  tone?: Tone;
   index?: number;
   /** Delay before this row's own questions/nested subsections start
    * cascading in — set by the sibling list so they wait their turn. */
@@ -67,7 +71,7 @@ interface SubsectionAccordionProps extends SubsectionAccordionHandlers {
  * Only one row per level stays open, so the card never grows into a column the
  * author has to scroll through to find their place.
  */
-export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, ...handlers }: SubsectionAccordionProps) {
+export function SubsectionAccordion({ entry, tone = "brand", readOnly, index, contentDelay = 0, ...handlers }: SubsectionAccordionProps) {
   const {
     expandedIds,
     selectedId,
@@ -81,12 +85,18 @@ export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, 
     pendingDeleteMessage,
     onConfirmDeleteSection,
     onCancelDeleteSection,
+    isRowLocked,
   } = handlers;
 
   const { section, depth, numbering } = entry;
   const isExpanded = expandedIds.has(section.id);
   const isSelected = selectedId === section.id;
   const isPendingDelete = pendingDeleteId === section.id;
+  // Same idea as SectionEditor: this row's own header goes inert while a row
+  // elsewhere is mid delete-confirm or mid-edit, but the tree underneath
+  // still gets the original `readOnly` — the active row, however deep,
+  // keeps working.
+  const chromeLocked = readOnly || isRowLocked;
   
   const isDragging = handlers.draggingSectionId === section.id;
   const draggingParentId = handlers.draggingSectionId ? findSection(handlers.sections, handlers.draggingSectionId)?.parentId : null;
@@ -121,8 +131,9 @@ export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, 
         // Anywhere on the header makes this the active row, not just the title
         // field — otherwise clicking a description or the empty space beside it
         // moved nothing, and the tree and rail stayed on the previous row. Not
-        // while the delete banner is up: it should only ever answer that.
-        onClick={() => !isPendingDelete && onSelect(section.id)}
+        // while the delete banner is up, or another row is locked: it should
+        // only ever answer that.
+        onClick={() => !isPendingDelete && !chromeLocked && onSelect(section.id)}
         className={cn("flex items-start gap-2", isDropTarget && "bg-primary/5")}
       >
         {isPendingDelete ? (
@@ -135,7 +146,7 @@ export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, 
         ) : (
           <>
             <div className="flex flex-col items-center mt-1">
-              {!readOnly && (
+              {!chromeLocked && (
                 <span
                   {...handlers.getSectionHandleProps(section.id)}
                   aria-label={`Reordenar ${section.title}`}
@@ -148,17 +159,20 @@ export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, 
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
+                  if (chromeLocked) return;
                   onToggleExpanded(section.id);
                 }}
+                disabled={chromeLocked}
                 aria-expanded={isExpanded}
                 aria-label={
                   isExpanded ? `Contraer ${depthLabel(depth)} ${numbering}` : `Expandir ${depthLabel(depth)} ${numbering}`
                 }
                 className={cn(
-                  "flex shrink-0 items-center justify-center rounded-lg p-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-                  isExpanded ? "bg-primary/10 text-primary" : "text-muted-foreground/60 hover:bg-surface-muted",
+                  "flex shrink-0 items-center justify-center rounded-lg p-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-40",
+                  !isExpanded && "text-muted-foreground/60 hover:bg-surface-muted",
                   theme.chevronSize
                 )}
+                style={isExpanded ? toneChip(tone) : undefined}
               >
                 <ChevronRight
                   className={cn("transition-transform duration-200", isExpanded && "rotate-90", theme.chevronIcon)}
@@ -175,6 +189,10 @@ export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, 
                     theme.chip,
                     isSelected && CHIP_SELECTED_RING
                   )}
+                  // Level 2 is the tinted chip, so it takes the branch's tone.
+                  // Level 3 is an outlined chip by design — a third weight of
+                  // color there would compete with its parent.
+                  style={theme.tinted ? toneChip(tone) : undefined}
                 >
                   <span className={cn("font-extrabold opacity-60", theme.chipMarker)}>{numbering}</span>
                   <span className="font-semibold">{depthLabel(depth)}</span>
@@ -185,7 +203,7 @@ export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, 
 
               <input
                 value={section.title}
-                readOnly={readOnly}
+                readOnly={chromeLocked}
                 onChange={(event) => onTitleChange(section.id, event.target.value)}
                 onFocus={() => onSelect(section.id)}
                 placeholder={`${depthLabel(depth)} ${numbering}`}
@@ -198,7 +216,7 @@ export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, 
 
               <input
                 value={section.description}
-                readOnly={readOnly}
+                readOnly={chromeLocked}
                 onChange={(event) => onDescriptionChange(section.id, event.target.value)}
                 placeholder="Añade una descripción."
                 aria-label={`Descripción de ${depthLabel(depth)} ${numbering}`}
@@ -210,13 +228,14 @@ export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, 
               {questionCount > 0 && (
                 <span
                   aria-label={`${questionCount} preguntas`}
-                  className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground ring-1 ring-inset ring-border/70"
+                  className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums"
+                  style={toneChip(tone)}
                 >
                   {questionCount}
                 </span>
               )}
 
-              {!readOnly && (
+              {!chromeLocked && (
                 <MoveToPopover
                   subjectLabel={section.title || `${depthLabel(entry.depth)} ${entry.numbering}`}
                   destinations={moveDestinationsForSection(handlers.sections, entry)}
@@ -228,10 +247,10 @@ export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, 
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    disabled={readOnly}
+                    disabled={chromeLocked}
                     onClick={() => onDelete(section.id)}
                     aria-label={`Eliminar ${depthLabel(depth)} ${numbering}`}
-                    className="rounded-lg p-1.5 text-muted-foreground/60 transition-all hover:bg-status-negative/10 hover:text-status-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg p-1.5 text-status-negative transition-all hover:bg-status-negative/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:text-muted-foreground/60 disabled:opacity-40"
                   >
                     <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
                   </button>
@@ -270,9 +289,11 @@ export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, 
           {canHaveQuestions(depth) && (
             <SectionQuestions
               readOnly={readOnly}
+              tone={tone}
               sectionId={section.id}
               questions={section.questions}
               editingQuestionId={handlers.editingQuestionId}
+              isRowLocked={isRowLocked}
               showQuestionValidation={handlers.showQuestionValidation}
               onOpenQuestion={handlers.onOpenQuestion}
               onQuestionChange={handlers.onQuestionChange}
@@ -300,6 +321,7 @@ export function SubsectionAccordion({ entry, readOnly, index, contentDelay = 0, 
                 <SubsectionAccordion
                   key={child.section.id}
                   entry={child}
+                  tone={tone}
                   readOnly={readOnly}
                   index={index}
                   contentDelay={cascadeItemSettleTime(contentDelay, index) + CASCADE_CONTENT_GAP}

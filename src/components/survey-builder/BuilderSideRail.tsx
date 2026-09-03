@@ -9,6 +9,7 @@ import {
   Library,
   ListChecks,
   ListPlus,
+  LogOut,
   Plus,
   Sparkles,
   UploadCloud,
@@ -35,7 +36,12 @@ import {
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { formatCount, type ParticipantsGroupBreakdown } from "./participants";
 import { depthLabel } from "./surveyBuilderTypes";
-import { RailSelectionChip, useRailAutoHide } from "@/components/action-rail";
+import {
+  RailDragHandle,
+  RailSelectionChip,
+  useDraggableRail,
+  useRailAutoHide,
+} from "@/components/action-rail";
 
 interface BuilderSideRailProps {
   readOnly?: boolean;
@@ -106,6 +112,9 @@ interface BuilderSideRailProps {
    */
   selectedDepth: number | null;
   onSave: () => void;
+  /** Leaves the creation experience, keeping the draft as-is — the same
+   *  action the header breadcrumb's "Encuestas" link performs. */
+  onExit: () => void;
   onContinue: () => void;
   canContinue: boolean;
   continueLabel?: string;
@@ -130,6 +139,10 @@ interface RailButtonProps {
   /** When true, ignores clicks outside so the rail doesn't close if a modal opens */
   ignoreOutsideClick?: boolean;
   tooltipSide?: "top" | "left";
+  /** "danger" reads as a destructive/leaving action — the same red as the
+   * eliminar buttons elsewhere in the builder — instead of the rail's
+   * default white-on-dark treatment. */
+  variant?: "default" | "danger";
 }
 
 function RailButton({
@@ -139,6 +152,7 @@ function RailButton({
   blockedReason = null,
   ignoreOutsideClick = false,
   tooltipSide = "top",
+  variant = "default",
 }: RailButtonProps) {
   const disabled = blockedReason !== null;
 
@@ -150,7 +164,12 @@ function RailButton({
           onClick={disabled ? undefined : onClick}
           disabled={disabled}
           {...(ignoreOutsideClick ? { "data-click-outside-ignore": true } : {})}
-          className="dock-item relative flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-white/60"
+          className={cn(
+            "dock-item relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-40",
+            variant === "danger"
+              ? "text-status-negative/80 hover:bg-status-negative/10 hover:text-status-negative focus-visible:ring-status-negative/30 disabled:hover:bg-transparent disabled:hover:text-status-negative/80"
+              : "text-white/60 hover:bg-white/10 hover:text-white focus-visible:ring-white/30 disabled:hover:bg-transparent disabled:hover:text-white/60"
+          )}
         >
           {icon}
         </button>
@@ -262,6 +281,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
       showAddSubsection,
       selectedDepth,
       onSave,
+      onExit,
       onContinue,
       canContinue,
       continueLabel = "Continuar",
@@ -282,6 +302,12 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
     const [autoHide, setAutoHide] = useRailAutoHide();
     const [isExpanded, setIsExpanded] = React.useState(true);
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // The pin toggle's "keep the bar open" state doubles as its "fixed"
+    // state — same reasoning as the other floating rails: only while
+    // autoHide won't yank the bar away is picking it up safe.
+    const isFixed = !autoHide;
+    const { barRef, position, isDragging, gripHandlers } = useDraggableRail(isFixed);
 
     // ── Step-change detection ──────────────────────────────
     // Tracks the previous step to detect real transitions and drive the
@@ -422,18 +448,27 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
 
     return (
       <>
-        <div 
+        <div
           className={cn(
           "absolute z-50 flex pointer-events-none",
-          isRight ? "right-0 top-1/2 -translate-y-1/2 flex-row items-center justify-end" : "bottom-0 left-1/2 -translate-x-1/2 flex-col items-center justify-end"
+          // Centred with flexbox rather than a translate transform — a
+          // transformed ancestor becomes the containing block for a fixed-
+          // position descendant, which would send the dragged bar's
+          // coordinates to the wrong origin and fling it off-screen.
+          isRight ? "inset-y-0 right-0 flex-row items-center justify-end" : "inset-x-0 bottom-0 flex-col items-center justify-end"
         )}
       >
-        {/* Hit area for hover */}
-        <div 
+        {/* Hit area for hover. Switches to fixed positioning once dragged, so
+            it can sit anywhere in the viewport instead of only at its
+            default dock. */}
+        <div
+          ref={barRef}
           className={cn(
             "pointer-events-auto flex items-center justify-end",
-            isRight ? "w-16 flex-row py-6 pr-0" : "h-16 flex-col px-6 pb-0"
+            isRight ? "w-16 flex-row py-6 pr-0" : "h-16 flex-col px-6 pb-0",
+            position && "fixed z-[60]"
           )}
+          style={position ? { left: position.x, top: position.y } : undefined}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
@@ -460,6 +495,13 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                 isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
               )}
             >
+              {isFixed && (
+                <>
+                  <RailDragHandle isDragging={isDragging} {...gripHandlers} />
+                  <div className={cn("self-stretch bg-white/10", isRight ? "mx-2 my-1 h-px w-auto" : "mx-1 my-2 w-px")} />
+                </>
+              )}
+
               {isSectionsStepActive && !readOnly && (
                 <>
                   {/* Shimmer overlay for the contextual group */}
@@ -861,6 +903,21 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
               </Tooltip>
 
               <div className={cn("self-stretch bg-white/10", isRight ? "mx-2 my-1 h-px w-auto" : "-mx-1 my-2 w-px")} />
+
+              {/* Leaving is not a per-step action, but it belongs right next
+                  to "Guardar" — the two ways a session at the dock can end —
+                  and to its left, since leaving is the more final of the
+                  two. Keeps the draft as-is, the same as the header
+                  breadcrumb's "Encuestas" link. Red like the eliminar
+                  buttons elsewhere, since it is the one action here that
+                  leaves the screen. */}
+              <RailButton
+                tooltipSide={isRight ? "left" : "top"}
+                icon={<LogOut className="h-[20px] w-[20px]" strokeWidth={2} />}
+                label="Salir de la experiencia de creación"
+                onClick={onExit}
+                variant="danger"
+              />
 
               <RailButton tooltipSide={isRight ? "left" : "top"}
                 icon={<Save className="h-[20px] w-[20px]" strokeWidth={2} />}

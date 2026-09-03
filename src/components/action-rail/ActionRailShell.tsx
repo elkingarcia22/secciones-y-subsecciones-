@@ -3,6 +3,8 @@ import { Minimize2, Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRailAutoHide } from "./railAutoHide";
+import { useDraggableRail } from "./useDraggableRail";
+import { RailDragHandle } from "./RailDragHandle";
 import { motion } from "framer-motion";
 
 interface ActionRailShellProps {
@@ -39,6 +41,11 @@ export function ActionRailShell({
   const [isExpanded, setIsExpanded] = React.useState(true);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // The pin toggle's "keep the bar open" state doubles as its "fixed" state —
+  // only while autoHide won't yank the rail away is picking it up safe.
+  const isFixed = !autoHide;
+  const { barRef, position, isDragging, gripHandlers } = useDraggableRail(isFixed);
+
   const startCollapseTimer = React.useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (!autoHide || keepOpen) return;
@@ -56,9 +63,16 @@ export function ActionRailShell({
 
   return (
     <div className="pointer-events-none flex flex-col items-center justify-end pb-4">
-      {/* Hover catch area, so the collapsed handle is easy to reach. */}
+      {/* Hover catch area, so the collapsed handle is easy to reach. Switches
+          to fixed positioning once dragged, so it can sit anywhere in the
+          viewport instead of only at the shell's bottom-centre dock. */}
       <div
-        className="pointer-events-auto flex h-16 flex-col items-center justify-end px-6"
+        ref={barRef}
+        className={cn(
+          "pointer-events-auto flex h-16 flex-col items-center justify-end px-6",
+          position && "fixed z-[60]"
+        )}
+        style={position ? { left: position.x, top: position.y } : undefined}
         onMouseEnter={() => {
           setIsExpanded(true);
           if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -66,7 +80,7 @@ export function ActionRailShell({
         onMouseLeave={startCollapseTimer}
       >
         <motion.div
-          layout
+          layout={!isDragging}
           initial={false}
           transition={{ type: "spring", bounce: 0.35, duration: 0.7 }}
           className={cn(
@@ -79,13 +93,20 @@ export function ActionRailShell({
           )}
         >
           <motion.div
-            layout="position"
+            layout={isDragging ? false : "position"}
             transition={{ type: "spring", bounce: 0.35, duration: 0.7 }}
             className={cn(
               "dock-container flex w-max items-center gap-2",
               isExpanded ? "scale-100 opacity-100 transition-opacity duration-300" : "pointer-events-none scale-95 opacity-0 transition-opacity duration-150"
             )}
           >
+            {isFixed && (
+              <>
+                <RailDragHandle isDragging={isDragging} {...gripHandlers} />
+                <RailDivider />
+              </>
+            )}
+
             {contextual && (
               <>
                 {contextual}

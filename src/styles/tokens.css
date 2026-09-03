@@ -23,9 +23,12 @@
   --color-border-strong: #979ba3;
   
   /* States (Figma Update) */
-  --color-positive: #328E2C;
-  --color-positive-dark: #223B16;
-  --color-positive-bg: #E8F8E4;
+  /* Same green family as the table's status badges (StatusBadge, emerald-*),
+     so an "En curso"/"Finalizado" chip and a metric card never read as two
+     different greens. */
+  --color-positive: #059669;
+  --color-positive-dark: #064E3B;
+  --color-positive-bg: #E8FCF2;
   
   --color-negative: #E9343C;
   
@@ -33,6 +36,12 @@
   --color-warning-light: #FFB37F;
 
   --color-yellow: #EAB308;
+
+  /* The "official / other" accent — the fifth tone, next to brand blue,
+     positive green and warning orange. Used by the NOM 035 template family,
+     the anonymous-visibility card and anything else that needs a hue of its
+     own without claiming a status. */
+  --color-indigo: #6366f1;
   
   --color-info: #4A74EE;
   
@@ -98,9 +107,9 @@
   --color-border-hsl: 210 4% 82%;
   --color-border-strong-hsl: 220 6% 62%;
   --color-negative-hsl: 357 80% 56%;
-  --color-positive-hsl: 116 53% 37%;
-  --color-positive-dark-hsl: 100 45% 16%;
-  --color-positive-bg-hsl: 108 55% 93%;
+  --color-positive-hsl: 161.4 93.5% 30.4%;
+  --color-positive-dark-hsl: 164.2 85.7% 16.5%;
+  --color-positive-bg-hsl: 150 76.9% 94.9%;
   --color-warning-hsl: 27 100% 52%;
   --color-warning-light-hsl: 24 100% 75%;
   --color-yellow-hsl: 48 96% 46%;

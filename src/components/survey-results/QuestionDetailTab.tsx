@@ -1,27 +1,25 @@
 import * as React from "react";
 import { ListChecks } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { RingGauge } from "@/components/survey-analytics/pulseCharts";
+import { Sparkline } from "@/components/survey-analytics/pulseCharts";
 
 import { EmptyState } from "@/components/feedback";
 import type { SurveyDraft } from "@/components/survey-builder";
-import { buildAnswerMatrix, buildOpenComments, buildQuestionBreakdowns, buildRespondents, sentimentTotals, type Sentiment } from "@/mocks/questionResponses";
+import { buildAnswerMatrix, buildOpenComments, buildQuestionBreakdowns, buildRespondents, effectiveSentiment, sentimentTotals, type Sentiment } from "@/mocks/questionResponses";
 import { flattenResultSections, sectionResultsForFilters, type SectionResult, type SegmentDefinition, type SurveyResults } from "@/mocks/surveyResults";
 import { CommentsSentimentView, scopeToQuestion } from "./CommentsSentimentView";
 import { CommentsFiltersButton, CommentsSearchBox, commentFilterCounts, commentTopics, useCommentFilters } from "./CommentsToolbar";
-import { PARTICIPANT_SCORE_LEGEND } from "./favorabilityScale";
+import { deriveTrendSeries } from "./deriveTrend";
+import { formatPercent, PARTICIPANT_SCORE_LEGEND, POSITIVE, YELLOW } from "./favorabilityScale";
 import { IndividualResponsesView, type AnswerDrillDown } from "./IndividualResponsesView";
 import { MeasurementScaleButton } from "./MeasurementScaleButton";
-import { AnimatedNumber } from "./MiniMetricCard";
-import { ResultsSummaryCard } from "./ResultsSummaryCard";
-import { SpectrumScale } from "@/components/survey-analytics/pulseCharts";
+import { MetricReadingBadge, MetricSummaryCard } from "./MetricSummaryCard";
 import { QuestionBreakdownView } from "./QuestionBreakdownView";
 import { QuestionViewSwitch, type QuestionView } from "./QuestionViewSwitch";
 import { ResultsFilterChips, ResultsFilterControls, THREE_TIER_HIGHLIGHT } from "./ResultsFilterToolbar";
 import { RosterFilterButton, useRosterFilters } from "./RosterFilters";
 import { COMMENT_FILTER_KEYS, commentMatchesFilters } from "./summaryModel";
-import { SENTIMENT_NEGATIVE_CEILING, SENTIMENT_POSITIVE_FLOOR, SENTIMENT_SCALE_LEGEND, SENTIMENT_STYLES, SENTIMENT_WEIGHT, sentimentAverage, SENTIMENT_ORDER } from "./sentimentScale";
+import { SENTIMENT_NEGATIVE_CEILING, SENTIMENT_POSITIVE_FLOOR, SENTIMENT_SCALE_LEGEND, SENTIMENT_STYLES, SENTIMENT_WEIGHT, sentimentAverage } from "./sentimentScale";
 import { useResultsFilters } from "./useResultsFilters";
 
 const formatCount = (value: number) => new Intl.NumberFormat("es-CO").format(value);
@@ -57,7 +55,6 @@ export function QuestionDetailTab({
   const [view, setView] = React.useState<QuestionView>("breakdown");
   const [drill, setDrill] = React.useState<AnswerDrillDown | null>(null);
   const [focusQuestionId, setFocusQuestionId] = React.useState<string | null>(null);
-  const [sentimentFilter, setSentimentFilter] = React.useState<ReadonlySet<Sentiment>>(new Set());
  // Search and filters belong to the toolbar row, so they live with the header
  // rather than inside the view they narrow.
  const commentFilters = useCommentFilters();
@@ -105,22 +102,9 @@ export function QuestionDetailTab({
   // strips the demographics, and there `commentMatchesFilters` keeps the
   // comment rather than inventing a group for it.
   const scopedComments = React.useMemo(
-    () => comments.filter((comment) => {
-      if (!commentMatchesFilters(comment, filtersState.filters, segments)) return false;
-      if (sentimentFilter.size > 0 && !sentimentFilter.has(comment.sentiment)) return false;
-      return true;
-    }),
-    [comments, filtersState.filters, segments, sentimentFilter]
+    () => comments.filter((comment) => commentMatchesFilters(comment, filtersState.filters, segments)),
+    [comments, filtersState.filters, segments]
   );
-
-  const toggleSentimentFilter = React.useCallback((sentiment: Sentiment) => {
-    setSentimentFilter((prev) => {
-      const next = new Set(prev);
-      if (next.has(sentiment)) next.delete(sentiment);
-      else next.add(sentiment);
-      return next;
-    });
-  }, []);
 
  // Only the demographics a comment carries are offered: the rest would look
  // like a filter and behave like nothing.
@@ -157,6 +141,39 @@ export function QuestionDetailTab({
  return { questions, answers };
  }, [sections]);
 
+ // Which section's comments read most negative — the same "top 3" every
+ // other tab's card leads with, read from sentiment instead of favorability.
+ // A comment's own `sectionTitle` is its immediate subsection — often a leaf
+ // like "Comentarios abiertos" that repeats across every survey and says
+ // nothing — so it's rolled up to the root section (the same "área" level
+ // Favorabilidad's own top 3 reads from) via the shared numbering prefix.
+ const negativeSentimentBySection = React.useMemo(() => {
+ const rootTitleByNumbering = new Map(sections.map((section) => [section.numbering, section.title]));
+ const groups = new Map<string, { negative: number; total: number }>();
+ for (const comment of scopedComments) {
+ const rootNumbering = comment.sectionNumbering.split(".")[0];
+ const rootTitle = rootTitleByNumbering.get(rootNumbering) ?? comment.sectionTitle;
+ const group = groups.get(rootTitle) ?? { negative: 0, total: 0 };
+ group.total += 1;
+ if (effectiveSentiment(comment, overrides) === "negative") group.negative += 1;
+ groups.set(rootTitle, group);
+ }
+ return Array.from(groups.entries())
+ .filter(([, group]) => group.total > 0)
+ .map(([title, group]) => ({ id: title, title, ratio: (group.negative / group.total) * 100 }))
+ .sort((a, b) => b.ratio - a.ratio)
+ .slice(0, 3);
+ }, [scopedComments, overrides, sections]);
+
+ // This app has no real measurement-over-measurement record of average
+ // sentiment, so the trend is deterministically derived around today's index
+ // — same quarters the other tabs' trends use.
+ const trendLabels = React.useMemo(() => results.trend.map((point) => point.label), [results.trend]);
+ const sentimentTrend = React.useMemo(
+ () => deriveTrendSeries(trendLabels, `${draft.name}:sentiment`, sentiment.index ?? 0, 6, [0, 100]),
+ [trendLabels, draft.name, sentiment.index]
+ );
+
  const setSentiment = React.useCallback((commentId: string, sentiment: Sentiment) => {
  setOverrides((current) => new Map(current).set(commentId, sentiment));
  }, []);
@@ -179,35 +196,21 @@ export function QuestionDetailTab({
  setView("comments");
  }, []);
 
+ const maxPossibleAnswers = results.participation.invited * totals.questions;
+ const accentColor =
+ sentiment.index === null
+ ? "bg-muted-foreground"
+ : sentiment.type === "positive"
+ ? "bg-status-positive"
+ : sentiment.type === "negative"
+ ? "bg-status-negative"
+ : "bg-status-warning";
+
  return (
- <div className="flex h-full min-h-0 flex-col">
- <ResultsSummaryCard
- className="mb-6 mt-1 shrink-0"
- label="Sentimiento promedio"
- tone={sentiment.index === null ? "neutral" : SENTIMENT_TONE[sentiment.type]}
- value={
- sentiment.index === null ? (
- <span className="text-text-muted">—</span>
- ) : (
- <AnimatedNumber value={sentiment.index} format={(value) => Math.round(value).toString()} />
- )
- }
- valueAside={
- sentiment.index !== null && (
- <span
- className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-bold leading-none"
- style={{
- backgroundColor: SENTIMENT_STYLES[sentiment.type].background,
- borderColor: SENTIMENT_STYLES[sentiment.type].border,
- color: SENTIMENT_STYLES[sentiment.type].foreground,
- }}
- >
- <SentimentIcon type={sentiment.type} />
- {SENTIMENT_STYLES[sentiment.type].label}
- </span>
- )
- }
- caption={`${formatCount(sentiment.counted)} ${sentiment.counted === 1 ? "comentario analizado" : "comentarios analizados"} · índice de 0 a 100`}
+ <div className="flex h-full min-h-0 flex-col gap-6">
+ <MetricSummaryCard
+ accentColor={accentColor}
+ title="Sentimiento promedio"
  hint={
  <div className="flex flex-col items-start gap-3 leading-relaxed">
  <p className="text-[12px]">
@@ -220,124 +223,68 @@ export function QuestionDetailTab({
  entre los dos. Las correcciones que hagas a una lectura de la IA entran en el
  cálculo.
  </p>
- {/* No multiplier here — the weights already put the result on
- 0–100, so the shared FormulaBlock's "× 100" would be wrong. */}
- <div className="flex w-full flex-col gap-1">
- <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
- Fórmula
- </span>
- <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
- <div className="flex flex-col items-center text-center leading-tight">
- <span className="border-b border-current px-2 pb-0.5 leading-tight">
- Suma del valor de cada comentario
- </span>
- <span className="px-2 pt-0.5 leading-tight opacity-80">
- {formatCount(sentiment.counted)} comentarios
- </span>
- </div>
- <span className="text-[13px] font-semibold">=</span>
- <span className="font-semibold">
- {sentiment.index === null
- ? "sin comentarios"
- : `${Math.round(sentiment.index)} · ${SENTIMENT_STYLES[sentiment.type].label}`}
- </span>
- </div>
- </div>
  </div>
  }
-  rightContent={
-    <div className="flex gap-0">
-      {/* Rings de métricas - izquierda con separador */}
-      <div className="flex flex-col gap-3 flex-1 lg:border-r lg:border-border/40 lg:pr-8">
-        <span className="text-[11px] font-semibold text-text-muted">Resumen de respuestas</span>
-        <div className="flex items-center justify-between gap-4">
-          {(() => {
-            const maxPossible = results.participation.invited * totals.questions;
-            const rings = [
-              { id: "questions", label: "Preguntas", value: totals.questions, max: totals.questions, color: "text-primary" },
-              { id: "answers", label: "Respuestas", value: totals.answers, max: maxPossible, color: "text-status-positive" },
-              { id: "people", label: "Personas", value: respondents.length, max: results.participation.invited, color: "text-[#EAB308]" },
-            ];
-            return rings.map((ring) => (
-              <div key={ring.id} className="flex flex-col items-center gap-1.5">
-                <div className={cn("relative", ring.color)}>
-                  <RingGauge
-                    value={ring.max > 0 ? (ring.value / ring.max) * 100 : 0}
-                    ariaLabel={ring.label}
-                    size={60}
-                    strokeWidth={5.5}
-                  />
-                  <span className="absolute inset-0 flex items-center justify-center text-[11px] font-extrabold text-text-primary">
-                    {formatCount(ring.value)}
-                  </span>
-                </div>
-                <span className="text-[10px] font-medium text-text-muted leading-tight text-center">{ring.label}</span>
-                <span className="text-[9px] text-text-muted">de {formatCount(ring.max)}</span>
-              </div>
-            ));
-          })()}
-        </div>
-      </div>
-      {/* Sentiment segments - derecha con filtros */}
-      <div className="flex flex-col gap-2.5 flex-1 pl-8">
-        <span className="text-[11px] font-semibold text-text-muted">Comentarios por sentimiento</span>
-        <div className="flex h-2.5 w-full gap-px overflow-hidden rounded-full bg-muted dark:bg-white/10">
-          {SENTIMENT_ORDER.filter((id) => sentimentCounts[id] > 0).map((id) => (
-            <span
-              key={id}
-              className={cn(
-                "h-full min-w-[3px] pulse-bar-grow origin-left transition-opacity duration-200",
-                sentimentFilter.size > 0 && !sentimentFilter.has(id as Sentiment) && "opacity-30"
-              )}
-              style={{
-                flexGrow: sentimentCounts[id],
-                backgroundColor: SENTIMENT_STYLES[id].color,
-              }}
-            />
-          ))}
-        </div>
-        <ul className="flex flex-col gap-0.5">
-          {SENTIMENT_ORDER.map((id) => {
-            const isActive = sentimentFilter.has(id as Sentiment);
-            return (
-              <li key={id}>
-                <button
-                  type="button"
-                  onClick={() => toggleSentimentFilter(id as Sentiment)}
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-lg px-1.5 py-1 text-[12px] transition-colors duration-200",
-                    "hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-                    isActive && "bg-primary/[0.06] ring-1 ring-primary/30",
-                    sentimentFilter.size > 0 && !isActive && "opacity-60"
-                  )}
-                >
-                  <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: SENTIMENT_STYLES[id].color }} />
-                  <span className="min-w-0 flex-1 truncate font-medium text-text-secondary">
-                    {SENTIMENT_STYLES[id].plural.charAt(0).toUpperCase() + SENTIMENT_STYLES[id].plural.slice(1)}
-                  </span>
-                  <span className="shrink-0 font-bold tabular-nums text-text-primary">{formatCount(sentimentCounts[id])}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </div>
-  }
- chartTitle="Dónde cae el promedio en la escala"
- chartInset
- chart={
- <SpectrumScale
- value={sentiment.index}
- min={0}
- max={100}
- zones={[
- { id: "negative", label: `Negativo · hasta ${SENTIMENT_NEGATIVE_CEILING}`, from: 0, to: SENTIMENT_NEGATIVE_CEILING, color: SENTIMENT_STYLES.negative.color },
- { id: "neutral", label: "Neutral", from: SENTIMENT_NEGATIVE_CEILING, to: SENTIMENT_POSITIVE_FLOOR, color: SENTIMENT_STYLES.neutral.color },
- { id: "positive", label: `Positivo · desde ${SENTIMENT_POSITIVE_FLOOR}`, from: SENTIMENT_POSITIVE_FLOOR, to: 100, color: SENTIMENT_STYLES.positive.color },
+ bigValue={sentiment.index === null ? "—" : String(Math.round(sentiment.index))}
+ bigValueBadge={
+ sentiment.index !== null && (
+ <MetricReadingBadge
+ tone={sentiment.type === "neutral" ? "warning" : sentiment.type}
+ label={SENTIMENT_STYLES[sentiment.type].label}
+ />
+ )
+ }
+ caption={`${formatCount(sentiment.counted)} ${sentiment.counted === 1 ? "comentario analizado" : "comentarios analizados"} · índice de 0 a 100`}
+ ringsLabel="Resumen de respuestas"
+ ringsTotal={`${formatCount(totals.questions)} preguntas`}
+ rings={[
+ {
+ id: "questions",
+ label: "Preguntas",
+ percentage: totals.questions > 0 ? 100 : 0,
+ color: "var(--color-brand)",
+ count: formatCount(totals.questions),
+ active: false,
+ onToggle: () => {},
+ interactive: false,
+ },
+ {
+ id: "answers",
+ label: "Respuestas",
+ percentage: maxPossibleAnswers > 0 ? Math.round((totals.answers / maxPossibleAnswers) * 100) : 0,
+ color: POSITIVE,
+ count: formatCount(totals.answers),
+ active: false,
+ onToggle: () => {},
+ interactive: false,
+ },
+ {
+ id: "people",
+ label: "Personas",
+ percentage: results.participation.invited > 0 ? Math.round((respondents.length / results.participation.invited) * 100) : 0,
+ color: YELLOW,
+ count: formatCount(respondents.length),
+ active: false,
+ onToggle: () => {},
+ interactive: false,
+ },
  ]}
+ topAreasTitle="Top 3 secciones con más sentimiento negativo"
+ topAreas={negativeSentimentBySection.map((group) => ({
+ id: group.id,
+ label: group.title,
+ value: group.ratio,
+ displayValue: formatPercent(group.ratio),
+ }))}
+ chartTitle="Tendencia por medición"
+ chart={
+ <Sparkline
+ points={trendLabels.map((label, index) => ({ id: label, name: label, value: sentimentTrend[index] }))}
  format={(value) => Math.round(value).toString()}
- ariaLabel={`Sentimiento promedio ${sentiment.index === null ? "sin comentarios" : Math.round(sentiment.index)} en una escala de 0 a 100`}
+ ariaLabel={`Sentimiento promedio de las últimas ${trendLabels.length} mediciones`}
+ height={56}
+ showPoints
+ fitTarget={false}
  />
  }
  />
@@ -345,10 +292,10 @@ export function QuestionDetailTab({
  {/* pb-20: the screen's floating action rail hovers over the last ~80px of
  the scroll area, and this tab's lists end in a real control. */}
  <div className="min-h-0 flex-1 pb-20 ">
- <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
+ <div className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-surface p-4 shadow-card">
  {/* Same sticky toolbar the Favorabilidad views use: title, count, the
  shared filters, the view switch and the scale legend. */}
- <div className="sticky top-3 z-30 -mt-6 pt-6 pb-2 sm:-mt-8 sm:pt-8 bg-surface">
+ <div className="sticky top-3 z-30 -mt-4 pt-4 pb-2 bg-surface">
  <div className="flex flex-wrap items-center gap-4 pb-2">
  <div className="flex items-center gap-2">
  <h3 className="text-[13px] font-bold text-text-primary">
@@ -520,18 +467,6 @@ export function QuestionDetailTab({
  * answers that: one index on favorability's own 0–100 ground, with the reading
  * it falls in spelled out beside it, and the split behind it on hover.
  */
-/** Card tone per sentiment reading — the same three the badge uses. */
-const SENTIMENT_TONE: Readonly<Record<Sentiment, "positive" | "yellow" | "negative">> = {
- positive: "positive",
- neutral: "yellow",
- negative: "negative",
-};
-
-function SentimentIcon({ type }: { type: Sentiment }) {
- const Icon = SENTIMENT_STYLES[type].icon;
- return <Icon className="h-3 w-3" strokeWidth={2.5} />;
-}
-
 const VIEW_TITLES: Readonly<Record<QuestionView, string>> = {
  breakdown: "Detalle por secciones",
  people: "Respuestas individuales",

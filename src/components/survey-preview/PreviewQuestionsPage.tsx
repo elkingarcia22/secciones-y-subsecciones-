@@ -5,6 +5,7 @@ import { PreviewQuestionCard } from "./PreviewQuestionCard";
 import { PreviewScaleMatrix } from "./PreviewScaleMatrix";
 import type { PreviewAnswer } from "./PreviewAnswerField";
 import { groupQuestionBlocks, toPreviewQuestion, type PreviewPage } from "./previewModel";
+import { toneChip, type Tone } from "@/lib/tone";
 
 /**
  * A page of questions — a section, a subsection, or the demographics block.
@@ -45,7 +46,11 @@ export function PreviewQuestionsPage({
           animates as a set: the box itself settles in, then its own pieces
           (breadcrumb, title, description, meta) cascade in right behind it. */}
       <header className="preview-page-enter-header relative overflow-hidden rounded-2xl border border-border/60 bg-surface p-6 shadow-drawer sm:p-7">
-        {/* Subtle top accent to mark it as a header without being intrusive */}
+        {/* Subtle top accent to mark it as a header without being intrusive.
+            Plain brand blue, on purpose: color on this page is reserved for
+            what an answer means (see the scale controls below it) — a section
+            tinted by its position would compete with that and mean nothing on
+            its own. */}
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/80 to-primary/40" />
         {/* Very faint background gradient to give it slight depth compared to questions */}
         <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none" />
@@ -71,8 +76,12 @@ export function PreviewQuestionsPage({
           )}
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <Meta icon={ListChecks} label={`${questions.length} ${questions.length === 1 ? "pregunta" : "preguntas"}`} />
-            <Meta icon={Clock3} label={`${minutes} min aprox.`} />
+            <Meta
+              icon={ListChecks}
+              tone="positive"
+              label={`${questions.length} ${questions.length === 1 ? "pregunta" : "preguntas"}`}
+            />
+            <Meta icon={Clock3} tone="warning" label={`${minutes} min aprox.`} />
           </div>
         </div>
       </header>
@@ -103,9 +112,12 @@ export function PreviewQuestionsPage({
   );
 }
 
-function Meta({ icon: Icon, label }: { icon: typeof ListChecks; label: string }) {
+function Meta({ icon: Icon, tone, label }: { icon: typeof ListChecks; tone: Tone; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-muted px-2.5 py-1 text-[12px] font-semibold text-text-secondary">
+    <span
+      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-semibold"
+      style={toneChip(tone)}
+    >
       <Icon className="h-3.5 w-3.5" strokeWidth={2} />
       {label}
     </span>

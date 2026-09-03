@@ -169,8 +169,10 @@
        en manchas casi blancas sobre las cards oscuras. */
     --color-ai-bg: #1b1a33;
     --color-ai-border: #4b53a8;
-    --color-positive-bg: #17301a;
-    --color-positive-dark: #a8dfa2;
+    /* Same emerald family as StatusBadge's dark:bg-emerald-500/15 and
+       dark:text-emerald-300, so a metric card matches a table badge here too. */
+    --color-positive-bg: #15353B;
+    --color-positive-dark: #6EE7B7;
     --color-warning-light: #7a4415;
 
     --color-text-primary: #edeeef;    /* ubits-fg-1-high dark */
@@ -430,6 +432,69 @@
 
   .magic-card-sweep:hover::after {
     opacity: 1;
+  }
+
+  /* Toned cards — a card that carries its own accent (a survey kind, a way of
+     picking participants) hovers in that accent instead of in brand blue.
+     `--tone` is set inline by `MagicCard`; the wash, the outline and the drop
+     shadow all read from it, so the whole hover stays one hue. */
+  .magic-card-toned.magic-card-sweep::after {
+    background: radial-gradient(
+      130% 100% at 6% 112%,
+      color-mix(in srgb, var(--tone) 8%, transparent),
+      transparent 58%
+    );
+  }
+
+  .magic-card-toned:not(.magic-card-selected):hover {
+    border-color: color-mix(in srgb, var(--tone) 40%, transparent);
+  }
+
+  .magic-card-toned.magic-card-lift:hover {
+    box-shadow: 0 6px 16px -12px color-mix(in srgb, var(--tone) 40%, transparent);
+  }
+
+  /* Any control that should hover in the accent it was handed rather than in
+     brand blue. Set `--tone` inline (see `@/lib/tone`'s `toneAccent`). */
+  .tone-hover {
+    transition:
+      border-color 200ms ease,
+      background-color 200ms ease,
+      color 200ms ease;
+  }
+
+  .tone-hover:hover {
+    border-color: color-mix(in srgb, var(--tone) 40%, transparent);
+    background-color: color-mix(in srgb, var(--tone) 5%, transparent);
+    color: var(--tone);
+  }
+
+  /* An icon chip or label that stays neutral gray at rest and only takes its
+     option's tone once that option is hovered or picked — so a row of choices
+     reads as one calm set until the author actually engages with one, instead
+     of shouting every accent at once. Pairs with `.tone-hover` (the compact
+     type-selector buttons) and `.magic-card-toned` (the bigger option cards);
+     the selected state is still painted separately by the caller. */
+  .tone-reveal-chip {
+    background-color: var(--color-surface-muted);
+    color: var(--color-text-secondary);
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  .tone-reveal-text {
+    color: var(--color-text-secondary);
+    transition: color 200ms ease;
+  }
+
+  .tone-hover:hover .tone-reveal-chip,
+  .magic-card-toned:not(.magic-card-selected):hover .tone-reveal-chip {
+    background-color: color-mix(in srgb, var(--tone) 12%, transparent);
+    color: var(--tone);
+  }
+
+  .tone-hover:hover .tone-reveal-text,
+  .magic-card-toned:not(.magic-card-selected):hover .tone-reveal-text {
+    color: var(--tone);
   }
 
   /* AI variant — one soft blend of the same three hues as `.bg-ai-mesh-card`

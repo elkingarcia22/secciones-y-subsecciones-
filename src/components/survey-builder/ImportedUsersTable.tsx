@@ -577,6 +577,9 @@ export function ImportedUsersTable({
                   onToggle={() => toggleSort("name")}
                 />
               </TableHead>
+              <TableHead className="py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Username
+              </TableHead>
               <TableHead
                 aria-sort={sortKey === "email" ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
                 className="py-3"
@@ -819,7 +822,6 @@ function SingleGroupNotice({ tab, count, fileName }: { tab: Tab; count: number; 
  * derived email and dashes for whatever the file did not provide. */
 function NewUserRow({ user }: { user: ImportedUser }) {
   const label = user.name || fallbackLabel(user.username);
-  const subtitle = user.username || user.email || "Usuario nuevo";
   const email = user.email || (user.username ? `${user.username}@ubits.co` : "—");
   return (
     <>
@@ -833,12 +835,10 @@ function NewUserRow({ user }: { user: ImportedUser }) {
           >
             {initials(label)}
           </span>
-          <div className="min-w-0">
-            <p className="truncate text-[13px] font-semibold text-text-primary">{label}</p>
-            <p className="truncate text-[12px] text-muted-foreground">{subtitle}</p>
-          </div>
+          <p className="min-w-0 truncate text-[13px] font-semibold text-text-primary">{label}</p>
         </div>
       </TableCell>
+      <TableCell className="text-[13px] text-text-secondary">{user.username || "—"}</TableCell>
       <TableCell className="text-[13px] text-text-secondary">{email}</TableCell>
       <TableCell className="text-[13px] text-text-secondary">{user.area || "—"}</TableCell>
       <TableCell className="pr-4 text-[13px] text-text-secondary">{user.leader || "—"}</TableCell>

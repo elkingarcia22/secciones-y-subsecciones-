@@ -170,7 +170,9 @@ export function getStepState(
 /** Resolves which step the current selection points at. */
 export function stepFromSelection(selection: {
   kind: string;
-  id: string;
+  id?: string;
 }): StepperStepId {
-  return selection.kind === "section" ? "sections" : (selection.id as StepperStepId);
+  return selection.kind === "section" || selection.kind === "sections-empty"
+    ? "sections"
+    : (selection.id as StepperStepId);
 }

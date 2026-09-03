@@ -330,6 +330,7 @@ const LEADER_OPTIONS = [
 const COUNTRY_OPTIONS = [...new Set(COLLABORATORS.map((person) => person.country))];
 const AGE_OPTIONS = [...new Set(COLLABORATORS.map((person) => person.age))];
 const GENDER_OPTIONS = [...new Set(COLLABORATORS.map((person) => person.gender))];
+const CUSTOM_GROUP_OPTIONS = [...new Set(COLLABORATORS.map((person) => person.customGroup))];
 
 /** The people the measurement was sent to, as the one per-person breakdown. */
 export const CLIMA_Q1_2026_INVITED = 520;
@@ -348,6 +349,7 @@ export const STANDARD_DEMOGRAPHICS: readonly DemographicSeed[] = [
   { key: "country", label: "País", visible: false, options: COUNTRY_OPTIONS },
   { key: "age", label: "Edad", visible: false, options: AGE_OPTIONS },
   { key: "gender", label: "Género", visible: false, options: GENDER_OPTIONS },
+  { key: "customGroup", label: "Grupos personalizados", visible: false, options: CUSTOM_GROUP_OPTIONS },
   { key: "collaborator", label: "Colaborador", visible: false, perPerson: true, options: COLLABORATOR_OPTIONS },
 ];
 

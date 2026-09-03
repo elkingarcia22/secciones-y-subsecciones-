@@ -207,8 +207,8 @@ export function HeatmapTab({
   const scoredTotals = displayTotals.filter((total): total is number => total !== null);
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-surface p-6 shadow-card sm:p-8">
-      <div className="sticky top-3 z-30 -mt-6 pt-6 sm:-mt-8 sm:pt-8 bg-surface">
+    <div className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-surface p-4 shadow-card">
+      <div className="sticky top-3 z-30 -mt-4 pt-4 bg-surface">
         <div className="flex flex-wrap items-center gap-4 pb-2">
           <div className="flex items-center gap-2">
             <h3 className="text-[13px] font-bold text-text-primary">
@@ -267,7 +267,7 @@ export function HeatmapTab({
             <Table className="table-fixed">
               <TableHeader>
                 <TableRow className="border-border/60 bg-muted/40 hover:bg-muted/40">
-                  <TableHead className="sticky left-0 z-20 w-[260px] min-w-[260px] border-r border-border/60 bg-muted-solid pl-7 pr-3 py-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <TableHead className="sticky left-0 z-20 w-[260px] min-w-[260px] border-r border-border/60 bg-muted-solid pl-7 pr-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     <div className="flex items-center gap-2">
                       Sección
                       {hasHighlights && (
@@ -283,7 +283,7 @@ export function HeatmapTab({
                       )}
                     </div>
                   </TableHead>
-                  <TableHead className="w-[90px] border-r border-border/60 py-4 pr-4 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <TableHead className="w-[90px] border-r border-border/60 py-3 pr-3 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="inline-flex cursor-help items-center gap-1 justify-end">
@@ -323,7 +323,7 @@ export function HeatmapTab({
                   {columnOrder.map((index) => (
                     <TableHead
                       key={heatmap.columns[index].id}
-                      className="w-[108px] max-w-[108px] py-4 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                      className="w-[104px] max-w-[104px] py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
                     >
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -467,6 +467,9 @@ function RowNode({
   );
 }
 
+/** The gutter between two heatmap tiles — the only space in the color field. */
+const CELL_GUTTER = "p-[1.5px]";
+
 /** Mirrors `TableRow`'s own base classes (`ui/table.tsx`) — needed because a
  * freshly-revealed row renders as `motion.tr` directly rather than through
  * `TableRow`, which doesn't forward a ref for framer-motion to drive. */
@@ -513,7 +516,10 @@ function GridRow({
     : isQuestion || row.depth >= 3
       ? "text-[11px]"
       : "text-[11px]";
-  const hierarchyBox = isRoot ? "h-10" : isQuestion || row.depth >= 3 ? "h-8" : "h-9";
+  // The tile *is* the row: every cell fills its column and the only space
+  // between two of them is CELL_GUTTER, so adjacent scores read as one
+  // continuous color field instead of a row of separate pills.
+  const hierarchyBox = isRoot ? "h-9" : isQuestion || row.depth >= 3 ? "h-7" : "h-8";
   const padding =
     row.depth === 1 ? "pl-7" : row.depth === 2 ? "pl-10" : row.depth === 3 ? "pl-14" : "pl-16";
 
@@ -525,12 +531,18 @@ function GridRow({
       <th
         scope="row"
         className={cn(
-          "sticky left-0 z-10 min-w-[260px] border-r border-border/60 py-3.5 pl-7 pr-4 text-left align-middle",
+          "sticky left-0 z-10 min-w-[260px] border-r border-border/60 py-[3px] pl-7 pr-4 text-left align-middle",
           stickyBackground,
           padding
         )}
       >
-        <div className={cn("flex items-center gap-2", levelHidden ? "opacity-60" : rowDimmed && "opacity-55")}>
+        <div
+          className={cn(
+            "flex items-center gap-2",
+            hierarchyBox,
+            levelHidden ? "opacity-60" : rowDimmed && "opacity-55"
+          )}
+        >
           {row.kind === "section" && row.children.length > 0 ? (
             <button
               type="button"
@@ -608,13 +620,13 @@ function GridRow({
 
       <td
         className={cn(
-          "border-b border-r border-border/60 px-4 py-3.5 text-right align-middle",
+          "border-b border-r border-border/60 px-3 py-[3px] text-right align-middle",
           rowDimmed && "opacity-45 grayscale",
           stickyBackground
         )}
         style={{ borderBottomColor: "var(--color-surface)" }}
       >
-        <div>
+        <div className={cn("flex items-center justify-end", hierarchyBox)}>
           {levelHidden ? (
             <span
               className="inline-flex h-5 items-center px-1 text-[12px] font-medium leading-none text-muted-foreground/40"
@@ -653,13 +665,13 @@ function GridRow({
             !tierBands.has(tier.id));
 
         return (
-          <TableCell key={index} className="px-2 py-2 align-middle">
+          <TableCell key={index} className={cn(CELL_GUTTER, "align-middle")}>
             <Tooltip>
               <TooltipTrigger asChild>
                 {levelHidden ? (
                   <div
                     className={cn(
-                      "flex items-center justify-center rounded-lg bg-muted/40",
+                      "flex w-full items-center justify-center rounded-[5px] bg-muted/30",
                       hierarchyBox
                     )}
                     title="Total y resultados ocultos: este nivel está desmarcado en Niveles"
@@ -667,7 +679,7 @@ function GridRow({
                 ) : cell.unscored ? (
                   <div
                     className={cn(
-                      "flex items-center justify-center rounded-lg bg-muted/60 text-muted-foreground/70",
+                      "flex w-full items-center justify-center rounded-[5px] bg-muted/45 text-muted-foreground/60",
                       hierarchyBox
                     )}
                   >
@@ -677,7 +689,7 @@ function GridRow({
                   cell.n === 0 ? (
                     <div
                       className={cn(
-                        "flex items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/50",
+                        "flex w-full items-center justify-center rounded-[5px] bg-muted/30 text-muted-foreground/50",
                         hierarchyBox
                       )}
                     >
@@ -686,7 +698,7 @@ function GridRow({
                   ) : (
                     <div
                       className={cn(
-                        "flex items-center justify-center rounded-lg bg-muted text-muted-foreground",
+                        "flex w-full items-center justify-center rounded-[5px] bg-muted/45 text-muted-foreground/70",
                         hierarchyBox
                       )}
                     >
@@ -696,7 +708,7 @@ function GridRow({
                 ) : (
                   <div
                     className={cn(
-                      "flex items-center justify-center rounded-lg font-extrabold tabular-nums transition-transform",
+                      "relative flex w-full items-center justify-center rounded-[5px] font-extrabold tabular-nums transition-transform hover:z-10",
                       hierarchyBox,
                       isRoot ? "text-[12px]" : hierarchySize,
                       dimmed && "bg-muted text-muted-foreground hover:scale-100",
@@ -705,6 +717,10 @@ function GridRow({
                     style={{
                       backgroundColor: dimmed ? undefined : band?.background,
                       color: dimmed ? undefined : band?.foreground,
+                      boxShadow:
+                        dimmed || !band
+                          ? undefined
+                          : `inset 0 0 0 1px color-mix(in srgb, ${band.border} 30%, transparent)`,
                     }}
                   >
                     {formatScore(cell.score as number)}

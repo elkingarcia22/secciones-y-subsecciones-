@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ArrowUpDown, CheckIcon, ChevronDown, ListFilter, MinusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -226,7 +227,11 @@ export function SortOnlyHeader({
   onSort,
   align = "left",
 }: {
-  label: string;
+  /**
+   * Rich rather than plain text so a column can carry both a full name and an
+   * abbreviation and let the breakpoint pick — see "Participantes".
+   */
+  label: ReactNode;
   sortActive: boolean;
   onSort: () => void;
   align?: "left" | "right";

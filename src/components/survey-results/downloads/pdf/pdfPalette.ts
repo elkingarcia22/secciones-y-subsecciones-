@@ -14,7 +14,7 @@ import type { FavorabilityBand, NpsScoreBand } from "../../favorabilityScale";
  */
 export const NEGATIVE_BG = "hsl(354 80% 87%)";
 export const NEGATIVE_BORDER = "hsl(354 78% 54%)";
-export const NEGATIVE = "hsl(354 76% 48%)";
+export const NEGATIVE = "hsl(0 72.2% 50.6%)"; // Tailwind red-600, same as StatusBadge's "failed"
 export const NEGATIVE_TEXT = "hsl(354 76% 42%)";
 
 export const SOFTER_NEGATIVE_BG = "hsl(1 84% 96%)";
@@ -24,12 +24,12 @@ export const SOFTER_NEGATIVE_TEXT = "hsl(357 80% 56%)";
 
 export const YELLOW_BG = "hsl(48 96% 92%)";
 export const YELLOW_BORDER = "hsl(48 92% 64%)";
-export const YELLOW = "hsl(48 92% 50%)";
+export const YELLOW = "hsl(32.1 94.6% 43.7%)"; // Tailwind amber-600, same as StatusBadge's "pending"
 export const YELLOW_TEXT = "hsl(46 90% 42%)";
 
 export const POSITIVE_BG = "hsl(116 52% 94%)";
 export const POSITIVE_BORDER = "hsl(116 50% 72%)";
-export const POSITIVE = "hsl(116 48% 48%)";
+export const POSITIVE = "hsl(161.4 93.5% 30.4%)"; // Tailwind emerald-600, same as StatusBadge's "success"
 export const POSITIVE_TEXT = "hsl(116 48% 42%)";
 
 export const DEEP_POSITIVE_BG = "hsl(122 55% 82%)";

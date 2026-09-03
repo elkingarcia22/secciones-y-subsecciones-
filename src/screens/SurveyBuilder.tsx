@@ -62,6 +62,7 @@ import {
 } from "@/components/survey-builder";
 import { SurveyPreviewDrawer, canPreview } from "@/components/survey-preview";
 import { QuestionBankDrawer } from "@/components/survey-builder/QuestionBankDrawer";
+import { useDeleteConfirmLock } from "@/components/survey-builder/deleteConfirmLock";
 import { AiSectionsComposer } from "@/components/survey-builder/AiSectionsComposer";
 import { AiGenerationReviewBar } from "@/components/survey-builder/AiGenerationReviewBar";
 import { SectionsEmptyState } from "@/components/survey-builder/SectionsEmptyState";
@@ -442,14 +443,13 @@ export function SurveyBuilder({
 
     if (step === "sections") {
       // Land on the first root section so the tree has something to show. A
-      // brand-new survey has none yet — without creating one here, this step
-      // would be a dead end: nothing to select, and the rail's own "add
-      // section" button only appears once a section is already active.
+      // brand-new survey has none yet — that's not a dead end, it's the
+      // step's own empty state, offering its own ways to create the first one.
       const first = draft.sections[0];
       if (first) {
         selectSection(first.id);
       } else {
-        handleAddRootSection();
+        commitSelection({ kind: "sections-empty" });
       }
       return;
     }
@@ -542,6 +542,25 @@ export function SurveyBuilder({
     seed: number;
   }
   const [pendingAiReview, setPendingAiReview] = React.useState<PendingAiReview | null>(null);
+
+  // True while any question or demographic, anywhere in the tree, has its
+  // inline "¿eliminar esto?" banner open — the rail below reads this the
+  // same way it reads the AI-proposal flags, to force-collapse itself.
+  const isDeletingItem = useDeleteConfirmLock();
+
+  // True while the author's attention is pinned to exactly one row — its
+  // delete confirmation is up, or its full editor has replaced the row —
+  // anywhere in the sections tree. Every other row, the step sidebar, and
+  // the rail read this to go inert: deciding cancel or delete, or finishing
+  // an edit, has to happen before anything else can be touched.
+  const isRowLocked =
+    isDeletingItem || pendingDeleteId !== null || editingQuestionId !== null || editingDemographicId !== null;
+
+  // Narrower than isRowLocked: only the delete-confirm banner should force
+  // the floating rail to collapse. Editing a question or demographic keeps
+  // it up, since its actions (add question, add subsection, etc.) stay
+  // reachable while the author is mid-edit on a row.
+  const isDeleteConfirmActive = isDeletingItem || pendingDeleteId !== null;
 
   const handleOpenAiSections = (sectionId: string | null) => {
     if (!isStepReachable("sections", stepInput)) {
@@ -803,7 +822,7 @@ export function SurveyBuilder({
     if (nextSelectedId) {
       selectSection(nextSelectedId);
     } else {
-      selectFixed("welcome");
+      commitSelection({ kind: "sections-empty" });
     }
     setPendingDeleteId(null);
     toast.success(`${depthLabel(entry?.depth ?? 1)} eliminada`);
@@ -820,7 +839,7 @@ export function SurveyBuilder({
       if (nextSelectedId) {
         selectSection(nextSelectedId);
       } else {
-        selectFixed("welcome");
+        commitSelection({ kind: "sections-empty" });
       }
       return;
     }
@@ -1114,6 +1133,7 @@ export function SurveyBuilder({
     overSectionId,
     getSectionHandleProps,
     getSectionDropTargetProps,
+    isRowLocked,
   };
 
   /**
@@ -1398,6 +1418,7 @@ export function SurveyBuilder({
       <div className="flex min-h-0 flex-1 items-start gap-3 px-1 py-3">
         <SectionsPanel
           readOnly={draft.isReadOnly}
+          isLocked={isRowLocked}
           sections={draft.sections}
           selection={selection}
           expandedIds={expandedCardIds}
@@ -1407,7 +1428,10 @@ export function SurveyBuilder({
           onToggleCollapsed={() => setIsSectionsPanelCollapsed((collapsed) => !collapsed)}
           stepInput={stepInput}
           onSelectStep={handleSelectStep}
-          onSelect={(next) => (next.kind === "section" ? selectSection(next.id) : selectFixed(next.id))}
+          onSelect={(next) => {
+            if (next.kind === "section") selectSection(next.id);
+            else if (next.kind === "fixed") selectFixed(next.id);
+          }}
           onReorderSections={handleReorderSections}
           onToggleExpanded={handleToggleCardExpanded}
           onStartRename={setRenamingId}
@@ -1481,6 +1505,7 @@ export function SurveyBuilder({
             showAddSubsection={showAddSubsection}
             selectedDepth={selectedEntry ? selectedEntry.depth : null}
             onSave={() => toast.success("Encuesta guardada")}
+            onExit={() => onExit(draft)}
             onContinue={handleContinue}
             canContinue={canContinue}
             continueLabel={continueLabel}
@@ -1490,9 +1515,13 @@ export function SurveyBuilder({
             onClearParticipantsSelection={clearParticipantsSelection}
             onDeleteParticipantsSelection={deleteParticipantsSelection}
             // Also minimized while a proposal sits unreviewed above the
-            // sections: the rail's own creation actions have to wait until
-            // that one is kept, regenerated, changed, or discarded.
-            forceMinimized={aiRequest !== null || pendingAiReview !== null}
+            // sections (the rail's own creation actions have to wait until
+            // that one is kept, regenerated, changed, or discarded) or while
+            // a row's delete-confirm banner is up, since deciding cancel or
+            // delete has to happen before anything else can be touched.
+            // Editing a question/demographic does NOT force it minimized —
+            // the rail stays reachable while the author is mid-edit.
+            forceMinimized={aiRequest !== null || pendingAiReview !== null || isDeleteConfirmActive}
           />
         </div>
       </div>

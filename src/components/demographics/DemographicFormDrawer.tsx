@@ -1,13 +1,14 @@
 import * as React from "react";
-import { Check, GripVertical, Plus, Trash2 } from "lucide-react";
+import { Check, ListChecks, ListOrdered, Plus, Tag, Trash2, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { toneAccent, toneChip, type Tone } from "@/lib/tone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SheetFooter } from "@/components/ui/sheet";
 import { DrawerShell } from "@/components/overlays/DrawerShell";
-import { MagicCard } from "@/components/ui/magic-card";
 import { DEMOGRAPHIC_TYPES } from "@/components/survey-builder/demographics";
+import { questionTypeTone } from "@/components/survey-builder/questionCatalog";
 import {
   createLibraryDemographic,
   updateLibraryDemographic,
@@ -162,9 +163,9 @@ export function DemographicFormDrawer({
       className="!w-[min(620px,92vw)] !max-w-[min(620px,92vw)]"
       disablePadding
       footer={
-        <SheetFooter className="border-t bg-background px-6 py-4">
+        <SheetFooter className="border-t border-border/60 bg-surface px-4 py-3">
           <div className="flex w-full items-center justify-end gap-2">
-            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
             <Button className="gap-2" onClick={handleSave}>
@@ -175,119 +176,206 @@ export function DemographicFormDrawer({
         </SheetFooter>
       }
     >
-      <div className="flex flex-col gap-7 px-6 py-6">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="demographic-label" className="text-[13px] font-bold text-text-primary">
-            Nombre del dato demográfico
-          </label>
+      {/* Cada parte del demográfico —cómo se llama, cómo se responde, qué se
+          puede responder— en su propia tarjeta sobre el fondo del drawer, en
+          vez de tres bloques de campos flotando en una misma superficie. El
+          tono del tipo elegido tiñe los dos grupos que dependen de él. */}
+      <div className="flex min-h-full flex-col gap-3 bg-background p-4">
+        <FormSection
+          icon={Tag}
+          tone="brand"
+          title="Nombre del dato demográfico"
+          hint="Es lo que verán los participantes y lo que aparecerá en los filtros de resultados."
+        >
           <Input
             id="demographic-label"
             value={label}
             onChange={(event) => setLabel(event.target.value)}
             placeholder="Ej. Tipo de jornada"
+            aria-label="Nombre del dato demográfico"
             aria-invalid={duplicate || (attempted && missingLabel)}
             className={cn(
-              "h-10",
+              "h-10 border-border/60 bg-surface",
               (duplicate || (attempted && missingLabel)) && "border-status-negative"
             )}
           />
           {duplicate ? (
-            <span className="text-[12px] font-medium text-status-negative">
+            <span className="mt-2 block text-[12px] font-medium text-status-negative">
               Ya existe un demográfico con este nombre. Dos con el mismo nombre serían
               indistinguibles en los filtros.
             </span>
           ) : attempted && missingLabel ? (
-            <span className="text-[12px] font-medium text-status-negative">
+            <span className="mt-2 block text-[12px] font-medium text-status-negative">
               Ponle un nombre para poder {isEdit ? "guardarlo" : "crearlo"}.
             </span>
-          ) : (
-            <span className="text-[12px] text-muted-foreground">
-              Es lo que verán los participantes y lo que aparecerá en los filtros de resultados.
-            </span>
-          )}
-        </div>
+          ) : null}
+        </FormSection>
 
-        <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1.5 text-[13px] font-bold text-text-primary">
-            Tipo de respuesta
-          </legend>
+        <FormSection
+          icon={ListChecks}
+          tone="brand"
+          title="Tipo de respuesta"
+          hint={TYPE_HINTS[type]}
+        >
+          {/* Las mismas tarjetas de tipo que el editor de demográficos dentro
+              de la encuesta: grises en reposo y teñidas solo al elegirlas. */}
           <div className="flex flex-wrap gap-2">
             {DEMOGRAPHIC_TYPES.map((entry) => {
               const Icon = entry.icon;
               const selected = type === entry.value;
+              const entryTone = questionTypeTone(entry.value);
+              const accent = toneAccent(entryTone);
               return (
                 <button
                   key={entry.value}
                   type="button"
                   onClick={() => setType(entry.value)}
+                  style={
+                    {
+                      "--tone": accent,
+                      ...(selected
+                        ? {
+                            borderColor: `color-mix(in srgb, ${accent} 55%, transparent)`,
+                            backgroundColor: `color-mix(in srgb, ${accent} 7%, transparent)`,
+                            color: accent,
+                          }
+                        : null),
+                    } as React.CSSProperties
+                  }
                   className={cn(
-                    "flex flex-1 min-w-[100px] flex-col items-center justify-center gap-1.5 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-                    selected
-                      ? "border-primary bg-primary/10 text-primary shadow-sm"
-                      : "border-border bg-surface text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                    "flex min-w-[100px] flex-1 flex-col items-center justify-center gap-1.5 rounded-xl border p-2.5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                    selected ? "shadow-sm" : "tone-hover border-border/60 bg-surface text-text-secondary"
                   )}
                 >
-                  <Icon className="h-4 w-4" strokeWidth={selected ? 2.5 : 2} />
-                  <span className="text-[10px] font-semibold leading-tight">{entry.label}</span>
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "flex h-7 w-7 items-center justify-center rounded-lg",
+                      !selected && "tone-reveal-chip"
+                    )}
+                    style={selected ? toneChip(entryTone) : undefined}
+                  >
+                    <Icon className="h-4 w-4" strokeWidth={2} />
+                  </span>
+                  <span className="text-[10.5px] font-semibold leading-tight">{entry.label}</span>
                 </button>
               );
             })}
           </div>
-        </fieldset>
+        </FormSection>
 
-        <div className="flex flex-col gap-2">
-          <span className="text-[13px] font-bold text-text-primary">Opciones de respuesta</span>
-          <span className="mb-1 text-[12px] text-muted-foreground">
-            Cada opción es un grupo por el que podrás cortar los resultados, así que conviene que
-            sean pocas y claras.
-          </span>
+        <FormSection
+          icon={ListOrdered}
+          tone="brand"
+          title="Opciones de respuesta"
+          hint="Cada opción es un grupo por el que podrás cortar los resultados, así que conviene que sean pocas y claras."
+          badge={`${options.length}`}
+        >
+          {/* La lista vive sobre el fondo gris, dentro de su marco: las filas
+              se leen como un grupo y no como campos sueltos en la tarjeta. */}
+          <div className="rounded-xl border border-border/60 bg-background p-2.5">
+            <ul className="flex flex-col gap-2">
+              {options.map((option, index) => (
+                <li key={index} className="flex items-center gap-2.5">
+                  <span className="w-4 shrink-0 text-right text-[11px] font-semibold tabular-nums text-text-muted">
+                    {index + 1}
+                  </span>
+                  <Input
+                    value={option}
+                    onChange={(event) => update(index, event.target.value)}
+                    placeholder={`Opción ${index + 1}`}
+                    aria-label={`Opción ${index + 1}`}
+                    className="h-9 min-w-0 flex-1 border-border/60 bg-surface text-[13px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    disabled={options.length <= MIN_OPTIONS}
+                    aria-label={`Eliminar opción ${index + 1}`}
+                    className={cn(
+                      "shrink-0 rounded-lg border border-status-negative/30 bg-status-negative/5 p-2 text-status-negative transition-all",
+                      "hover:border-status-negative/40 hover:bg-status-negative/10",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30",
+                      "disabled:cursor-not-allowed disabled:border-border/60 disabled:bg-transparent disabled:text-text-muted disabled:opacity-40"
+                    )}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+                  </button>
+                </li>
+              ))}
+            </ul>
 
-          <div className="flex flex-col gap-2">
-            {options.map((option, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/40" />
-                <Input
-                  value={option}
-                  onChange={(event) => update(index, event.target.value)}
-                  placeholder={`Opción ${index + 1}`}
-                  aria-label={`Opción ${index + 1}`}
-                  className="h-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  disabled={options.length <= MIN_OPTIONS}
-                  aria-label={`Eliminar opción ${index + 1}`}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-status-negative disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+            <Button
+              variant="outline"
+              className="mt-2.5 h-8 w-full gap-2 border-dashed"
+              onClick={() => setOptions([...options, ""])}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Agregar opción
+            </Button>
           </div>
 
-          <Button
-            variant="outline"
-            className="mt-1 gap-2 self-start"
-            onClick={() => setOptions([...options, ""])}
-          >
-            <Plus className="h-4 w-4" />
-            Agregar opción
-          </Button>
-
           {attempted && notEnoughOptions && (
-            <span className="mt-2 text-[12px] font-medium text-status-negative">
+            <span className="mt-2 block text-[12px] font-medium text-status-negative">
               Necesitas al menos {MIN_OPTIONS} opciones con texto: una sola no es una elección.
             </span>
           )}
           {duplicateOption && (
-            <span className="mt-2 text-[12px] font-medium text-status-negative">
+            <span className="mt-2 block text-[12px] font-medium text-status-negative">
               Hay opciones repetidas. Dos grupos con el mismo nombre no se pueden distinguir en los
               resultados.
             </span>
           )}
-        </div>
+        </FormSection>
       </div>
     </DrawerShell>
+  );
+}
+
+/**
+ * Un grupo del formulario como tarjeta: el chip de su icono, el título, la
+ * línea que explica para qué sirve y, bajo una divisoria, sus campos. Misma
+ * anatomía que los paneles del banco de preguntas, para que los dos drawers se
+ * lean como el mismo producto.
+ */
+function FormSection({
+  icon: Icon,
+  tone,
+  title,
+  hint,
+  badge,
+  children,
+}: {
+  icon: LucideIcon;
+  tone: Tone;
+  title: string;
+  hint: string;
+  /** Un dato al vuelo sobre lo que hay dentro — cuántas opciones van escritas. */
+  badge?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-border/60 bg-surface p-3.5 shadow-card">
+      <header className="flex items-start gap-2.5">
+        <span
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ring-border/40"
+          style={toneChip(tone)}
+        >
+          <Icon className="h-4 w-4" strokeWidth={2} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[13.5px] font-semibold leading-tight text-text-primary">{title}</h3>
+            {badge && (
+              <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-semibold tabular-nums text-text-secondary">
+                {badge}
+              </span>
+            )}
+          </div>
+          <p className="mt-0.5 text-[12px] leading-relaxed text-text-muted">{hint}</p>
+        </div>
+      </header>
+      <div className="mt-3 border-t border-border/50 pt-3.5">{children}</div>
+    </section>
   );
 }

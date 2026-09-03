@@ -18,11 +18,22 @@ export interface Collaborator {
   country: string;
   age: string;
   gender: string;
+  /** Ad-hoc group the admin assembled by hand — a committee, a network, a
+   * pilot cohort — cutting across area and leader rather than following the
+   * org chart. */
+  customGroup: string;
 }
 
 const COUNTRIES = ["Colombia", "México", "Perú", "Chile", "Argentina", "España"] as const;
 const AGES = ["18-24", "25-34", "35-44", "45-54", "55+"] as const;
 const GENDERS = ["Femenino", "Masculino", "Otro", "Prefiero no decirlo"] as const;
+const CUSTOM_GROUPS = [
+  "Embajadores de cultura",
+  "Comité de bienestar",
+  "Red de mentoría",
+  "Voceros de innovación",
+  "Alto potencial",
+] as const;
 
 const FIRST_NAMES = [
   "Ana", "Carlos", "Sofía", "Daniel", "Valentina", "Andrés", "Camila", "Julián",
@@ -108,6 +119,7 @@ function buildDirectory(): readonly Collaborator[] {
       country,
       age,
       gender,
+      customGroup: CUSTOM_GROUPS[hash(index, 9) % CUSTOM_GROUPS.length],
     });
   }
 

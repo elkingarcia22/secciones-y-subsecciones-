@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toneAccent, type Tone } from "@/lib/tone";
 import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { QuestionCard } from "./QuestionCard";
@@ -12,6 +13,10 @@ import { cascadeContainer } from "@/lib/cascadeAnimation";
 export interface QuestionListHandlers {
   /** The single question currently open in edit mode, anywhere in the survey. */
   editingQuestionId: string | null;
+  /** True while a row anywhere in the tree is mid delete-confirm or
+   *  mid-edit — every row except the one actually open goes inert, so
+   *  nothing else can be touched until that's resolved. */
+  isRowLocked?: boolean;
   /** True once the author has tried to leave the sections step with an
    * incomplete question still open — flips on its missing-field highlighting
    * rather than showing errors on a form nobody has tried to submit yet. */
@@ -37,6 +42,9 @@ interface SectionQuestionsProps extends QuestionListHandlers {
   readOnly?: boolean;
   sectionId: string;
   questions: readonly SurveyQuestion[];
+  /** The accent of the root section this list hangs from — the open editor's
+   *  contour and the "añadir pregunta" hover read from it. */
+  tone?: Tone;
   /** Delay before this list's rows start cascading in — set by the parent
    * so questions only start once the row they belong to has settled in. */
   revealDelay?: number;
@@ -58,6 +66,7 @@ export function SectionQuestions({
   sectionId,
   questions,
   editingQuestionId,
+  isRowLocked = false,
   showQuestionValidation,
   onOpenQuestion,
   onQuestionChange,
@@ -69,6 +78,7 @@ export function SectionQuestions({
   sections,
   onMoveQuestion,
   aiStartQuestionId,
+  tone = "brand",
   revealDelay = 0,
 }: SectionQuestionsProps) {
   const { draggingId, overId, getHandleProps, getDropTargetProps } = useDragReorder(onReorderQuestions);
@@ -94,7 +104,7 @@ export function SectionQuestions({
     >
       {slice.map((question, index) => (
         <QuestionCard
-          readOnly={readOnly}
+          readOnly={readOnly || isRowLocked}
           key={question.id}
           question={question}
           index={offset + index}
@@ -140,19 +150,20 @@ export function SectionQuestions({
           onDuplicate={() => onDuplicateQuestion(questions[editingIndex].id)}
           onRemove={() => onRemoveQuestion(questions[editingIndex].id)}
           startWithAi={aiStartQuestionId === questions[editingIndex].id}
+          tone={tone}
         />
       )}
 
       {rowsAfter.length > 0 && renderRows(rowsAfter, editingIndex + 1)}
 
-      {!readOnly && (
+      {!readOnly && !isRowLocked && (
         <button
           type="button"
           onClick={() => onAddQuestion(sectionId)}
           data-click-outside-ignore
+          style={{ "--tone": toneAccent(tone) } as React.CSSProperties}
           className={cn(
-            "flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border/70 px-3 py-2.5 text-[12px] font-semibold text-muted-foreground transition-all",
-            "hover:border-primary/40 hover:bg-primary/5 hover:text-primary",
+            "tone-hover flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border/70 px-3 py-2.5 text-[12px] font-semibold text-muted-foreground",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           )}
         >

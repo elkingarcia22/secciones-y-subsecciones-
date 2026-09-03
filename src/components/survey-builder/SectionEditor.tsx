@@ -2,6 +2,7 @@ import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronUp, CornerDownRight, Layers, Plus, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toneBar, toneBorder, toneSolid, toneText, type Tone } from "@/lib/tone";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { EmptyStateActionButton } from "@/components/feedback/EmptyStateActionButton";
@@ -24,6 +25,14 @@ interface SectionEditorProps extends SubsectionAccordionHandlers {
   readOnly?: boolean;
   /** Always a level-1 section: the card is the root of one branch. */
   entry: SectionTreeEntry;
+  /**
+   * The accent this branch is drawn in — its edge, its numbering badge and
+   * the chips of everything nested under it. Every section shares the same
+   * brand blue: a per-section palette read as arbitrary categorization
+   * rather than as depth, so the whole tree stays one color and hierarchy is
+   * carried by outline and indentation instead.
+   */
+  tone?: Tone;
   /** Controlled by the parent: only one root card is expanded at a time. */
   isCollapsed: boolean;
   onToggleCardCollapse: () => void;
@@ -53,6 +62,7 @@ interface SectionEditorProps extends SubsectionAccordionHandlers {
 export function SectionEditor({
   readOnly,
   entry,
+  tone = "brand",
   isCollapsed,
   onToggleCardCollapse,
   canDelete,
@@ -73,12 +83,19 @@ export function SectionEditor({
     pendingDeleteMessage,
     onConfirmDeleteSection,
     onCancelDeleteSection,
+    isRowLocked,
   } = handlers;
 
   const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
   const children = childEntries(entry);
   const isSelected = selectedId === section.id;
   const isPendingDelete = pendingDeleteId === section.id;
+  // A row elsewhere is mid delete-confirm or mid-edit: this card's own
+  // controls go inert too, same as `readOnly` — but the tree underneath
+  // (SectionQuestions, SubsectionAccordion) still gets the *original*
+  // `readOnly`, not this, so the active row itself, however deep, still
+  // works.
+  const chromeLocked = readOnly || isRowLocked;
 
   // Grow the description to fit its content so it never shows an inner scrollbar.
   React.useLayoutEffect(() => {
@@ -100,11 +117,17 @@ export function SectionEditor({
       className={cn(
         "flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-surface shadow-card transition-all relative",
         isCollapsed ? "shrink-0" : "flex-1",
-        isSelected ? "border-primary/40" : "border-border/60",
+        !isSelected && "border-border/60",
         isDragging && "opacity-40",
         isDropTarget && "ring-2 ring-primary ring-offset-2"
       )}
+      style={isSelected ? toneBorder(tone, 45) : undefined}
     >
+      {/* The branch's accent, held to the card's left edge. The header keeps
+          its own white — a fill there would break the "one surface" rule the
+          outline is built on — so the color lives on the edge instead, the
+          way the home's alert row carries its mood. */}
+      <span aria-hidden className="absolute inset-y-0 left-0 w-[3px]" style={toneBar(tone)} />
       {/* Card header: same white as the body, split off by a divider rather
           than a fill. Generous inset — a rounded card needs room or the
           content hugs the curve. Anchors the rail when this section is active. */}
@@ -112,8 +135,9 @@ export function SectionEditor({
         {...(isSelected && handlers.editingQuestionId === null ? { [ANCHOR_ATTRIBUTE]: true } : {})}
         // Anywhere on the header makes this the active section — see the same
         // handler on a subsection's header row. Not while the delete banner is
-        // up: it should only ever answer that.
-        onClick={() => !isPendingDelete && onSelect(section.id)}
+        // up, or while some other row is locked: it should only ever answer
+        // that.
+        onClick={() => !isPendingDelete && !chromeLocked && onSelect(section.id)}
         className={cn("flex items-start gap-3 border-b px-6 py-5", SECTION_HEADER_DIVIDER)}
       >
         {isPendingDelete ? (
@@ -126,7 +150,7 @@ export function SectionEditor({
         ) : (
           <>
             <div className="flex flex-col items-center mt-1">
-              {!readOnly && (
+              {!chromeLocked && (
                 <span
                   {...handlers.getSectionHandleProps(section.id)}
                   aria-label={`Reordenar ${section.title}`}
@@ -139,11 +163,13 @@ export function SectionEditor({
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
+                  if (chromeLocked) return;
                   onToggleCardCollapse();
                 }}
+                disabled={chromeLocked}
                 aria-expanded={!isCollapsed}
                 aria-label={isCollapsed ? "Expandir sección" : "Contraer sección"}
-                className="shrink-0 rounded-lg p-1 text-muted-foreground/60 transition-all hover:bg-border/30 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="shrink-0 rounded-lg p-1 text-muted-foreground/60 transition-all hover:bg-border/30 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronUp
                   className={cn("h-4 w-4 transition-transform duration-300", isCollapsed && "rotate-180")}
@@ -155,21 +181,22 @@ export function SectionEditor({
             {/* Solid badge — the heaviest marker in the tree, reserved for level 1. */}
             <span
               aria-hidden
-              className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary text-[11px] font-bold tabular-nums text-primary-foreground shadow-card"
+              className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold tabular-nums shadow-card"
+              style={toneSolid(tone)}
             >
               {numbering}
             </span>
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 px-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-primary/70">
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={toneText(tone)}>
                   {depthLabel(depth)}
                 </p>
                 {section.isAiGenerated && <AiGeneratedBadge />}
               </div>
               <input
                 value={section.title}
-                readOnly={readOnly}
+                readOnly={chromeLocked}
                 onChange={(event) => onTitleChange(section.id, event.target.value)}
                 onFocus={() => onSelect(section.id)}
                 placeholder={`${depthLabel(depth)} ${numbering}`}
@@ -179,7 +206,7 @@ export function SectionEditor({
               <textarea
                 ref={descriptionRef}
                 value={section.description}
-                readOnly={readOnly}
+                readOnly={chromeLocked}
                 onChange={(event) => onDescriptionChange(section.id, event.target.value)}
                 onFocus={() => onSelect(section.id)}
                 placeholder="Descripción (opcional)"
@@ -195,9 +222,9 @@ export function SectionEditor({
                   <button
                     type="button"
                     onClick={() => onDelete(section.id)}
-                    disabled={readOnly || !canDelete}
+                    disabled={chromeLocked || !canDelete}
                     aria-label="Eliminar sección"
-                    className="rounded-lg border border-border/60 p-1.5 text-muted-foreground/70 transition-all hover:border-status-negative/30 hover:bg-status-negative/5 hover:text-status-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border/60 disabled:hover:bg-transparent disabled:hover:text-muted-foreground/70"
+                    className="rounded-lg border border-status-negative/30 bg-status-negative/5 p-1.5 text-status-negative transition-all hover:border-status-negative/40 hover:bg-status-negative/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:border-border/60 disabled:bg-transparent disabled:text-muted-foreground/70 disabled:opacity-40"
                   >
                     <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
                   </button>
@@ -242,17 +269,24 @@ export function SectionEditor({
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <EmptyStateActionButton
                     onClick={() => onAddSubsection(section.id)}
+                    disabled={chromeLocked}
                     icon={<CornerDownRight className="size-4" strokeWidth={2.5} />}
                   >
                     Crear subsección
                   </EmptyStateActionButton>
                   <EmptyStateActionButton
                     onClick={() => onAddSubsectionWithQuestion(section.id)}
+                    disabled={chromeLocked}
                     icon={<Plus className="size-4" strokeWidth={2.5} />}
                   >
                     Crear pregunta
                   </EmptyStateActionButton>
-                  {!readOnly && <AiCreateChip onClick={() => onGenerateWithAi(section.id)} />}
+                  {!chromeLocked && (
+                    <AiCreateChip
+                      onClick={() => onGenerateWithAi(section.id)}
+                      className="h-11 rounded-xl px-4"
+                    />
+                  )}
                 </div>
               }
             />
@@ -261,9 +295,11 @@ export function SectionEditor({
               {canHaveQuestions(depth) && section.questions.length > 0 && (
                 <SectionQuestions
                   readOnly={readOnly}
+                  tone={tone}
                   sectionId={section.id}
                   questions={section.questions}
                   editingQuestionId={handlers.editingQuestionId}
+                  isRowLocked={isRowLocked}
                   showQuestionValidation={handlers.showQuestionValidation}
                   onOpenQuestion={handlers.onOpenQuestion}
                   onQuestionChange={handlers.onQuestionChange}
@@ -288,6 +324,7 @@ export function SectionEditor({
                     <SubsectionAccordion
                       key={child.section.id}
                       entry={child}
+                      tone={tone}
                       readOnly={readOnly}
                       index={index}
                       // This row's own content starts right as the row itself

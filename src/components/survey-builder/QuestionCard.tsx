@@ -2,11 +2,13 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { GripVertical, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toneChip } from "@/lib/tone";
 import { Badge } from "@/components/ui/badge";
 import { AiGeneratedBadge } from "@/components/ai-interaction";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
+import { useHoldDeleteConfirmLock } from "./deleteConfirmLock";
 import { MoveToPopover } from "./MoveToPopover";
-import { questionTypeLabel, scaleTypeLabel } from "./questionCatalog";
+import { questionTypeLabel, questionTypeMark, scaleTypeLabel } from "./questionCatalog";
 import type { SectionTreeEntry } from "./sectionTree";
 import type { SurveyQuestion } from "./surveyBuilderTypes";
 import { cascadeItem } from "@/lib/cascadeAnimation";
@@ -46,6 +48,10 @@ export function QuestionCard({
   dropTargetProps,
 }: QuestionCardProps) {
   const [isConfirmingRemove, setIsConfirmingRemove] = React.useState(false);
+  // Collapses and locks the floating rail for as long as this banner is up —
+  // a bulk rail action landing mid-delete-confirmation would be easy to fire
+  // by mistake.
+  useHoldDeleteConfirmLock(isConfirmingRemove);
 
   // A scale question is better identified by its scale than by the generic
   // "Escala de valoración" — that's the choice the author actually made.
@@ -54,14 +60,19 @@ export function QuestionCard({
       ? scaleTypeLabel(question.scale.kind)
       : questionTypeLabel(question.type);
 
+  // What kind of answer this row asks for, as a mark you can scan a list by
+  // instead of reading every caption.
+  const { icon: TypeIcon, tone: typeTone } = questionTypeMark(question.type, question.scale.kind);
+
   // Dropping onto a row whose own delete banner is up would reorder a list the
   // author can't see the whole of, so drag targets are off then.
   const dragProps = isConfirmingRemove ? {} : dropTargetProps;
 
   if (isConfirmingRemove) {
     return (
-      <li className="bg-surface px-2.5 py-2">
+      <li className="bg-surface">
         <InlineDeleteConfirm
+          bleed
           ariaLabel={`Confirmar eliminación de la pregunta ${index + 1}`}
           message="Se eliminará esta pregunta. Esta acción no se puede deshacer."
           onCancel={() => setIsConfirmingRemove(false)}
@@ -122,7 +133,14 @@ export function QuestionCard({
         >
           {question.statement ? question.statement.replace(/<[^>]*>?/gm, '') : "Sin enunciado"}
         </span>
-        <span className="mt-0.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground/80">
+        <span className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground/80">
+          <span
+            aria-hidden
+            className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px]"
+            style={toneChip(typeTone)}
+          >
+            <TypeIcon className="h-3 w-3" strokeWidth={2.25} />
+          </span>
           {typeLabel}
           {!question.required && <span className="text-muted-foreground/60">· Opcional</span>}
           {question.isBankQuestion && (
@@ -153,8 +171,8 @@ export function QuestionCard({
           onClick={() => setIsConfirmingRemove(true)}
           aria-label={`Eliminar pregunta ${index + 1}`}
           className={cn(
-            "shrink-0 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all",
-            "hover:bg-status-negative/10 hover:text-status-negative",
+            "shrink-0 rounded-lg p-1.5 text-status-negative opacity-0 transition-all",
+            "hover:bg-status-negative/10",
             "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30",
             "group-hover:opacity-100"
           )}

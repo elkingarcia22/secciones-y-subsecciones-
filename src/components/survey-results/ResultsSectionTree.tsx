@@ -299,7 +299,7 @@ function SubsectionRow({
           >
             <div
               className={cn(
-                "mt-2.5 flex flex-col gap-3 pb-1",
+                "mt-2.5 flex flex-col gap-3 pb-1 pr-2",
                 theme.rail,
                 theme.railOffset
               )}

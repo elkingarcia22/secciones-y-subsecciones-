@@ -154,7 +154,7 @@ export type ParticipantMode = "company" | "groups" | "individual" | "import";
 
 /** Category used to bucket collaborators into groups — shared by the "Toda la
  * empresa" breakdown table and the "Por grupos" participant mode. */
-export type SegmentKey = "area" | "leader" | "country" | "age" | "gender";
+export type SegmentKey = "area" | "leader" | "country" | "age" | "gender" | "customGroup";
 
 /**
  * One row read from an imported file, before it is resolved against the
@@ -346,7 +346,10 @@ export interface SurveyDraft {
 /** Identifies whichever panel entry is currently being edited. */
 export type BuilderSelection =
   | { kind: "fixed"; id: FixedBlockId }
-  | { kind: "section"; id: string };
+  | { kind: "section"; id: string }
+  /** On the sections step, but no root section exists yet — the empty state
+   *  is what's showing, not a section's own editor. */
+  | { kind: "sections-empty" };
 
 /** Average minutes a respondent spends per question, used for the estimate. */
 export const MINUTES_PER_QUESTION = 0.5;

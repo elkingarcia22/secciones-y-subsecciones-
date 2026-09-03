@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ChevronRight, Clock, Layers, ListChecks, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NEUTRAL_ACCENT } from "@/lib/tone";
 import type { TemplateSize, TemplateTone } from "./templateCatalog";
 
 /**
@@ -75,11 +76,8 @@ function toneMix(color: string, badgeAlpha: number, lineAlpha: number, stageAlph
 }
 
 // NOM 035's shield icon is the "official / compliance" template family, so
-// it gets an indigo accent — distinct from brand blue, positive green,
-// warning orange and the AI tone's own blue. A flat gray tint (tried first)
-// read as "no tint at all" next to the saturated colors on the other tiles.
-const NEUTRAL_ACCENT = "#6366f1";
-
+// it takes the shared `neutral` accent (see `@/lib/tone`) — indigo, distinct
+// from brand blue, positive green and warning orange.
 const STYLE_TONE_MIX: Readonly<Record<StyleTone, ToneMix>> = {
   ai: toneMix("var(--color-ai-gradient-start)", 14, 70, 7),
   neutral: toneMix(NEUTRAL_ACCENT, 14, 65, 10),
@@ -109,9 +107,12 @@ export interface PageThumbProps {
  * card lifts off a stack.
  */
 export function PageThumb({ icon: Icon, tone, dashed = false, size = "sm", className }: PageThumbProps) {
+  // Each ternary calls the type guard directly (rather than branching on a
+  // `mixed` variable computed once) so TypeScript narrows `tone` to
+  // `ClassTone` right where it indexes these two maps.
   const mixed = isStyleTone(tone) ? STYLE_TONE_MIX[tone] : undefined;
-  const badgeClassName = mixed ? undefined : TONE_BADGE_CLASSES[tone];
-  const lineClassName = mixed ? undefined : TONE_LINE_CLASSES[tone];
+  const badgeClassName = isStyleTone(tone) ? undefined : TONE_BADGE_CLASSES[tone];
+  const lineClassName = isStyleTone(tone) ? undefined : TONE_LINE_CLASSES[tone];
   const isLarge = size === "lg";
 
   return (
@@ -178,7 +179,7 @@ export function ToneStage({ tone, children, className }: ToneStageProps) {
     <span
       className={cn(
         "relative flex items-center justify-center overflow-hidden rounded-xl ring-1 ring-inset ring-border/40",
-        !mixed && TONE_STAGE_CLASSES[tone],
+        !isStyleTone(tone) && TONE_STAGE_CLASSES[tone],
         className
       )}
       style={mixed?.stage}
@@ -228,11 +229,16 @@ export interface TemplateTileProps {
    * `card`: taller — the page on a tinted stage, then the name, the objective
    * and its size, with a chevron that slides in on hover. A gallery entry you
    * open, not a shortcut you press.
+   * `list`: one full-width row — thumb, name, objective on one truncated
+   * line, then its size — for browsing many templates at a glance instead of
+   * scanning a grid.
    */
-  variant?: "compact" | "card";
-  /** The objective, shown only by the `card` variant. */
+  variant?: "compact" | "card" | "list";
+  /** The objective — shown by the `card` variant (two lines) and the `list`
+   *  variant (one, truncated). */
   description?: string;
-  /** Section / question / minute counts, shown only by the `card` variant. */
+  /** Section / question / minute counts, shown by the `card` and `list`
+   *  variants. */
   size?: TemplateSize;
   /** A "more…" tile: dotted outline, no badge. */
   dashed?: boolean;
@@ -253,13 +259,18 @@ export function TemplateTile({
   className,
 }: TemplateTileProps) {
   const isCard = variant === "card";
+  const isList = variant === "list";
   const mixed = isStyleTone(tone) ? STYLE_TONE_MIX[tone] : undefined;
 
-  // The compact row (the home strip) carries the same faint tone tint the
-  // gallery card's stage uses, instead of a plain surface — so a shelf of
-  // shortcuts reads by color the same way the gallery's cards do.
-  const tintClassName = !dashed && !isCard && !mixed ? TONE_STAGE_CLASSES[tone] : undefined;
-  const tintStyle = !dashed && !isCard ? mixed?.stage : undefined;
+  // Both non-card shapes tint their whole background, `card`'s own thumbnail
+  // stage carries the tint instead. The light overlay that sits on top of
+  // that tint (below) is what keeps it a wash rather than a flat block of
+  // color — it just needs to reach much further across a `list` row than
+  // across a small square `compact` tile, which is why the two variants use
+  // different gradients there instead of sharing one.
+  const tintsWholeTile = !isCard;
+  const tintClassName = !dashed && tintsWholeTile && !isStyleTone(tone) ? TONE_STAGE_CLASSES[tone] : undefined;
+  const tintStyle = !dashed && tintsWholeTile ? mixed?.stage : undefined;
 
   return (
     <button
@@ -274,18 +285,28 @@ export function TemplateTile({
         "magic-card-sweep magic-card-lift",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
         isCard ? "flex-col gap-3 p-3 pb-3.5" : "items-center gap-3 py-2.5 pl-3 pr-3",
+        isList && "sm:gap-4",
         dashed
           ? "border-dashed border-border bg-surface-muted/50 hover:border-primary/40"
           : cn("border-border/60", tintClassName ?? "bg-surface"),
         className
       )}
     >
-      {!isCard && !dashed && (
-        // Same top-left light the gallery stage has, so the tint reads as a
-        // soft glow instead of a flat swatch.
+      {tintsWholeTile && !dashed && (
+        // The light that keeps the tint a wash instead of a flat block of
+        // color. On the small square `compact` tile a corner radial already
+        // reaches every edge; stretched across a full-width `list` row the
+        // same radial faded out around a third of the way in, leaving the
+        // rest of the row solid color — so `list` gets a left-to-right wash
+        // that keeps going, and stays mostly light past its icon.
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(120%_140%_at_8%_0%,hsl(var(--card)/0.55),transparent_60%)]"
+          className={cn(
+            "pointer-events-none absolute inset-0 z-0",
+            isList
+              ? "bg-[linear-gradient(to_right,hsl(var(--card)/0.15)_0%,hsl(var(--card)/0.94)_42%)]"
+              : "bg-[radial-gradient(120%_140%_at_8%_0%,hsl(var(--card)/0.55),transparent_60%)]"
+          )}
         />
       )}
       {isCard ? (
@@ -311,6 +332,28 @@ export function TemplateTile({
             )}
             {size && <TemplateSizeMeta size={size} className="mt-1" />}
           </span>
+        </>
+      ) : isList ? (
+        <>
+          <PageThumb icon={icon} tone={tone} dashed={dashed} />
+          {/* One truncated line: the two texts have to shrink together, so
+              `truncate` sits on this wrapper rather than on each span —
+              truncating them separately would let the name run long while
+              the objective vanished first. */}
+          <span className="relative z-[1] min-w-0 flex-1 truncate text-[13px] leading-tight">
+            <span className="font-semibold text-text-primary">{label}</span>
+            {description && <span className="text-text-secondary"> — {description}</span>}
+          </span>
+          {size && (
+            <span className="relative z-[1] hidden shrink-0 sm:block">
+              <TemplateSizeMeta size={size} />
+            </span>
+          )}
+          <ChevronRight
+            aria-hidden
+            className="relative z-[1] h-4 w-4 shrink-0 -translate-x-1 text-text-muted opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:text-primary group-hover:opacity-100"
+            strokeWidth={2}
+          />
         </>
       ) : (
         <>

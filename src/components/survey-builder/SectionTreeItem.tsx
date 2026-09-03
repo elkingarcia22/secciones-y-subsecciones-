@@ -13,6 +13,11 @@ const INDENT_PER_LEVEL = 14;
 
 interface SectionTreeItemProps {
   readOnly?: boolean;
+  /** True while a row elsewhere in the tree is mid delete-confirm or
+   *  mid-edit — unlike `readOnly`, this also blocks *selecting* a different
+   *  section, since jumping away is exactly the "other action" that has to
+   *  wait. */
+  isLocked?: boolean;
   entry: SectionTreeEntry;
   isActive: boolean;
   isCollapsed: boolean;
@@ -35,6 +40,7 @@ interface SectionTreeItemProps {
 /** One row of the sections tree. */
 export function SectionTreeItem({
   readOnly,
+  isLocked = false,
   entry,
   isActive,
   isCollapsed,
@@ -79,7 +85,7 @@ export function SectionTreeItem({
         )}
       >
         {/* Every level reorders the same way: drag among siblings under the same parent. */}
-        {readOnly ? (
+        {readOnly || isLocked ? (
           <span className="shrink-0 rounded-md p-0.5 text-muted-foreground/30 transition-colors">
             <span className="h-3.5 w-3.5 block" />
           </span>
@@ -96,7 +102,8 @@ export function SectionTreeItem({
         {canCollapse ? (
           <button
             type="button"
-            onClick={onToggleCollapse}
+            onClick={isLocked ? undefined : onToggleCollapse}
+            disabled={isLocked}
             aria-expanded={!isCollapsed}
             aria-label={isCollapsed ? `Expandir ${section.title}` : `Contraer ${section.title}`}
             className="shrink-0 rounded-md p-0.5 text-muted-foreground transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
@@ -112,15 +119,16 @@ export function SectionTreeItem({
           <span className="h-3.5 w-[18px] shrink-0" aria-hidden="true" />
         )}
 
-        {isRenaming && !readOnly ? (
+        {isRenaming && !readOnly && !isLocked ? (
           <RenameField initialValue={section.title} onCommit={onRename} onCancel={onCancelRename} />
         ) : (
           <button
             type="button"
-            onClick={onSelect}
-            onDoubleClick={readOnly ? undefined : onStartRename}
+            onClick={isLocked ? undefined : onSelect}
+            onDoubleClick={readOnly || isLocked ? undefined : onStartRename}
+            disabled={isLocked}
             title={`${numbering} · ${section.title}`}
-            className="flex min-w-0 flex-1 cursor-text items-baseline gap-1.5 rounded-md py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            className="flex min-w-0 flex-1 cursor-text items-baseline gap-1.5 rounded-md py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed"
           >
             <span
               className={cn(

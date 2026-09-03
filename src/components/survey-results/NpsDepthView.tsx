@@ -81,13 +81,13 @@ export function NpsDepthView({
         icon={MessagesSquare}
         title="Ninguna pregunta pidió profundidad"
         description="Las preguntas de profundidad se activan en el editor, sobre una pregunta de escala: cada banda —detractores, neutros y promotores— recibe su propia pregunta abierta. Cuando alguna las tenga, sus respuestas se leen aquí."
-        className="mt-6"
+        className="mt-4"
       />
     );
   }
 
   return (
-    <div className="mt-6 flex flex-col gap-4">
+    <div className="mt-4 flex flex-col gap-4">
       {sections.map((section) => (
         <DepthSectionRoot
           key={section.id}

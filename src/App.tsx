@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { UbitsToaster } from "@/components/feedback";
 import { AdminShell } from "@/components/app-shell";
 import { UbitsTabs } from "@/components/navigation";
-import { HomePulseStrip, TemplatesStrip } from "@/components/home";
+import { HomePulseStrip, TemplatesStrip, AlertsRow } from "@/components/home";
 import { TemplatesDrawer } from "@/components/survey-list/TemplatesDrawer";
 import {
   NO_FILTERS,
@@ -197,7 +197,7 @@ function App() {
       <UbitsToaster />
       <AdminShell
         breadcrumb={breadcrumb}
-        scrollContent={false}
+        scrollContent={view === "list"}
         showFooter={view === "list"}
         onNavigateHome={leaveToList}
       >
@@ -215,11 +215,15 @@ function App() {
             draft={(resultsSurvey as any).draft || createPublishedSurveyDraft(resultsSurvey)}
             item={resultsSurvey}
             history={resultsHistory}
+            onBack={goHome}
           />
         ) : (
           <div className="px-1 pt-2 pb-6 flex-1 flex flex-col min-h-0">
-            {/* Above the pulse strip on purpose: "what can I start from" comes
-                before "how are my surveys doing" in the reading order. */}
+            <h1 className="mb-4 shrink-0 text-2xl font-bold text-text-primary tracking-tight">Encuestas</h1>
+
+            {/* "What can I start from" comes first, then "how are my surveys
+                doing", then what needs a hand — each step narrower than the
+                last. */}
             <TemplatesStrip
               className="mb-4 shrink-0"
               onSelectTemplate={(template) => {
@@ -234,10 +238,11 @@ function App() {
               }}
             />
 
-            {/* Averages on the left, the list's alerts on the right. Alerts
-                filter the Encuestas tab, so pressing one also brings that tab
-                forward if the reader was on Datos Demográficos. */}
-            <HomePulseStrip
+            <HomePulseStrip className="mb-4 shrink-0" surveys={surveys} />
+
+            {/* Alerts filter the Encuestas tab, so pressing one also brings
+                that tab forward if the reader was on Datos Demográficos. */}
+            <AlertsRow
               className="mb-4 shrink-0"
               surveys={surveys}
               filters={listFilters}

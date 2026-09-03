@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MagicCard } from "@/components/ui/magic-card";
+import { toneChip, toneForIndex, toneText, type Tone } from "@/lib/tone";
 import { GuidedStep } from "./GuidedStep";
 import { AI_FOCUSES } from "./aiSectionThemes";
 import {
@@ -64,18 +65,21 @@ const SCOPE_OPTIONS: readonly {
   label: string;
   hint: string;
   icon: LucideIcon;
+  tone: Tone;
 }[] = [
   {
     value: "section",
     label: "Esta sección",
     hint: "Crea las subsecciones y sus preguntas dentro de la sección abierta.",
     icon: CornerDownRight,
+    tone: "brand",
   },
   {
     value: "survey",
     label: "Toda la encuesta",
     hint: "Crea varias secciones nuevas, cada una con sus subsecciones y preguntas.",
     icon: Layers,
+    tone: "brand",
   },
 ];
 
@@ -84,37 +88,49 @@ const STYLE_OPTIONS: readonly {
   label: string;
   hint: string;
   icon: LucideIcon;
+  tone: Tone;
 }[] = [
   {
     value: "scale",
     label: "Escala",
     hint: "Todas en escala de acuerdo, comparables entre sí.",
     icon: SlidersHorizontal,
+    tone: "brand",
   },
   {
     value: "single",
     label: "Opción única",
     hint: "Solo una respuesta posible por pregunta.",
     icon: CircleDot,
+    tone: "positive",
   },
   {
     value: "multiple",
     label: "Múltiples",
     hint: "El participante puede marcar varias opciones.",
     icon: ListChecks,
+    tone: "warning",
   },
   {
     value: "dropdown",
     label: "Desplegable",
     hint: "Lista compacta para elegir una opción.",
     icon: ChevronDownCircle,
+    tone: "ai",
   },
-  { value: "open", label: "Abiertas", hint: "Solo preguntas de respuesta libre.", icon: AlignLeft },
+  {
+    value: "open",
+    label: "Abiertas",
+    hint: "Solo preguntas de respuesta libre.",
+    icon: AlignLeft,
+    tone: "neutral",
+  },
   {
     value: "mixed",
     label: "Mixtas",
     hint: "Escala para medir y una abierta al cierre.",
     icon: Shuffle,
+    tone: "brand",
   },
 ];
 
@@ -234,10 +250,13 @@ export function AiSectionsBriefForm({
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-2">
             {/* Predefined focuses */}
-            {AI_FOCUSES.map((focus) => {
+            {AI_FOCUSES.map((focus, index) => {
               const isOn = brief.focuses.includes(focus.id);
-              const position = brief.focuses.indexOf(focus.id) + 1;
               const Icon = FOCUS_ICONS[focus.id] || Target;
+              // Un tema no tiene color propio, así que lo toma de su posición
+              // — igual que las secciones raíz del builder. Una nube de veinte
+              // pastillas grises no se lee; una con acentos, sí.
+              const tone = toneForIndex(index);
 
               return (
                 <button
@@ -246,19 +265,20 @@ export function AiSectionsBriefForm({
                   onClick={() => toggleFocus(focus.id)}
                   aria-pressed={isOn}
                   title={focus.hint}
+                  style={isOn ? { ...toneChip(tone), borderColor: "currentColor" } : undefined}
                   className={cn(
                     "group relative flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold tracking-tight transition-all",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
                     isOn
-                      ? "border-primary bg-primary/10 text-primary shadow-sm"
-                      : "border-border/70 bg-surface text-text-secondary hover:-translate-y-0.5 hover:border-primary/40 hover:text-text-primary hover:shadow-card"
+                      ? "shadow-sm"
+                      : "border-border/70 bg-surface text-text-secondary hover:-translate-y-0.5 hover:shadow-card"
                   )}
                 >
-                  {isOn ? (
-                    <Icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.5} />
-                  ) : (
-                    <Icon className="h-4 w-4 shrink-0 text-text-secondary" strokeWidth={2} />
-                  )}
+                  <Icon
+                    className="h-4 w-4 shrink-0"
+                    strokeWidth={isOn ? 2.5 : 2}
+                    style={isOn ? undefined : toneText(tone)}
+                  />
                   {focus.label}
                 </button>
               );
@@ -267,21 +287,21 @@ export function AiSectionsBriefForm({
             {/* Custom focuses from brief */}
             {brief.focuses
               .filter((id) => !AI_FOCUSES.some((f) => f.id === id))
-              .map((customId) => {
-                const position = brief.focuses.indexOf(customId) + 1;
+              .map((customId, index) => {
+                const tone = toneForIndex(AI_FOCUSES.length + index);
                 return (
                   <button
                     key={customId}
                     type="button"
                     onClick={() => toggleFocus(customId)}
                     aria-pressed={true}
+                    style={{ ...toneChip(tone), borderColor: "currentColor" }}
                     className={cn(
-                      "group relative flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold tracking-tight transition-all",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-                      "border-primary bg-primary/10 text-primary shadow-sm"
+                      "group relative flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold tracking-tight transition-all shadow-sm",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     )}
                   >
-                    <Target className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.5} />
+                    <Target className="h-4 w-4 shrink-0" strokeWidth={2.5} />
                     {customId}
                   </button>
                 );
@@ -350,6 +370,7 @@ export function AiSectionsBriefForm({
             {brief.scope === "survey" && (
               <Counter
                 icon={Layers}
+                tone="brand"
                 label="Secciones"
                 value={brief.sectionCount}
                 min={AI_BRIEF_LIMITS.sectionCount.min}
@@ -359,6 +380,7 @@ export function AiSectionsBriefForm({
             )}
             <Counter
               icon={CornerDownRight}
+              tone="brand"
               label={brief.scope === "survey" ? "Subsecciones por sección" : "Subsecciones"}
               value={brief.subsectionCount}
               min={AI_BRIEF_LIMITS.subsectionCount.min}
@@ -367,6 +389,7 @@ export function AiSectionsBriefForm({
             />
             <Counter
               icon={Layers}
+              tone="brand"
               label="Sub-subsecciones"
               value={brief.subsubsectionCount}
               min={AI_BRIEF_LIMITS.subsubsectionCount.min}
@@ -375,6 +398,7 @@ export function AiSectionsBriefForm({
             />
             <Counter
               icon={Target}
+              tone="brand"
               label="Preguntas por nivel final"
               value={brief.questionCount}
               min={AI_BRIEF_LIMITS.questionCount.min}
@@ -470,7 +494,12 @@ function ScopeCards<T extends string>({
   onChange,
   layout = "grid",
 }: {
-  options: readonly { value: T; label: string; hint: string; icon: LucideIcon }[];
+  /** Every option carries a `tone` — `MagicCard` needs one to paint the
+   *  selected state. `SCOPE_OPTIONS` hands it the same brand blue for both
+   *  cards; `STYLE_OPTIONS` gives each response type the same accent the
+   *  question editor's own "Tipo de pregunta" cards use, so a type reads as
+   *  the same color everywhere it appears. */
+  options: readonly { value: T; label: string; hint: string; icon: LucideIcon; tone: Tone }[];
   /** `null` mientras la pregunta está sin contestar: ninguna tarjeta marcada. */
   value: T | null;
   onChange: (value: T) => void;
@@ -489,13 +518,14 @@ function ScopeCards<T extends string>({
             "flex w-full overflow-x-auto pt-2 -mt-2 pb-4 -mb-4 snap-x snap-mandatory"
       )}
     >
-      {options.map(({ value: optionValue, label, hint, icon: Icon }) => {
+      {options.map(({ value: optionValue, label, hint, icon: Icon, tone }) => {
         const isSelected = optionValue === value;
 
         return (
           <MagicCard
             key={optionValue}
             isSelected={isSelected}
+            tone={tone}
             onClick={() => onChange(optionValue)}
             className={cn(
               "min-h-[108px]",
@@ -505,12 +535,8 @@ function ScopeCards<T extends string>({
           >
             <div className="flex w-full items-start justify-between gap-2">
               <span
-                className={cn(
-                  "flex size-9 items-center justify-center rounded-xl transition-colors",
-                  isSelected
-                    ? "bg-primary/10 text-primary"
-                    : "bg-surface-muted text-text-secondary group-hover:text-text-primary"
-                )}
+                className="flex size-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
+                style={toneChip(tone)}
               >
                 <Icon className="size-[18px]" strokeWidth={2.2} />
               </span>
@@ -521,19 +547,18 @@ function ScopeCards<T extends string>({
                 aria-hidden
                 className={cn(
                   "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-                  isSelected ? "border-primary" : "border-border-strong/40"
+                  !isSelected && "border-border-strong/40"
                 )}
+                style={isSelected ? { borderColor: "currentColor" } : undefined}
               >
-                {isSelected && <span className="size-2.5 rounded-full bg-primary" />}
+                {isSelected && <span className="size-2.5 rounded-full bg-current" />}
               </span>
             </div>
 
             <span className="flex flex-col gap-1">
               <span
-                className={cn(
-                  "text-[13px] font-semibold leading-tight",
-                  isSelected ? "text-primary" : "text-text-primary"
-                )}
+                className="text-[13px] font-semibold leading-tight"
+                style={isSelected ? toneText(tone) : { color: "var(--color-text-primary)" }}
               >
                 {label}
               </span>
@@ -554,6 +579,7 @@ function ScopeCards<T extends string>({
  */
 function Counter({
   icon: Icon,
+  tone,
   label,
   value,
   min,
@@ -561,6 +587,8 @@ function Counter({
   onChange,
 }: {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  /** El acento del nivel que cuenta esta fila. */
+  tone: Tone;
   label: string;
   value: number;
   min: number;
@@ -589,7 +617,10 @@ function Counter({
 
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-surface px-3 py-2">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-text-secondary">
+      <span
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+        style={toneChip(tone)}
+      >
         <Icon className="h-3.5 w-3.5" strokeWidth={2.2} />
       </span>
       <p className="min-w-0 flex-1 truncate text-[12.5px] font-semibold tracking-tight text-text-primary">

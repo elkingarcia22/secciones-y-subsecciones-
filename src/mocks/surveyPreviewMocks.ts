@@ -74,6 +74,7 @@ const SECTION_SEEDS: readonly SectionSeed[] = [
         questions: [
           { statement: "Mis tareas diarias están conectadas con los objetivos del equipo." },
           { statement: "Sé qué se espera de mí en mi rol." },
+          { statement: "¿Qué te ayudaría a entender mejor hacia dónde va la organización?", type: "open" },
         ],
       },
     ],
@@ -121,6 +122,7 @@ const SECTION_SEEDS: readonly SectionSeed[] = [
               "Compensación o beneficios",
             ],
           },
+          { statement: "¿Qué te gustaría que tu líder hiciera diferente?", type: "open" },
         ],
       },
     ],

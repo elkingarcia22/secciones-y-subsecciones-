@@ -28,12 +28,14 @@ export function IconToggleButton({
   label,
   tooltip,
   onSelect,
+  disabled = false,
 }: {
   icon: LucideIcon;
   isActive: boolean;
   label: string;
   tooltip?: string;
   onSelect: () => void;
+  disabled?: boolean;
 }) {
   const button = (
     <button
@@ -41,9 +43,11 @@ export function IconToggleButton({
       aria-pressed={isActive}
       aria-label={label}
       onClick={onSelect}
+      disabled={disabled}
       className={cn(
         "flex h-7 w-7 items-center justify-center rounded-md transition-all",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+        "disabled:cursor-not-allowed disabled:opacity-40",
         isActive ? "bg-primary/10 text-primary" : "text-muted-foreground/70 hover:text-text-primary"
       )}
     >
@@ -65,9 +69,11 @@ export function IconToggleButton({
 export function RowVisibilityToggle({
   visible,
   onChange,
+  disabled = false,
 }: {
   visible: boolean;
   onChange: (visible: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border/70 bg-muted/30 p-0.5">
@@ -77,6 +83,7 @@ export function RowVisibilityToggle({
         label="Mostrar al participante"
         tooltip="Mostrar la pregunta al participante para que confirme o corrija su dato."
         onSelect={() => onChange(true)}
+        disabled={disabled}
       />
       <IconToggleButton
         icon={EyeOff}
@@ -84,6 +91,7 @@ export function RowVisibilityToggle({
         label="Ocultar, solo para filtrar"
         tooltip="No mostrarla: el dato se toma de la plataforma o del archivo y solo se usa para filtrar resultados."
         onSelect={() => onChange(false)}
+        disabled={disabled}
       />
     </div>
   );
@@ -95,9 +103,11 @@ export function RowVisibilityToggle({
 export function VisibilityBulkRow({
   bulk,
   onVisibleChange,
+  disabled = false,
 }: {
   bulk: boolean | "mixed" | null;
   onVisibleChange: (visible: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex shrink-0 items-center gap-0.5">
@@ -112,6 +122,7 @@ export function VisibilityBulkRow({
         label="Mostrar todos"
         tooltip="Mostrar todos los activos al participante"
         onSelect={() => onVisibleChange(true)}
+        disabled={disabled}
       />
       <IconToggleButton
         icon={EyeOff}
@@ -119,6 +130,7 @@ export function VisibilityBulkRow({
         label="Ocultar todos"
         tooltip="Ocultarlos todos y usarlos solo para filtrar"
         onSelect={() => onVisibleChange(false)}
+        disabled={disabled}
       />
     </div>
   );

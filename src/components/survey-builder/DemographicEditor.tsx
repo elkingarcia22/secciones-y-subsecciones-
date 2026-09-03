@@ -1,17 +1,23 @@
 import * as React from "react";
-import { BookOpen, Database, Lock, Trash2 } from "lucide-react";
+import { BookOpen, ChevronUp, Database, Lock, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MagicCard } from "@/components/ui/magic-card";
+import { toneAccent, toneChip, toneText, type Tone } from "@/lib/tone";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
+import { useHoldDeleteConfirmLock } from "./deleteConfirmLock";
 import { QuestionOptionsEditor } from "./QuestionOptionsEditor";
 import { DEMOGRAPHIC_TYPES, demographicTypeLabel, findSystemDemographic } from "./demographics";
-import { MIN_OPTIONS, buildOption } from "./questionCatalog";
+import { MIN_OPTIONS, buildOption, questionTypeTone } from "./questionCatalog";
 import type { DemographicField, DemographicType } from "./surveyBuilderTypes";
 
 interface DemographicEditorProps {
+  /** El acento del origen al que pertenece el dato — el mismo que lleva el
+   *  chip de su acordeón, para que el formulario abierto se lea como parte de
+   *  ese bloque y no como un recuadro azul suelto. */
+  tone?: Tone;
   field: DemographicField;
   index: number;
   onChange: (field: DemographicField) => void;
@@ -47,8 +53,13 @@ export function DemographicEditor({
   onChange,
   onRemove,
   onClose,
+  tone = "brand",
 }: DemographicEditorProps) {
   const [isConfirmingRemove, setIsConfirmingRemove] = React.useState(false);
+  // Collapses and locks the floating rail for as long as this banner is up —
+  // a bulk rail action landing mid-delete-confirmation would be easy to fire
+  // by mistake.
+  useHoldDeleteConfirmLock(isConfirmingRemove);
   const rootRef = React.useRef<HTMLDivElement>(null);
   // While the removal banner is up, a click outside answers that decision
   // rather than closing the whole form underneath it.
@@ -94,141 +105,197 @@ export function DemographicEditor({
   return (
     <div ref={rootRef} className="flex flex-col gap-4" onKeyDown={handleKeyDown}>
       <div className="flex items-start justify-between gap-3">
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold tracking-tight text-primary">
+        <p
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold tracking-tight"
+          style={toneText(tone)}
+        >
           Dato demográfico {index + 1}
           <span className="font-semibold text-muted-foreground">
             {!field.visible ? "(no se muestra)" : field.required ? "(obligatorio)" : "(opcional)"}
           </span>
           {field.preloadable && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+            <span
+              className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold"
+              style={toneChip(tone)}
+            >
               <Database className="h-2.5 w-2.5" strokeWidth={2.5} />
               Precargado
             </span>
           )}
           {isLibrary && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+            <span
+              className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold"
+              style={toneChip(tone)}
+            >
               <BookOpen className="h-2.5 w-2.5" strokeWidth={2.5} />
               Del módulo de encuestas
             </span>
           )}
         </p>
 
-        {isCustom && (
+        <div className="flex shrink-0 items-center gap-1.5">
+          {isCustom && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setIsConfirmingRemove(true)}
+                  disabled={isConfirmingRemove}
+                  aria-label={`Eliminar dato demográfico ${index + 1}`}
+                  className="shrink-0 rounded-md border border-status-negative/30 bg-status-negative/5 p-1.5 text-status-negative transition-all hover:border-status-negative/40 hover:bg-status-negative/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30 disabled:cursor-not-allowed disabled:border-border/70 disabled:bg-transparent disabled:text-muted-foreground/70 disabled:opacity-40"
+                >
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left">Eliminar dato demográfico</TooltipContent>
+            </Tooltip>
+          )}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 type="button"
-                onClick={() => setIsConfirmingRemove(true)}
-                aria-label={`Eliminar dato demográfico ${index + 1}`}
-                className="shrink-0 rounded-md border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-status-negative/30 hover:bg-status-negative/5 hover:text-status-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30"
+                onClick={onClose}
+                disabled={isConfirmingRemove}
+                aria-label="Contraer edición del dato demográfico"
+                className="shrink-0 rounded-md border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border/70 disabled:hover:bg-transparent disabled:hover:text-muted-foreground/70"
               >
-                <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+                <ChevronUp className="h-3.5 w-3.5" strokeWidth={2.5} />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="left">Eliminar dato demográfico</TooltipContent>
+            <TooltipContent side="left">Contraer edición</TooltipContent>
           </Tooltip>
-        )}
+        </div>
       </div>
 
-      <Field
-        label="Pregunta o enunciado"
-        hint={!field.visible ? "Solo se usa como nombre del filtro en los resultados." : undefined}
-      >
-        <textarea
-          value={field.label}
-          onChange={(event) => onChange({ ...field, label: event.target.value })}
-          placeholder="Escribe aquí la pregunta o enunciado"
-          aria-label="Pregunta o enunciado del dato demográfico"
-          rows={2}
-          className="w-full resize-y rounded-md border border-border bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-text-primary outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/70"
-        />
-      </Field>
-
-      {isSystem ? (
-        <div className="flex flex-col gap-2.5">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[12px] font-semibold text-text-secondary">
-              Opciones de respuesta
-            </span>
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
-              <Lock className="h-3 w-3" strokeWidth={2} />
-              Las define la plataforma
-            </span>
-          </div>
-
-          <ul className="flex flex-wrap gap-1.5">
-            {field.options.map((option) => (
-              <li
-                key={option.id}
-                className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[12px] font-medium text-text-secondary"
-              >
-                {option.label}
-              </li>
-            ))}
-          </ul>
-
-          {systemEntry && (
-            <p className="text-[12px] leading-relaxed text-muted-foreground">
-              {systemEntry.origin} Se responde como {demographicTypeLabel(field.type).toLowerCase()}.
-            </p>
-          )}
-        </div>
-      ) : (
-        <>
-          <fieldset className="flex flex-col gap-1.5">
-            <legend className="text-[12px] font-semibold text-text-secondary mb-1.5">
-              Tipo de respuesta
-            </legend>
-            <div className="flex flex-wrap gap-2">
-              {DEMOGRAPHIC_TYPES.map(({ value, label, icon: Icon }) => {
-                const selected = field.type === value;
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => changeType(value as DemographicType)}
-                    className={cn(
-                      "flex flex-1 min-w-[100px] flex-col items-center justify-center gap-1.5 rounded-lg border p-2 text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-                      selected
-                        ? "border-primary bg-primary/10 text-primary shadow-sm"
-                        : "border-border bg-surface text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" strokeWidth={selected ? 2.5 : 2} />
-                    <span className="text-[10px] font-semibold leading-tight">{label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
-
-
-          <QuestionOptionsEditor
-            options={field.options}
-            onChange={(options) => onChange({ ...field, options })}
-          />
-        </>
-      )}
-
-      {/* Nothing is asked of a hidden field, so there is nothing to require and no
-          helper control to place. */}
-      {field.visible && (
-        <div
-          className={cn(
-            "flex flex-wrap items-center justify-end gap-x-5 gap-y-3 border-t border-border/60 pt-3.5",
-            isConfirmingRemove && "hidden"
-          )}
+      {/* Everything editable is locked behind this fieldset while the removal
+          banner is up — a keystroke or a stray click landing on the form
+          underneath a decision that big is worse than making the author
+          click "Cancelar" first. `contents` keeps it a layout no-op so the
+          parent's own `gap-4` still spaces these as direct children. */}
+      <fieldset disabled={isConfirmingRemove} className="contents">
+        <Field
+          label="Pregunta o enunciado"
+          hint={!field.visible ? "Solo se usa como nombre del filtro en los resultados." : undefined}
         >
-          <label className="flex cursor-pointer items-center gap-2 text-[12px] font-semibold text-text-secondary">
-            Obligatoria
-            <Switch
-              checked={field.required}
-              onCheckedChange={(required) => onChange({ ...field, required })}
-              aria-label="Obligatoria"
+          <textarea
+            value={field.label}
+            onChange={(event) => onChange({ ...field, label: event.target.value })}
+            placeholder="Escribe aquí la pregunta o enunciado"
+            aria-label="Pregunta o enunciado del dato demográfico"
+            rows={2}
+            className="w-full resize-y rounded-md border border-border bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-text-primary outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25 placeholder:text-muted-foreground/70 disabled:cursor-not-allowed disabled:opacity-60"
+          />
+        </Field>
+
+        {isSystem ? (
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[12px] font-semibold text-text-secondary">
+                Opciones de respuesta
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+                <Lock className="h-3 w-3" strokeWidth={2} />
+                Las define la plataforma
+              </span>
+            </div>
+
+            <ul className="flex flex-wrap gap-1.5">
+              {field.options.map((option) => (
+                <li
+                  key={option.id}
+                  className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[12px] font-medium text-text-secondary"
+                >
+                  {option.label}
+                </li>
+              ))}
+            </ul>
+
+            {systemEntry && (
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
+                {systemEntry.origin} Se responde como {demographicTypeLabel(field.type).toLowerCase()}.
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <fieldset className="flex flex-col gap-1.5">
+              <legend className="text-[12px] font-semibold text-text-secondary mb-1.5">
+                Tipo de respuesta
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {DEMOGRAPHIC_TYPES.map(({ value, label, icon: Icon }) => {
+                  const selected = field.type === value;
+                  const typeTone = questionTypeTone(value);
+                  const accent = toneAccent(typeTone);
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => changeType(value as DemographicType)}
+                      style={
+                        {
+                          "--tone": accent,
+                          ...(selected
+                            ? {
+                                borderColor: `color-mix(in srgb, ${accent} 55%, transparent)`,
+                                backgroundColor: `color-mix(in srgb, ${accent} 7%, transparent)`,
+                                color: accent,
+                              }
+                            : null),
+                        } as React.CSSProperties
+                      }
+                      className={cn(
+                        "flex flex-1 min-w-[100px] flex-col items-center justify-center gap-1.5 rounded-lg border p-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50",
+                        selected ? "shadow-sm" : "tone-hover border-border bg-surface text-text-secondary"
+                      )}
+                    >
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "flex h-7 w-7 items-center justify-center rounded-lg",
+                          !selected && "tone-reveal-chip"
+                        )}
+                        style={selected ? toneChip(typeTone) : undefined}
+                      >
+                        <Icon className="h-4 w-4" strokeWidth={2} />
+                      </span>
+                      <span className="text-[10px] font-semibold leading-tight">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+
+            <QuestionOptionsEditor
+              options={field.options}
+              onChange={(options) => onChange({ ...field, options })}
             />
-          </label>
-        </div>
-      )}
+          </>
+        )}
+
+        {/* Nothing is asked of a hidden field, so there is nothing to require and no
+            helper control to place. Hidden rather than merely disabled while
+            confirming — the removal prompt below takes this footer's spot. */}
+        {field.visible && (
+          <div
+            className={cn(
+              "flex flex-wrap items-center justify-end gap-x-5 gap-y-3 border-t border-border/60 pt-3.5",
+              isConfirmingRemove && "hidden"
+            )}
+          >
+            <label className="flex cursor-pointer items-center gap-2 text-[12px] font-semibold text-text-secondary">
+              Obligatoria
+              <Switch
+                checked={field.required}
+                onCheckedChange={(required) => onChange({ ...field, required })}
+                aria-label="Obligatoria"
+              />
+            </label>
+          </div>
+        )}
+      </fieldset>
 
       {/* The removal prompt takes the footer's place — or, on a hidden field
           with no footer at all, is simply the bottom of the form — rather than
