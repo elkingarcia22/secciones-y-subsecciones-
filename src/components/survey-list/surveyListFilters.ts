@@ -8,6 +8,7 @@
  */
 
 export interface SurveyFilterableRow {
+  id: string;
   type: string;
   status: string;
   startDate: string;
@@ -54,6 +55,13 @@ export interface SurveyListFilters {
    * along with the rest.
    */
   risk: readonly string[];
+  /**
+   * Not offered by any column menu either, and unlike every other column this
+   * one names rows directly instead of a bucket they fall into: the home's
+   * negative-results alert flags specific surveys by what their own results
+   * say, which the table has no column for at all.
+   */
+  ids: readonly string[];
 }
 
 export const NO_FILTERS: SurveyListFilters = {
@@ -62,6 +70,7 @@ export const NO_FILTERS: SurveyListFilters = {
   close: [],
   progress: [],
   risk: [],
+  ids: [],
 };
 
 const MONTHS: Readonly<Record<string, number>> = {
@@ -135,6 +144,7 @@ export function matchesFilters(
     const bucket = riskBucketOf(row, today);
     if (bucket === null || !filters.risk.includes(bucket)) return false;
   }
+  if (filters.ids.length > 0 && !filters.ids.includes(row.id)) return false;
   return true;
 }
 
@@ -143,7 +153,8 @@ export const hasAnyFilter = (filters: SurveyListFilters): boolean =>
   filters.status.length > 0 ||
   filters.close.length > 0 ||
   filters.progress.length > 0 ||
-  filters.risk.length > 0;
+  filters.risk.length > 0 ||
+  filters.ids.length > 0;
 
 const sameValues = (a: readonly string[], b: readonly string[]): boolean =>
   a.length === b.length && [...a].sort().every((value, index) => value === [...b].sort()[index]);
@@ -154,7 +165,8 @@ export const filtersEqual = (a: SurveyListFilters, b: SurveyListFilters): boolea
   sameValues(a.status, b.status) &&
   sameValues(a.close, b.close) &&
   sameValues(a.progress, b.progress) &&
-  sameValues(a.risk, b.risk);
+  sameValues(a.risk, b.risk) &&
+  sameValues(a.ids, b.ids);
 
 /** Adds or removes one value from one column, leaving the others alone. */
 export function toggleFilterValue(

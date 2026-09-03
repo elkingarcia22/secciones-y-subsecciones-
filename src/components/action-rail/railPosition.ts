@@ -13,6 +13,15 @@ import * as React from "react";
  */
 
 export interface RailPosition {
+  /**
+   * The bar's horizontal *center*, not its left edge.
+   *
+   * The rail's own width changes as it collapses to the auto-hide pill and
+   * back — a left-edge coordinate would hold that edge still and let the
+   * visual center drift with every resize. A center coordinate is what a
+   * "drop it here" gesture actually means, so it is what survives the size
+   * change unchanged.
+   */
   x: number;
   y: number;
 }

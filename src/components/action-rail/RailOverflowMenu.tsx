@@ -3,6 +3,7 @@ import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRailIsVertical, useRailPopoutSide } from "./railOrientation";
 
 export interface RailOverflowSubItem {
   id: string;
@@ -44,6 +45,8 @@ export function RailOverflowMenu({
   onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = React.useState(false);
+  const isVertical = useRailIsVertical();
+  const side = useRailPopoutSide();
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
@@ -69,13 +72,14 @@ export function RailOverflowMenu({
             </button>
           </PopoverTrigger>
         </TooltipTrigger>
-        <TooltipContent side="top">{label}</TooltipContent>
+        <TooltipContent side={side}>{label}</TooltipContent>
       </Tooltip>
 
       <PopoverContent
-        align="end"
-        side="top"
+        align={isVertical ? "center" : "end"}
+        side={side}
         sideOffset={16}
+        collisionPadding={16}
         className="w-[248px] rounded-2xl border-white/10 bg-surface-nav p-2 text-white/60 shadow-rail"
       >
         {items.map((item, index) => {
@@ -139,7 +143,7 @@ export function RailOverflowMenu({
                 </PopoverTrigger>
                 <PopoverContent
                   align="start"
-                  side="right"
+                  side={isVertical ? "left" : "right"}
                   sideOffset={8}
                   collisionPadding={16}
                   className="w-[220px] rounded-2xl border-white/10 bg-surface-nav p-2 text-white/60 shadow-rail"

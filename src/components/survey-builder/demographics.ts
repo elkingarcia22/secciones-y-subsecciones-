@@ -40,7 +40,7 @@ export const demographicTypeLabel = (type: DemographicType): string =>
  * The type's own accent — what tells "Opción única" apart from "Desplegable"
  * apart from "Múltiples respuestas" on a selected tile or the view drawer's
  * type pill. Independent from a card's plain icon chip, which stays blue no
- * matter the type (see the `tone="brand"` passed to those `FormSection`s
+ * matter the type (see the `tone="brand"` passed to those `DrawerSection`s
  * directly) — that icon is decoration for the card, not a readout of which
  * type is picked, so the two must not share one tone value.
  */

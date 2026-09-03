@@ -1,7 +1,8 @@
 import * as React from "react";
-import { GripVertical } from "lucide-react";
+import { GripHorizontal, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRailIsVertical, useRailPopoutSide } from "./railOrientation";
 
 interface RailDragHandleProps {
   isDragging: boolean;
@@ -25,6 +26,12 @@ export function RailDragHandle({
   onPointerCancel,
   onDoubleClick,
 }: RailDragHandleProps) {
+  const isVertical = useRailIsVertical();
+  const side = useRailPopoutSide();
+  // The grip's own bars run across the rail, not along it — the same way a
+  // handle you would actually grab sits crosswise to the thing it moves.
+  const GripIcon = isVertical ? GripHorizontal : GripVertical;
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -42,10 +49,10 @@ export function RailDragHandle({
             isDragging && "cursor-grabbing bg-white/10 text-white/70"
           )}
         >
-          <GripVertical className="h-[18px] w-[18px]" strokeWidth={2} />
+          <GripIcon className="h-[18px] w-[18px]" strokeWidth={2} />
         </button>
       </TooltipTrigger>
-      <TooltipContent side="top">Arrastra para mover · doble clic para volver al centro</TooltipContent>
+      <TooltipContent side={side}>Arrastra para mover · doble clic para volver a su sitio</TooltipContent>
     </Tooltip>
   );
 }

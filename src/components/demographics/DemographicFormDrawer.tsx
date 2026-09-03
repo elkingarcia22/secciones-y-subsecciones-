@@ -13,7 +13,7 @@ import {
   updateLibraryDemographic,
 } from "@/components/survey-builder/demographicsLibrary";
 import type { DemographicType } from "@/components/survey-builder/surveyBuilderTypes";
-import { FormSection } from "./FormSection";
+import { DrawerSection } from "@/components/overlays/DrawerSection";
 import { TYPE_HINTS } from "./demographicTypeHints";
 
 /** The entry being edited — enough to prefill the form and save back over it. */
@@ -175,7 +175,7 @@ export function DemographicFormDrawer({
           vez de tres bloques de campos flotando en una misma superficie. El
           tono del tipo elegido tiñe los dos grupos que dependen de él. */}
       <div className="flex min-h-full flex-col gap-3 bg-background p-4">
-        <FormSection
+        <DrawerSection
           icon={Tag}
           tone="brand"
           title="Nombre del dato demográfico"
@@ -203,9 +203,9 @@ export function DemographicFormDrawer({
               Ponle un nombre para poder {isEdit ? "guardarlo" : "crearlo"}.
             </span>
           ) : null}
-        </FormSection>
+        </DrawerSection>
 
-        <FormSection
+        <DrawerSection
           icon={ListChecks}
           tone="brand"
           title="Tipo de respuesta"
@@ -256,9 +256,9 @@ export function DemographicFormDrawer({
               );
             })}
           </div>
-        </FormSection>
+        </DrawerSection>
 
-        <FormSection
+        <DrawerSection
           icon={ListOrdered}
           tone="brand"
           title="Opciones de respuesta"
@@ -320,7 +320,7 @@ export function DemographicFormDrawer({
               resultados.
             </span>
           )}
-        </FormSection>
+        </DrawerSection>
       </div>
     </DrawerShell>
   );

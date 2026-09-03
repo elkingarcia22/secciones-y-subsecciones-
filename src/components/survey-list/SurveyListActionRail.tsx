@@ -2,7 +2,7 @@ import * as React from "react";
 import { Copy, Download, GitCompare, Layout, Plus, Trash2, Sparkles, Upload } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { AiAgentDrawer } from "@/components/ai/AiAgentDrawer";
+import { useAiAgentPanel } from "@/components/app-shell/aiAgentPanelContext";
 import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
 import { AI_GRADIENT } from "@/components/app-shell/appShellData";
 import {
@@ -13,8 +13,10 @@ import {
   RailDivider,
   RailGroupShimmer,
   RailOverflowMenu,
+  RailPrimaryAction,
   RailSelectionChip,
   useContextChangeKey,
+  useRailPopoutSide,
 } from "@/components/action-rail";
 import {
   SURVEY_ACTIONS,
@@ -81,7 +83,9 @@ export function SurveyListActionRail({
   // swaps the whole action set, which is exactly the change the stagger exists
   // to announce.
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const [aiDrawerOpen, setAiDrawerOpen] = React.useState(false);
+  const popoutSide = useRailPopoutSide();
+  const { open: aiPanelOpen, context: aiPanelContext, openPanel } = useAiAgentPanel();
+  const isAiPanelOpenHere = aiPanelOpen && aiPanelContext === "dashboard";
   const animKey = useContextChangeKey(
     mode === "single" ? `single:${selectedSurvey?.status ?? ""}` : mode
   );
@@ -182,7 +186,7 @@ export function SurveyListActionRail({
   return (
     <>
       <ActionRailShell
-        keepOpen={selectedCount > 0 || isMenuOpen || aiDrawerOpen}
+        keepOpen={selectedCount > 0 || isMenuOpen || isAiPanelOpenHere}
         contextual={contextual}
         persistent={
           selectedCount === 0 ? (
@@ -211,7 +215,7 @@ export function SurveyListActionRail({
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    onClick={() => setAiDrawerOpen(true)}
+                    onClick={() => openPanel("dashboard")}
                     aria-label="Agente IA"
                     className="group hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl bg-transparent transition-all duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 overflow-hidden"
                   >
@@ -243,26 +247,21 @@ export function SurveyListActionRail({
                     />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="top">
-                  Agente IA
-                </TooltipContent>
+                <TooltipContent side={popoutSide}>Agente IA</TooltipContent>
               </Tooltip>
 
               <Popover onOpenChange={setIsMenuOpen}>
                 <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Crear encuesta"
-                    className="hover-icon-pop relative flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-[13px] font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
-                  >
-                    <Plus className="h-4 w-4" strokeWidth={2.5} />
-                    Crear encuesta
-                  </button>
+                  <RailPrimaryAction
+                    icon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
+                    label="Crear encuesta"
+                  />
                 </PopoverTrigger>
                 <PopoverContent
                   align="center"
-                  side="top"
+                  side={popoutSide}
                   sideOffset={16}
+                  collisionPadding={16}
                   className="w-[280px] rounded-2xl border-white/10 bg-surface-nav p-2 text-white/60 shadow-rail"
                 >
                   <RailCreateOption
@@ -283,7 +282,6 @@ export function SurveyListActionRail({
           ) : null
         }
       />
-      <AiAgentDrawer open={aiDrawerOpen} onOpenChange={setAiDrawerOpen} context="dashboard" />
     </>
   );
 }

@@ -26,16 +26,18 @@ export function useDraggableRail() {
   const position = dragPosition ?? storedPosition;
 
   // Keeps a dragged rail on-screen if the viewport shrinks under it (window
-  // resize, device rotation).
+  // resize, device rotation). `x` is the bar's center, so the clamp bounds
+  // keep half its width — not the whole width — inside each edge.
   React.useEffect(() => {
     if (!storedPosition) return;
     const clampToViewport = () => {
       const rect = barRef.current?.getBoundingClientRect();
       if (!rect) return;
-      const maxX = Math.max(window.innerWidth - rect.width, 0);
+      const halfWidth = rect.width / 2;
+      const maxX = Math.max(window.innerWidth - halfWidth, halfWidth);
       const maxY = Math.max(window.innerHeight - rect.height, 0);
       const next = {
-        x: clamp(storedPosition.x, 0, maxX),
+        x: clamp(storedPosition.x, halfWidth, maxX),
         y: clamp(storedPosition.y, 0, maxY),
       };
       if (next.x !== storedPosition.x || next.y !== storedPosition.y) {
@@ -62,8 +64,11 @@ export function useDraggableRail() {
     const height = barRef.current?.offsetHeight ?? 0;
     const maxX = Math.max(window.innerWidth - width, 0);
     const maxY = Math.max(window.innerHeight - height, 0);
+    // The rail stays forced open for the whole gesture, so `width` here is
+    // always its expanded size — the left edge the grab math produces,
+    // turned into the center coordinate `RailPosition.x` actually stores.
     setDragPosition({
-      x: clamp(event.clientX - offset.x, 0, maxX),
+      x: clamp(event.clientX - offset.x, 0, maxX) + width / 2,
       y: clamp(event.clientY - offset.y, 0, maxY),
     });
   };

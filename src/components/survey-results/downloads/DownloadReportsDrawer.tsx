@@ -1,6 +1,21 @@
 import * as React from "react";
-import { Check, ChevronDown, Download, History, Info, Loader2, Lock, RotateCcw, Share2 } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Download,
+  FileDown,
+  Filter,
+  History,
+  Info,
+  LayoutList,
+  Loader2,
+  Lock,
+  MessageSquareText,
+  Share2,
+  Table2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toneChip, toneSelected } from "@/lib/tone";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { SheetFooter } from "@/components/ui/sheet";
 import { DrawerShell } from "@/components/overlays/DrawerShell";
+import { DrawerSection } from "@/components/overlays/DrawerSection";
 import type { SurveyDraft } from "@/components/survey-builder";
 import { hasNpsDepthQuestions } from "@/mocks/npsDepth";
 import {
@@ -325,6 +341,19 @@ export function DownloadReportsDrawer({
   // Un PDF sin secciones no es un reporte.
   const pdfHasContent = availableSections.some((id) => pdfSections.has(id));
 
+  /** Cuántas secciones se imprimen — el contador de la tarjeta del PDF. */
+  const pdfSectionCount = availableSections.filter((id) => pdfSections.has(id)).length;
+  /**
+   * Cuántas pestañas trae el libro. No es cuántas hojas están encendidas: una
+   * tanda por demográfico produce una pestaña por cada demográfico elegido, así
+   * que el contador cuenta pestañas reales del archivo.
+   */
+  const xlsxTabCount = availableSheets.reduce((total, id) => {
+    if (!xlsxSheets.has(id)) return total;
+    const slot = XLSX_SHEETS.find((sheet) => sheet.id === id)?.segmentSlot;
+    return total + (slot ? xlsxSegmentSlots[slot].size : 1);
+  }, 0);
+
   const canDownload =
     blocked === null &&
     (kind !== "pdf" || pdfHasContent) &&
@@ -346,7 +375,7 @@ export function DownloadReportsDrawer({
       className="!w-[30vw] !max-w-[30vw] !min-w-[28rem]"
       disablePadding
       footer={
-        <SheetFooter className="border-t bg-background px-5 py-4">
+        <SheetFooter className="border-t border-border/60 bg-surface px-4 py-3">
           {activeTab === "reports" ? (
             <Button
               className="w-full gap-2"
@@ -372,21 +401,28 @@ export function DownloadReportsDrawer({
         />
 
         {activeTab === "reports" ? (
-          <div className="flex flex-col gap-5 px-5 py-4">
-            <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-[13px] font-bold text-text-primary">
-                Tipo de reporte
-              </legend>
+          /* Cada parte de la configuración —qué formato, qué lleva dentro, para
+             quién— en su propia tarjeta sobre el fondo del drawer, con la misma
+             anatomía que los drawers de demográficos: chip del icono, título,
+             la línea que explica para qué sirve y, bajo una divisoria, sus
+             controles. */
+          <div className="flex min-h-full flex-col gap-3 bg-background p-4">
+            <DrawerSection
+              icon={FileDown}
+              tone="brand"
+              title="Tipo de reporte"
+              hint="Cada formato trae su propia personalización debajo."
+            >
               {/*
-                * Una sola lista agrupada en vez de cinco tarjetas sueltas: las
-                * filas comparten borde y se dividen con una línea, y solo la
-                * seleccionada despliega su descripción. Cinco descripciones
-                * permanentes eran ~200px de texto que el lector ya decidió no
-                * leer; la del formato elegido es la única que informa la
-                * descarga que viene.
+                * Una sola lista dentro del marco en vez de cinco tarjetas
+                * sueltas: las filas comparten fondo y solo la seleccionada
+                * despliega su descripción. Cinco descripciones permanentes
+                * eran ~200px de texto que el lector ya decidió no leer; la del
+                * formato elegido es la única que informa la descarga que viene.
                 */}
-              <div className="overflow-hidden rounded-xl border border-border/70 bg-surface">
-                <div className="flex flex-col divide-y divide-border/60">
+              <fieldset className="rounded-xl border border-border/60 bg-background p-2">
+                <legend className="sr-only">Tipo de reporte</legend>
+                <div className="flex flex-col gap-2">
                   {REPORT_TYPES.map((type) => (
                     <ReportTypeRow
                       key={type.kind}
@@ -397,173 +433,182 @@ export function DownloadReportsDrawer({
                     />
                   ))}
                 </div>
-              </div>
-            </fieldset>
+              </fieldset>
+            </DrawerSection>
 
-            <div className="flex flex-col gap-3">
-              <h3 className="text-[13px] font-bold text-text-primary">
-                Personalización del reporte
-              </h3>
+            {/*
+              * Cada bloque del documento es una fila con su interruptor y,
+              * debajo, su propia personalización. La descripción larga vive en
+              * el `title` de la fila —un hover la trae de vuelta— salvo cuando
+              * explica por qué la fila está apagada, y el corte del heatmap
+              * sigue viviendo dentro del heatmap.
+              */}
+            {kind === "pdf" && (
+              <DrawerSection
+                icon={LayoutList}
+                tone="brand"
+                title="Secciones del reporte"
+                hint="Se imprimen en el orden de la lista y el número es su posición en el PDF."
+                badge={`${pdfSectionCount}`}
+              >
+                <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background p-2">
+                  {PDF_SECTIONS.map((section) => {
+                    const unavailable = !availableSections.includes(section.id);
+                    const enabled = !unavailable && pdfSections.has(section.id);
+                    // El número que se imprime no es la posición en el
+                    // catálogo sino la que queda tras apagar secciones: el
+                    // panel muestra el índice real del documento.
+                    const printedIndex = PDF_SECTIONS.filter(
+                      (candidate) =>
+                        availableSections.includes(candidate.id) &&
+                        pdfSections.has(candidate.id)
+                    ).findIndex((candidate) => candidate.id === section.id);
 
-              {/*
-                * Una sola lista agrupada: cada sección del documento es una
-                * fila con su interruptor y, debajo, su propia personalización.
-                *
-                * Antes eran ocho tarjetas sueltas — cada una con su borde, su
-                * padding y su descripción permanente — y la columna medía más
-                * de dos pantallas. Las filas comparten un contenedor y una
-                * línea divisoria, la descripción vive en el título como
-                * tooltip (salvo cuando explica por qué la fila está apagada), y
-                * el corte del heatmap sigue viviendo dentro del heatmap.
-                */}
-              {kind === "pdf" && (
-                <>
-                  <div className="flex flex-col divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-surface">
-                    {PDF_SECTIONS.map((section) => {
-                      const unavailable = !availableSections.includes(section.id);
-                      const enabled = !unavailable && pdfSections.has(section.id);
-                      // El número que se imprime no es la posición en el
-                      // catálogo sino la que queda tras apagar secciones: el
-                      // panel muestra el índice real del documento.
-                      const printedIndex = PDF_SECTIONS.filter(
-                        (candidate) =>
-                          availableSections.includes(candidate.id) &&
-                          pdfSections.has(candidate.id)
-                      ).findIndex((candidate) => candidate.id === section.id);
-
-                      const slot = section.segmentSlot;
-                      const picker =
-                        slot && depthSegmentItems.length > 0
+                    const slot = section.segmentSlot;
+                    const picker =
+                      slot && depthSegmentItems.length > 0
+                        ? {
+                            items: depthSegmentItems,
+                            selected: pdfSegmentSlots[slot],
+                            onChange: (next: ReadonlySet<string>) => setSlot(slot, next),
+                            placeholder: "Selecciona demográficos",
+                          }
+                        : section.picksSections && questionSectionItems.length > 0
                           ? {
-                              items: depthSegmentItems,
-                              selected: pdfSegmentSlots[slot],
-                              onChange: (next: ReadonlySet<string>) => setSlot(slot, next),
-                              placeholder: "Selecciona demográficos",
+                              items: questionSectionItems,
+                              selected: pdfQuestionSections,
+                              onChange: setPdfQuestionSections,
+                              placeholder: "Selecciona secciones",
                             }
-                          : section.picksSections && questionSectionItems.length > 0
-                            ? {
-                                items: questionSectionItems,
-                                selected: pdfQuestionSections,
-                                onChange: setPdfQuestionSections,
-                                placeholder: "Selecciona secciones",
-                              }
-                            : null;
+                          : null;
 
-                      return (
-                        <ConfigSectionRow
-                          key={section.id}
-                          index={printedIndex >= 0 ? `${printedIndex + 1}` : null}
-                          label={section.label}
-                          description={section.description}
-                          unavailableReason={
-                            unavailable
-                              ? section.needsNps
-                                ? "Esta medición no incluyó pregunta eNPS"
+                    return (
+                      <ConfigSectionRow
+                        key={section.id}
+                        index={printedIndex >= 0 ? `${printedIndex + 1}` : null}
+                        label={section.label}
+                        description={section.description}
+                        unavailableReason={
+                          unavailable
+                            ? section.needsNps
+                              ? "Esta medición no incluyó pregunta eNPS"
+                              : "Esta encuesta no recogió demográficos"
+                            : null
+                        }
+                        enabled={enabled}
+                        disabled={unavailable}
+                        onEnabledChange={() =>
+                          setPdfSections(toggleIn(pdfSections, section.id))
+                        }
+                        pickerLabel={section.pickerLabel}
+                        pickerEmptyHint={section.pickerEmptyHint}
+                        picker={picker}
+                      />
+                    );
+                  })}
+                </div>
+                {!pdfHasContent && (
+                  <span className="mt-2 block text-[12px] font-medium text-status-negative">
+                    Enciende al menos una sección para poder descargar.
+                  </span>
+                )}
+              </DrawerSection>
+            )}
+
+            {/*
+              * El libro se configura igual que el PDF: una hoja por fila, con
+              * su interruptor y su propio selector. El número es la posición de
+              * la pestaña en el archivo, así que las tandas por demográfico
+              * muestran un rango — "7–9" para tres demográficos — y no un solo
+              * número que mentiría sobre cuántas hojas produce.
+              */}
+            {kind === "xlsx" && (
+              <DrawerSection
+                icon={Table2}
+                tone="brand"
+                title="Hojas del libro"
+                hint="Cada hoja encendida es una pestaña; las tandas por demográfico producen una por cada uno."
+                badge={`${xlsxTabCount}`}
+              >
+                <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background p-2">
+                  {XLSX_SHEETS.map((sheet) => {
+                    const unavailable = !availableSheets.includes(sheet.id);
+                    const enabled = !unavailable && xlsxSheets.has(sheet.id);
+                    const slot = sheet.segmentSlot;
+
+                    // Cuántas pestañas produce cada hoja encendida antes de
+                    // esta: una tanda cuenta tantas como demográficos tenga.
+                    const tabsBefore = XLSX_SHEETS.filter(
+                      (candidate) =>
+                        availableSheets.includes(candidate.id) &&
+                        xlsxSheets.has(candidate.id) &&
+                        XLSX_SHEETS.indexOf(candidate) < XLSX_SHEETS.indexOf(sheet)
+                    ).reduce(
+                      (total, candidate) =>
+                        total +
+                        (candidate.segmentSlot
+                          ? xlsxSegmentSlots[candidate.segmentSlot].size
+                          : 1),
+                      0
+                    );
+                    const own = slot ? xlsxSegmentSlots[slot].size : 1;
+
+                    return (
+                      <ConfigSectionRow
+                        key={sheet.id}
+                        index={
+                          !enabled || own === 0
+                            ? null
+                            : own === 1
+                              ? `${tabsBefore + 1}`
+                              : `${tabsBefore + 1}–${tabsBefore + own}`
+                        }
+                        label={sheet.label}
+                        description={sheet.description}
+                        unavailableReason={
+                          !unavailable
+                            ? null
+                            : sheet.needsNps
+                              ? "Esta medición no incluyó pregunta eNPS"
+                              : sheet.needsDepth
+                                ? "Ninguna pregunta activó preguntas de profundidad"
                                 : "Esta encuesta no recogió demográficos"
-                              : null
-                          }
-                          enabled={enabled}
-                          disabled={unavailable}
-                          onEnabledChange={() =>
-                            setPdfSections(toggleIn(pdfSections, section.id))
-                          }
-                          pickerLabel={section.pickerLabel}
-                          pickerEmptyHint={section.pickerEmptyHint}
-                          picker={picker}
-                        />
-                      );
-                    })}
-                  </div>
-                  {!pdfHasContent && (
-                    <span className="text-[12px] font-medium text-status-negative">
-                      Enciende al menos una sección para poder descargar.
-                    </span>
-                  )}
-                </>
-              )}
+                        }
+                        enabled={enabled}
+                        disabled={unavailable}
+                        onEnabledChange={() => setXlsxSheets(toggleIn(xlsxSheets, sheet.id))}
+                        pickerLabel={sheet.pickerLabel}
+                        pickerEmptyHint={sheet.pickerEmptyHint}
+                        picker={
+                          slot && segmentItems.length > 0
+                            ? {
+                                items: segmentItems,
+                                selected: xlsxSegmentSlots[slot],
+                                onChange: (next) => setXlsxSlot(slot, next),
+                                placeholder: "Selecciona demográficos",
+                              }
+                            : null
+                        }
+                      />
+                    );
+                  })}
+                </div>
+                {!xlsxHasContent && (
+                  <span className="mt-2 block text-[12px] font-medium text-status-negative">
+                    Enciende al menos una hoja para poder descargar.
+                  </span>
+                )}
+              </DrawerSection>
+            )}
 
-              {/*
-                * El libro se configura igual que el PDF: una hoja por tarjeta,
-                * con su interruptor y su propio selector. El número es la
-                * posición de la pestaña en el archivo, así que las tandas por
-                * demográfico muestran un rango — "7–9" para tres demográficos —
-                * y no un solo número que mentiría sobre cuántas hojas produce.
-                */}
-              {kind === "xlsx" && (
-                <>
-                  <div className="flex flex-col divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-surface">
-                    {XLSX_SHEETS.map((sheet) => {
-                      const unavailable = !availableSheets.includes(sheet.id);
-                      const enabled = !unavailable && xlsxSheets.has(sheet.id);
-                      const slot = sheet.segmentSlot;
-
-                      // Cuántas pestañas produce cada hoja encendida antes de
-                      // esta: una tanda cuenta tantas como demográficos tenga.
-                      const tabsBefore = XLSX_SHEETS.filter(
-                        (candidate) =>
-                          availableSheets.includes(candidate.id) &&
-                          xlsxSheets.has(candidate.id) &&
-                          XLSX_SHEETS.indexOf(candidate) < XLSX_SHEETS.indexOf(sheet)
-                      ).reduce(
-                        (total, candidate) =>
-                          total +
-                          (candidate.segmentSlot
-                            ? xlsxSegmentSlots[candidate.segmentSlot].size
-                            : 1),
-                        0
-                      );
-                      const own = slot ? xlsxSegmentSlots[slot].size : 1;
-
-                      return (
-                        <ConfigSectionRow
-                          key={sheet.id}
-                          index={
-                            !enabled || own === 0
-                              ? null
-                              : own === 1
-                                ? `${tabsBefore + 1}`
-                                : `${tabsBefore + 1}–${tabsBefore + own}`
-                          }
-                          label={sheet.label}
-                          description={sheet.description}
-                          unavailableReason={
-                            !unavailable
-                              ? null
-                              : sheet.needsNps
-                                ? "Esta medición no incluyó pregunta eNPS"
-                                : sheet.needsDepth
-                                  ? "Ninguna pregunta activó preguntas de profundidad"
-                                  : "Esta encuesta no recogió demográficos"
-                          }
-                          enabled={enabled}
-                          disabled={unavailable}
-                          onEnabledChange={() => setXlsxSheets(toggleIn(xlsxSheets, sheet.id))}
-                          pickerLabel={sheet.pickerLabel}
-                          pickerEmptyHint={sheet.pickerEmptyHint}
-                          picker={
-                            slot && segmentItems.length > 0
-                              ? {
-                                  items: segmentItems,
-                                  selected: xlsxSegmentSlots[slot],
-                                  onChange: (next) => setXlsxSlot(slot, next),
-                                  placeholder: "Selecciona demográficos",
-                                }
-                              : null
-                          }
-                        />
-                      );
-                    })}
-                  </div>
-                  {!xlsxHasContent && (
-                    <span className="text-[12px] font-medium text-status-negative">
-                      Enciende al menos una hoja para poder descargar.
-                    </span>
-                  )}
-                </>
-              )}
-
-              {kind === "comments" && (
-                <div className="flex flex-col divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-surface">
+            {kind === "comments" && (
+              <DrawerSection
+                icon={MessageSquareText}
+                tone="brand"
+                title="Comentarios que entran"
+                hint="Con los filtros apagados entran todos los comentarios abiertos de la medición."
+              >
+                <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background p-2">
                   <ToggleMultiSelectRow
                     title="Sentimiento de los comentarios"
                     hint="Sin filtrar, el reporte incluye los tres sentimientos"
@@ -589,35 +634,40 @@ export function DownloadReportsDrawer({
                     />
                   )}
                 </div>
-              )}
+              </DrawerSection>
+            )}
 
-              {(kind === "questions-csv" || kind === "answers-csv") && (
-                <div className="flex items-start gap-2.5 rounded-xl border border-border/70 bg-muted/40 px-4 py-3">
-                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                  <p className="text-[13px] leading-snug text-muted-foreground">
-                    {reportDetailFor(kind, isAnonymous)}
-                  </p>
-                </div>
-              )}
+            {/* Los dos formatos planos no tienen nada que configurar, así que
+                su tarjeta es la explicación de lo que van a traer. */}
+            {(kind === "questions-csv" || kind === "answers-csv") && (
+              <DrawerSection
+                icon={Info}
+                tone="brand"
+                title="Contenido del archivo"
+                hint="Este formato sale completo: no tiene bloques que encender ni apagar."
+              >
+                <p className="rounded-xl border border-border/60 bg-background px-3 py-2.5 text-[13px] leading-relaxed text-text-secondary">
+                  {reportDetailFor(kind, isAnonymous)}
+                </p>
+              </DrawerSection>
+            )}
 
-              {hasSegments && filterApplies && (
-                <PopulationFilterCard
-                  segments={segments}
-                  scope={scope}
-                  blocked={blocked}
-                  enabled={filterEnabled}
-                  onEnabledChange={setFilterEnabled}
-                  filterKey={filterKey}
-                  onFilterKeyChange={(key) => {
-                    setFilterKey(key);
-                    setFilterOptionIds(new Set());
-                  }}
-                  selectedOptionIds={filterOptionIds}
-                  onSelectedOptionIdsChange={setFilterOptionIds}
-                />
-              )}
-
-            </div>
+            {hasSegments && filterApplies && (
+              <PopulationFilterCard
+                segments={segments}
+                scope={scope}
+                blocked={blocked}
+                enabled={filterEnabled}
+                onEnabledChange={setFilterEnabled}
+                filterKey={filterKey}
+                onFilterKeyChange={(key) => {
+                  setFilterKey(key);
+                  setFilterOptionIds(new Set());
+                }}
+                selectedOptionIds={filterOptionIds}
+                onSelectedOptionIdsChange={setFilterOptionIds}
+              />
+            )}
           </div>
         ) : (
           <DownloadsList entries={entries} results={results} onDeliver={onDeliver} onShare={onShare} />
@@ -659,7 +709,7 @@ function DrawerTabs({
   );
 
   return (
-    <div className="flex shrink-0 items-center gap-6 border-b border-border/70 px-5 pt-3">
+    <div className="flex shrink-0 items-center gap-6 border-b border-border/60 bg-surface px-4 pt-3">
       {tab("reports", "Reportes")}
       {tab("downloads", "Descargas", downloadsBadge)}
     </div>
@@ -694,15 +744,20 @@ function ReportTypeRow({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
+      // Misma receta de "esta es la elegida" que las tarjetas de tipo del
+      // editor de demográficos: borde y fondo teñidos en el tono, y la
+      // etiqueta en el acento. En reposo, gris sobre la superficie.
+      style={selected ? toneSelected("brand") : undefined}
       className={cn(
-        "flex w-full items-center gap-3 px-4 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40",
-        selected ? "bg-primary/[0.05]" : "hover:bg-muted/40"
+        "flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/30",
+        selected ? "shadow-sm" : "border-border/60 bg-surface hover:bg-muted/40"
       )}
     >
       <span
+        style={selected ? toneChip("brand") : undefined}
         className={cn(
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
-          selected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+          !selected && "bg-muted text-muted-foreground"
         )}
       >
         <Icon className="h-4 w-4" strokeWidth={2} />
@@ -711,13 +766,13 @@ function ReportTypeRow({
         <span
           className={cn(
             "text-[13px] font-semibold leading-tight",
-            selected ? "text-primary" : "text-text-primary"
+            !selected && "text-text-primary"
           )}
         >
           {type.title}
         </span>
         {selected && (
-          <span className="text-[12px] leading-snug text-muted-foreground">{description}</span>
+          <span className="text-[12px] leading-snug text-text-muted">{description}</span>
         )}
       </span>
       <span
@@ -779,7 +834,10 @@ function ConfigSectionRow({
 }) {
   return (
     <div
-      className={cn("flex flex-col gap-2.5 px-4 py-3 transition-colors", disabled && "opacity-45")}
+      className={cn(
+        "flex flex-col gap-2.5 rounded-lg border border-border/60 bg-surface px-3 py-2.5 transition-colors",
+        disabled && "opacity-45"
+      )}
       title={unavailableReason ?? description}
     >
       <div className="flex items-center justify-between gap-3">
@@ -893,7 +951,7 @@ function ToggleMultiSelectRow({
   };
 
   return (
-    <div className="flex flex-col gap-2.5 px-4 py-3">
+    <div className="flex flex-col gap-2.5 rounded-lg border border-border/60 bg-surface px-3 py-2.5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="text-[13px] font-semibold leading-tight text-text-primary">
@@ -1083,20 +1141,18 @@ function PopulationFilterCard({
   };
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-xl border border-border/70 bg-surface px-4 py-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[13px] font-semibold leading-tight text-text-primary">
-            Filtrar población
-          </span>
-          <span className="text-[12px] leading-snug text-muted-foreground">
-            Genera el reporte solo para los grupos que elijas
-          </span>
-        </div>
-        <Switch checked={enabled} onCheckedChange={onEnabledChange} className="shrink-0" />
-      </div>
-      {enabled && (
-        <div className="flex flex-col gap-2">
+    // El interruptor manda sobre la tarjeta entera —no hay filtro que
+    // configurar mientras esté apagado—, así que vive en la cabecera junto al
+    // título y no dentro del cuerpo.
+    <DrawerSection
+      icon={Filter}
+      tone="brand"
+      title="Filtrar población"
+      hint="Genera el reporte solo para los grupos que elijas."
+      action={<Switch checked={enabled} onCheckedChange={onEnabledChange} />}
+    >
+      {enabled ? (
+        <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background p-2.5">
           {/* Rótulo y control por línea, en la misma columna de 184px que los
               bloques de arriba: dos selectores lado a lado en un ancho de
               drawer quedaban de ~90px y truncaban el nombre del grupo. */}
@@ -1153,8 +1209,8 @@ function PopulationFilterCard({
               </span>
             ))}
         </div>
-      )}
-    </div>
+      ) : null}
+    </DrawerSection>
   );
 }
 
@@ -1202,40 +1258,43 @@ function DownloadsList({
   )?.id;
 
   return (
-    <div className="flex flex-1 flex-col px-5 py-4">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-[13px] font-bold text-text-primary">Lista de descargas</span>
-        <span className="text-[12px] font-semibold text-muted-foreground">
-          Últimos 7 días
-        </span>
-      </div>
-
-      {entries.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <History className="h-6 w-6" strokeWidth={2} />
-          </span>
-          <div className="flex flex-col gap-1">
-            <span className="text-[14px] font-bold text-text-primary">Sin descargas recientes</span>
-            <span className="max-w-[260px] text-[13px] leading-snug text-muted-foreground">
-              Tus reportes generados aparecerán aquí para acceso rápido.
+    <div className="flex min-h-full flex-col gap-3 bg-background p-4">
+      <DrawerSection
+        icon={History}
+        tone="brand"
+        title="Lista de descargas"
+        hint="Los reportes que pediste en los últimos 7 días, con la configuración de cada uno."
+        badge={entries.length > 0 ? `${entries.length}` : undefined}
+      >
+        {entries.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-border/60 bg-background px-4 py-10 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <History className="h-6 w-6" strokeWidth={2} />
             </span>
+            <div className="flex flex-col gap-1">
+              <span className="text-[13.5px] font-semibold text-text-primary">
+                Sin descargas recientes
+              </span>
+              <span className="max-w-[260px] text-[12px] leading-relaxed text-text-muted">
+                Tus reportes generados aparecerán aquí para acceso rápido.
+              </span>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {entries.map((entry) => (
-            <DownloadRow
-              key={entry.id}
-              entry={entry}
-              results={results}
-              isLatest={entry.id === latestDeliveredId}
-              onDeliver={onDeliver}
-              onShare={onShare}
-            />
-          ))}
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-background p-2">
+            {entries.map((entry) => (
+              <DownloadRow
+                key={entry.id}
+                entry={entry}
+                results={results}
+                isLatest={entry.id === latestDeliveredId}
+                onDeliver={onDeliver}
+                onShare={onShare}
+              />
+            ))}
+          </div>
+        )}
+      </DrawerSection>
     </div>
   );
 }
@@ -1262,8 +1321,8 @@ function DownloadRow({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border bg-white transition-colors",
-        detailsOpen ? "border-border/80" : "border-border/50"
+        "overflow-hidden rounded-lg border bg-surface transition-colors",
+        detailsOpen ? "border-border/80" : "border-border/60"
       )}
     >
       {/* ── Fila principal ── */}
@@ -1500,7 +1559,7 @@ function ReportDetailPanel({
   const allRows = [...pdfRows, ...xlsxRows, ...commentRows, ...filterRows];
 
   return (
-    <div className="divide-y divide-border/40 border-t border-border/40 bg-white px-3">
+    <div className="divide-y divide-border/40 border-t border-border/40 bg-background px-3">
       {allRows.length === 0 ? (
         <p className="py-3 text-[12px] text-muted-foreground">Sin configuración adicional.</p>
       ) : (

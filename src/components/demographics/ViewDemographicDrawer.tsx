@@ -3,12 +3,13 @@ import { Calendar, Copy, ListOrdered, Pencil, Tag, Trash2, User as UserIcon } fr
 import { toneChip } from "@/lib/tone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SheetFooter } from "@/components/ui/sheet";
 import { DrawerShell } from "@/components/overlays/DrawerShell";
 import { DEMOGRAPHIC_TYPES, demographicTypeTone } from "@/components/survey-builder/demographics";
-import { FormSection } from "./FormSection";
+import { DrawerSection } from "@/components/overlays/DrawerSection";
 import { TYPE_HINTS } from "./demographicTypeHints";
-import { formatIsoDay, type DemographicRow } from "./demographicRows";
+import { SYSTEM_BLOCK_REASON, formatIsoDay, type DemographicRow } from "./demographicRows";
 
 interface ViewDemographicDrawerProps {
   open: boolean;
@@ -66,13 +67,19 @@ export function ViewDemographicDrawer({
       className="!w-[min(620px,92vw)] !max-w-[min(620px,92vw)]"
       disablePadding
       footer={
+        /* Las tres acciones siempre están, también en un demográfico del
+           sistema: ahí editar y eliminar se rechazan con su razón —igual que
+           en la barra de acciones de la lista— en vez de desaparecer. Un pie
+           que cambia de contenido según la fila deja al lector adivinando si
+           la acción no existe o si él no puede hacerla. */
         <SheetFooter className="border-t border-border/60 bg-surface px-4 py-3">
           <div className="flex w-full items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              {!isSystem && (
+              <BlockableAction blockedReason={isSystem ? SYSTEM_BLOCK_REASON : null}>
                 <Button
                   variant="destructive"
                   className="gap-2"
+                  disabled={isSystem}
                   onClick={() => {
                     onOpenChange(false);
                     onDelete(shown.id);
@@ -81,7 +88,7 @@ export function ViewDemographicDrawer({
                   <Trash2 className="h-4 w-4" />
                   Eliminar
                 </Button>
-              )}
+              </BlockableAction>
               <Button
                 variant="outline"
                 className="gap-2"
@@ -94,9 +101,10 @@ export function ViewDemographicDrawer({
                 Duplicar
               </Button>
             </div>
-            {!isSystem && (
+            <BlockableAction blockedReason={isSystem ? SYSTEM_BLOCK_REASON : null}>
               <Button
                 className="gap-2"
+                disabled={isSystem}
                 onClick={() => {
                   onOpenChange(false);
                   onEdit(shown.id);
@@ -105,13 +113,13 @@ export function ViewDemographicDrawer({
                 <Pencil className="h-4 w-4" />
                 Editar
               </Button>
-            )}
+            </BlockableAction>
           </div>
         </SheetFooter>
       }
     >
       <div className="flex min-h-full flex-col gap-3 bg-background p-4">
-        <FormSection
+        <DrawerSection
           icon={Tag}
           tone="brand"
           title="Origen del dato demográfico"
@@ -141,9 +149,9 @@ export function ViewDemographicDrawer({
               )}
             </div>
           )}
-        </FormSection>
+        </DrawerSection>
 
-        <FormSection icon={TypeIcon} tone="brand" title="Tipo de respuesta" hint={TYPE_HINTS[shown.type]}>
+        <DrawerSection icon={TypeIcon} tone="brand" title="Tipo de respuesta" hint={TYPE_HINTS[shown.type]}>
           <div
             style={toneChip(typeTone)}
             className="flex items-center gap-2.5 rounded-xl border border-border/60 px-3.5 py-2.5 text-[13px] font-semibold"
@@ -151,9 +159,9 @@ export function ViewDemographicDrawer({
             <TypeIcon className="h-4 w-4 shrink-0" strokeWidth={2} />
             {shown.typeLabel}
           </div>
-        </FormSection>
+        </DrawerSection>
 
-        <FormSection
+        <DrawerSection
           icon={ListOrdered}
           tone="brand"
           title="Opciones de respuesta"
@@ -175,8 +183,35 @@ export function ViewDemographicDrawer({
               ))}
             </ul>
           </div>
-        </FormSection>
+        </DrawerSection>
       </div>
     </DrawerShell>
+  );
+}
+
+/**
+ * Un botón que puede estar bloqueado, con la razón en un tooltip.
+ *
+ * El envoltorio no es decorativo: un `<button disabled>` no emite eventos de
+ * puntero, así que sin un elemento vivo alrededor el tooltip que explica el
+ * bloqueo nunca aparecería — justo en el caso en que hace falta.
+ */
+function BlockableAction({
+  blockedReason,
+  children,
+}: {
+  blockedReason: string | null;
+  children: React.ReactNode;
+}) {
+  if (blockedReason === null) return <>{children}</>;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex cursor-not-allowed">{children}</span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[220px]">
+        {blockedReason}
+      </TooltipContent>
+    </Tooltip>
   );
 }

@@ -4,6 +4,8 @@ import { createPublishedSurveyDraft } from "@/mocks/surveyPreviewMocks";
 import type { SurveyListItem } from "@/mocks/types";
 import {
   npsBandForScore,
+  toneForFavorability,
+  toneForNps,
   verdictForFavorability,
   type FavorabilityVerdict,
 } from "@/components/survey-results/favorabilityScale";
@@ -70,7 +72,7 @@ const mean = (values: readonly number[]): number | null =>
 type SurveyWithDraft = SurveyListItem & { draft?: SurveyDraft };
 
 /** The draft a row's results are read from — its own when the builder made it. */
-const draftOf = (survey: SurveyWithDraft): SurveyDraft =>
+export const draftOf = (survey: SurveyWithDraft): SurveyDraft =>
   survey.draft ?? createPublishedSurveyDraft(survey);
 
 export function buildHomePulse(surveys: readonly SurveyListItem[]): HomePulse {
@@ -136,3 +138,41 @@ export const formatNpsDelta = (value: number): string => {
 /** "1 encuesta" / "21 encuestas" — the caption under each averaged value. */
 export const formatSurveyCount = (count: number): string =>
   `${count.toLocaleString("es-CO")} ${count === 1 ? "encuesta" : "encuestas"}`;
+
+/** Why a survey ended up on the negative-results alert. */
+export type NegativeResultReason = "favorabilidad" | "nps" | "ambos";
+
+export interface NegativeResultSurvey {
+  id: string;
+  name: string;
+  reason: NegativeResultReason;
+}
+
+/**
+ * "En curso" surveys whose favorability or eNPS has already crossed into
+ * negative territory, while responses are still coming in.
+ *
+ * The three averaged cards above answer "how are things on the whole"; this
+ * answers "which specific survey needs a look right now" — read through the
+ * same `buildSurveyResults` so a survey landing here shows the same red
+ * reading a person would see after opening it. A finished survey is left out:
+ * by then the fix is a retro, not a "go check on it".
+ */
+export function negativeResultSurveys(
+  surveys: readonly SurveyListItem[]
+): readonly NegativeResultSurvey[] {
+  const flagged: NegativeResultSurvey[] = [];
+  for (const survey of surveys) {
+    if (survey.status !== OPEN_STATUS) continue;
+    const result = buildSurveyResults({ draft: draftOf(survey), item: survey });
+    const favorabilityNegative = toneForFavorability(result.favorability) === "negative";
+    const npsNegative = result.nps !== null && toneForNps(result.nps.score) === "negative";
+    if (!favorabilityNegative && !npsNegative) continue;
+    flagged.push({
+      id: survey.id,
+      name: survey.name,
+      reason: favorabilityNegative && npsNegative ? "ambos" : favorabilityNegative ? "favorabilidad" : "nps",
+    });
+  }
+  return flagged;
+}

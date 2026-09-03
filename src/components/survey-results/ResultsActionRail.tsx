@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Download, Bell, Minimize2, Pin, Info, Tag, ShieldCheck, Users, Lock, CalendarRange, Sparkles, Eye, type LucideIcon } from "lucide-react";
-import { AiAgentDrawer } from "@/components/ai/AiAgentDrawer";
+import { useAiAgentPanel } from "@/components/app-shell/aiAgentPanelContext";
 import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -79,7 +79,7 @@ export function ResultsActionRail({
   const isAnonymous = draft.visibility === "anonymous";
   const [autoHide, setAutoHide] = useRailAutoHide();
   const [isExpanded, setIsExpanded] = React.useState(true);
-  const [aiDrawerOpen, setAiDrawerOpen] = React.useState(false);
+  const { openPanel } = useAiAgentPanel();
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const forceOpenTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -281,7 +281,7 @@ export function ResultsActionRail({
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  onClick={() => setAiDrawerOpen(true)}
+                  onClick={() => openPanel("results")}
                   aria-label="Agente IA"
                   className="group hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl bg-transparent transition-all duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 overflow-hidden"
                 >
@@ -338,7 +338,6 @@ export function ResultsActionRail({
           </div>
         </div>
       </div>
-      <AiAgentDrawer open={aiDrawerOpen} onOpenChange={setAiDrawerOpen} context="results" />
     </div>
   );
 }

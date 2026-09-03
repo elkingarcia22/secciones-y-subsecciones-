@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarClock, PlayCircle, type LucideIcon } from "lucide-react";
+import { AlertTriangle, CalendarClock, type LucideIcon } from "lucide-react";
 import { CLOSING_SOON_DAYS, NO_FILTERS, type SurveyListFilters } from "@/components/survey-list/surveyListFilters";
 
 /**
@@ -22,13 +22,6 @@ export interface MetricPreset {
 }
 
 export const METRIC_PRESETS: readonly MetricPreset[] = [
-  {
-    id: "open",
-    label: "En curso",
-    hint: "Encuestas que hoy están recibiendo respuestas.",
-    tone: "warning",
-    filters: { ...NO_FILTERS, status: [OPEN_STATUS] },
-  },
   {
     id: "closing",
     label: "Por cerrar",
@@ -57,7 +50,6 @@ export const formatCount = (value: number): string => value.toLocaleString("es-C
 
 /** One icon per preset id, shared by every surface that renders these presets. */
 export const PRESET_ICONS: Readonly<Record<string, LucideIcon>> = {
-  open: PlayCircle,
   closing: CalendarClock,
   low: AlertTriangle,
 };

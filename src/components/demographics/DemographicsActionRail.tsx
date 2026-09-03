@@ -6,12 +6,15 @@ import {
   RailButton,
   RailDivider,
   RailGroupShimmer,
+  RailPrimaryAction,
   RailSelectionChip,
   useContextChangeKey,
+  useRailPopoutSide,
 } from "@/components/action-rail";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { AiAgentDrawer } from "@/components/ai/AiAgentDrawer";
+import { useAiAgentPanel } from "@/components/app-shell/aiAgentPanelContext";
 import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
+import { SYSTEM_BLOCK_REASON } from "./demographicRows";
 
 interface DemographicsActionRailProps {
   selectedCount: number;
@@ -44,12 +47,14 @@ export function DemographicsActionRail({
   onDelete,
   onClearSelection,
 }: DemographicsActionRailProps) {
-  const [aiDrawerOpen, setAiDrawerOpen] = React.useState(false);
+  const { open: aiPanelOpen, context: aiPanelContext, openPanel } = useAiAgentPanel();
+  const isAiPanelOpenHere = aiPanelOpen && aiPanelContext === "demographics";
+  const popoutSide = useRailPopoutSide();
   const mode = selectedCount === 0 ? "none" : selectedCount === 1 ? "single" : "bulk";
   const animKey = useContextChangeKey(mode);
 
   const isSystem = selected?.origin === "system";
-  const systemBlock = "Los demográficos del sistema no se pueden modificar";
+  const systemBlock = SYSTEM_BLOCK_REASON;
 
   const contextual =
     selectedCount === 0 ? null : (
@@ -107,7 +112,7 @@ export function DemographicsActionRail({
   return (
     <>
       <ActionRailShell
-        keepOpen={selectedCount > 0 || aiDrawerOpen}
+        keepOpen={selectedCount > 0 || isAiPanelOpenHere}
         contextual={contextual}
         persistent={
           selectedCount === 0 ? (
@@ -124,7 +129,7 @@ export function DemographicsActionRail({
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    onClick={() => setAiDrawerOpen(true)}
+                    onClick={() => openPanel("demographics")}
                     aria-label="Agente IA"
                     className="group hover-icon-pop relative flex h-10 w-10 items-center justify-center rounded-xl bg-transparent transition-all duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 overflow-hidden"
                   >
@@ -156,24 +161,18 @@ export function DemographicsActionRail({
                     />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="top">
-                  Agente IA
-                </TooltipContent>
+                <TooltipContent side={popoutSide}>Agente IA</TooltipContent>
               </Tooltip>
 
-              <button
-                type="button"
+              <RailPrimaryAction
+                icon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
+                label="Crear demográfico"
                 onClick={onCreate}
-                className="hover-icon-pop relative flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-[13px] font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95"
-              >
-                <Plus className="h-4 w-4" strokeWidth={2.5} />
-                Crear demográfico
-              </button>
+              />
             </>
           ) : null
         }
       />
-      <AiAgentDrawer open={aiDrawerOpen} onOpenChange={setAiDrawerOpen} context="demographics" />
     </>
   );
 }

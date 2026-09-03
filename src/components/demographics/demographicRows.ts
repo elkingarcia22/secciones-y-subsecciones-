@@ -24,6 +24,15 @@ export const ORIGIN_LABELS: Readonly<Record<DemographicOrigin, string>> = {
 /** Both origin labels, for the column's filter menu. */
 export const ORIGIN_OPTIONS = [ORIGIN_LABELS.system, ORIGIN_LABELS.user] as const;
 
+/**
+ * Por qué editar o eliminar no está disponible en un demográfico del sistema.
+ *
+ * Vive aquí y no en cada superficie porque la barra de acciones y el drawer de
+ * detalle dicen lo mismo sobre la misma regla: dos redacciones distintas para
+ * el mismo bloqueo se leen como dos reglas distintas.
+ */
+export const SYSTEM_BLOCK_REASON = "Los demográficos del sistema no se pueden modificar";
+
 export interface DemographicRow {
   /** Catalog key — unique across both catalogs. */
   id: string;

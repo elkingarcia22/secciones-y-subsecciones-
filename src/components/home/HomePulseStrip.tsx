@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CheckCircle2, ChevronRight, Gauge, Info, ThumbsUp, TriangleAlert, Users, type LucideIcon } from "lucide-react";
+import { CheckCircle2, ChevronRight, Gauge, Info, ThumbsDown, ThumbsUp, TriangleAlert, Users, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DeltaPill } from "@/components/survey-analytics/DeltaPill";
@@ -23,12 +23,17 @@ import {
   NO_FILTERS,
   filtersEqual,
   matchesFilters,
-  type SurveyFilterableRow,
   type SurveyListFilters,
 } from "@/components/survey-list/surveyListFilters";
 import type { SurveyListItem } from "@/mocks/types";
 import { METRIC_PRESETS, PRESET_ICONS, formatCount, type MetricPreset } from "./homeMetrics";
-import { buildHomePulse, formatNpsDelta, formatSurveyCount, type PulseMetric } from "./homePulse";
+import {
+  buildHomePulse,
+  formatNpsDelta,
+  formatSurveyCount,
+  negativeResultSurveys,
+  type PulseMetric,
+} from "./homePulse";
 
 interface HomePulseStripProps {
   surveys: readonly SurveyListItem[];
@@ -210,8 +215,8 @@ const PRESET_TONE: Readonly<Record<NonNullable<MetricPreset["tone"]> | "default"
   negative: "negative",
 };
 
-/** Alerts first, plain state last: what needs a hand should be the first button. */
-const ALERT_ORDER: readonly string[] = ["closing", "low", "open"];
+/** Rendering order for the fixed presets — the dynamic results alert goes first. */
+const ALERT_ORDER: readonly string[] = ["closing", "low"];
 
 /**
  * One notice row: it says how many surveys need a hand and offers a button
@@ -229,7 +234,7 @@ export function AlertsRow({
   onFiltersChange,
   className,
 }: {
-  surveys: readonly SurveyFilterableRow[];
+  surveys: readonly SurveyListItem[];
   filters: SurveyListFilters;
   onFiltersChange: (filters: SurveyListFilters) => void;
   className?: string;
@@ -240,14 +245,28 @@ export function AlertsRow({
   const countFor = (preset: MetricPreset) =>
     surveys.filter((survey) => matchesFilters(survey, preset.filters, today)).length;
 
+  // Not a column filter like the three below it: it reads each survey's own
+  // favorability and eNPS, the way opening it would. Computed here rather
+  // than added to `METRIC_PRESETS` because its filter value — which surveys
+  // it names — is data, not a fixed bucket.
+  const negativeResults = React.useMemo(() => negativeResultSurveys(surveys), [surveys]);
+  const negativeResultsFilters: SurveyListFilters = React.useMemo(
+    () => ({ ...NO_FILTERS, ids: negativeResults.map((survey) => survey.id) }),
+    [negativeResults]
+  );
+  const negativeResultsActive = filtersEqual(filters, negativeResultsFilters) && negativeResults.length > 0;
+
   const presets = [...METRIC_PRESETS].sort((a, b) => ALERT_ORDER.indexOf(a.id) - ALERT_ORDER.indexOf(b.id));
-  // "En curso" is a state, not a worry — only the other reasons count as
-  // attention. Counted as distinct surveys: one that is both closing soon and
-  // behind on participation is one survey to look at, not two.
-  const worries = presets.filter((preset) => preset.id !== "open");
-  const attention = surveys.filter((survey) =>
-    worries.some((preset) => matchesFilters(survey, preset.filters, today))
-  ).length;
+  // Counted as distinct surveys: one that is both closing soon and behind on
+  // participation is one survey to look at, not two.
+  const attentionIds = new Set<string>();
+  for (const survey of surveys) {
+    if (presets.some((preset) => matchesFilters(survey, preset.filters, today))) {
+      attentionIds.add(survey.id);
+    }
+  }
+  for (const survey of negativeResults) attentionIds.add(survey.id);
+  const attention = attentionIds.size;
   const calm = attention === 0;
 
   return (
@@ -289,13 +308,24 @@ export function AlertsRow({
           </span>
           <span className="truncate text-[11px] font-medium text-text-muted">
             {calm
-              ? "Ninguna encuesta por cerrar ni con participación baja"
+              ? "Ninguna encuesta por cerrar, con participación baja ni con resultados en rojo"
               : "Toca una alerta para ver solo esas encuestas en la lista"}
           </span>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        {negativeResults.length > 0 && (
+          <AlertAction
+            icon={ThumbsDown}
+            label="Resultados negativos"
+            hint="Encuestas en curso cuya favorabilidad o eNPS ya están en terreno negativo. Vale la pena entrar a ver qué está pasando."
+            value={negativeResults.length}
+            tone="negative"
+            active={negativeResultsActive}
+            onClick={() => onFiltersChange(negativeResultsActive ? NO_FILTERS : negativeResultsFilters)}
+          />
+        )}
         {presets.map((preset) => {
           const count = countFor(preset);
           const active = filtersEqual(filters, preset.filters);

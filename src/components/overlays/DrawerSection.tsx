@@ -2,23 +2,43 @@ import type * as React from "react";
 import type { LucideIcon } from "lucide-react";
 import { toneChip, type Tone } from "@/lib/tone";
 
-interface FormSectionProps {
+interface DrawerSectionProps {
   icon: LucideIcon;
   tone: Tone;
   title: string;
   hint: string;
   /** Un dato al vuelo sobre lo que hay dentro — cuántas opciones van escritas. */
   badge?: string;
-  children: React.ReactNode;
+  /**
+   * Un control que manda sobre toda la tarjeta —un interruptor de "filtrar o
+   * no"—, alineado con el título. Va en la cabecera y no dentro del cuerpo
+   * porque enciende el cuerpo entero.
+   */
+  action?: React.ReactNode;
+  /**
+   * Los campos de la tarjeta. Opcional: una tarjeta apagada por su `action`
+   * no tiene cuerpo, y la divisoria tampoco debe dibujarse sobre nada.
+   */
+  children?: React.ReactNode;
 }
 
 /**
- * Un grupo del formulario como tarjeta: el chip de su icono, el título, la
- * línea que explica para qué sirve y, bajo una divisoria, sus campos. Misma
- * anatomía en el drawer de crear/editar y en el de ver, para que los dos se
- * lean como el mismo producto.
+ * Un grupo de un drawer como tarjeta: el chip de su icono, el título, la línea
+ * que explica para qué sirve y, bajo una divisoria, sus campos.
+ *
+ * Es la anatomía de los drawers de demográficos —crear, editar y ver— y la que
+ * usa el centro de descargas, para que todos los paneles laterales del producto
+ * se lean como la misma cosa.
  */
-export function FormSection({ icon: Icon, tone, title, hint, badge, children }: FormSectionProps) {
+export function DrawerSection({
+  icon: Icon,
+  tone,
+  title,
+  hint,
+  badge,
+  action,
+  children,
+}: DrawerSectionProps) {
   return (
     <section className="rounded-2xl border border-border/60 bg-surface p-3.5 shadow-card">
       <header className="flex items-start gap-2.5">
@@ -39,8 +59,9 @@ export function FormSection({ icon: Icon, tone, title, hint, badge, children }: 
           </div>
           <p className="mt-0.5 text-[12px] leading-relaxed text-text-muted">{hint}</p>
         </div>
+        {action && <div className="shrink-0 pt-0.5">{action}</div>}
       </header>
-      <div className="mt-3 border-t border-border/50 pt-3.5">{children}</div>
+      {children && <div className="mt-3 border-t border-border/50 pt-3.5">{children}</div>}
     </section>
   );
 }

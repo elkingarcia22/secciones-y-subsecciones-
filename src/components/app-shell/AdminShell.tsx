@@ -7,6 +7,8 @@ import { AppHeader } from "./AppHeader";
 import { AgentView } from "./AgentView";
 import { ShellHeaderSlotProvider } from "./shellHeaderSlot";
 import { ShellRailSlotProvider } from "./shellRailSlot";
+import { AiAgentPanelProvider } from "./aiAgentPanelContext";
+import { AiAgentPanel, type AiAgentContext } from "@/components/ai/AiAgentPanel";
 import type { ShellBreadcrumb, ShellMode } from "./shellTypes";
 
 interface AdminShellProps {
@@ -41,6 +43,20 @@ export const AdminShell: React.FC<AdminShellProps> = ({
   const [feedbackSent, setFeedbackSent] = React.useState(false);
   const [headerSlot, setHeaderSlot] = React.useState<HTMLDivElement | null>(null);
   const [railSlot, setRailSlot] = React.useState<HTMLDivElement | null>(null);
+  const [aiPanelOpen, setAiPanelOpen] = React.useState(false);
+  const [aiPanelContext, setAiPanelContext] = React.useState<AiAgentContext>("dashboard");
+  const aiAgentPanelApi = React.useMemo(
+    () => ({
+      open: aiPanelOpen,
+      context: aiPanelContext,
+      openPanel: (nextContext: AiAgentContext) => {
+        setAiPanelContext(nextContext);
+        setAiPanelOpen(true);
+      },
+      closePanel: () => setAiPanelOpen(false),
+    }),
+    [aiPanelOpen, aiPanelContext]
+  );
   // Pending auto-collapse: fires once, shortly after mount, so the sidebar
   // shows its labels first and then tucks itself away. Any manual toggle
   // before it fires cancels it — the user has already made the call.
@@ -78,121 +94,132 @@ export const AdminShell: React.FC<AdminShellProps> = ({
   const headerBreadcrumb: ShellBreadcrumb = isAgent ? { label: "Agente IA" } : breadcrumb;
 
   return (
-    <div
-      className={cn(
-        "flex h-dvh w-full gap-2 overflow-hidden bg-background p-2 font-sans",
-        isAgent && "bg-ai-mesh-agent"
-      )}
-    >
-      <AppSidebar
-        collapsed={collapsed}
-        mobileOpen={mobileOpen}
-        mode={mode}
-        onModeChange={setMode}
-        onNavigateHome={onNavigateHome}
-        onCloseMobile={() => setMobileOpen(false)}
-        onOpenFeedback={() => {
-          setFeedbackSent(false);
-          setFeedbackOpen(true);
-        }}
-      />
-
-      {/* Mobile scrim behind the drawer */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] lg:hidden"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AppHeader
-          breadcrumb={headerBreadcrumb}
-          onToggleSidebar={toggleSidebar}
-          isDark={isDark}
-          onToggleDark={() => setIsDark((value) => !value)}
-          onOpenNews={() => {/* handled inside AppHeader */}}
-          onSlotRef={setHeaderSlot}
-        />
-
-        <main className="relative flex min-h-0 flex-1 flex-col">
-          <ShellHeaderSlotProvider value={headerSlot}>
-            <ShellRailSlotProvider value={railSlot}>
-              {isAgent ? (
-                <AgentView />
-              ) : scrollContent ? (
-                <div className="min-h-0 flex-1 overflow-y-auto flex flex-col">
-                  {/* Full available width, on the same gutters the app-like
-                      screens use — the sidebar already narrows the column, so a
-                      max-width on top of it reads as an extra pair of margins.
-                      Padding matches the header's own px-1 so the content
-                      column lines up with the sidebar toggle above it. */}
-                  <div className="w-full flex-1 flex flex-col px-1 pb-6 pt-1">{children}</div>
-                </div>
-              ) : (
-                <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
-              )}
-            </ShellRailSlotProvider>
-          </ShellHeaderSlotProvider>
-
-          {/* Floating-rail anchor: outside the scroller, so a screen's rail
-              stays put while its content scrolls underneath. */}
-          <div
-            ref={setRailSlot}
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-50 flex justify-center"
-          />
-        </main>
-
-        {(showFooter ?? (scrollContent || isAgent)) && (
-          <footer className="flex shrink-0 flex-wrap items-center justify-center gap-2 px-4 py-2.5 text-xs text-text-muted">
-            <UbitsLogo size={16} color="var(--color-text-muted)" className="hover:scale-100" />
-            <span className="font-bold tracking-tight">UBITS</span>
-            <span className="opacity-50">|</span>
-            <button className="transition-colors hover:text-text-secondary hover:underline">
-              Términos y condiciones de uso de la plataforma
-            </button>
-            <span className="opacity-50">|</span>
-            <button className="transition-colors hover:text-text-secondary hover:underline">
-              Política de privacidad
-            </button>
-          </footer>
+    <AiAgentPanelProvider value={aiAgentPanelApi}>
+      <div
+        className={cn(
+          "flex h-dvh w-full gap-2 overflow-hidden bg-background p-2 font-sans",
+          isAgent && "bg-ai-mesh-agent"
         )}
-      </div>
+      >
+        <AppSidebar
+          collapsed={collapsed}
+          mobileOpen={mobileOpen}
+          mode={mode}
+          onModeChange={setMode}
+          onNavigateHome={onNavigateHome}
+          onCloseMobile={() => setMobileOpen(false)}
+          onOpenFeedback={() => {
+            setFeedbackSent(false);
+            setFeedbackOpen(true);
+          }}
+        />
 
-      {/* ---------- Feedback ---------- */}
-      <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-        <DialogContent className="max-w-sm rounded-3xl border-border/60">
-          {feedbackSent ? (
-            <div className="py-6 text-center">
-              <DialogTitle className="text-base font-bold text-text-primary">¡Gracias por tu feedback!</DialogTitle>
-              <DialogDescription className="mt-2 text-sm text-text-secondary">
-                Tu comentario nos ayuda a mejorar la plataforma.
-              </DialogDescription>
-            </div>
-          ) : (
-            <>
-              <DialogTitle className="text-base font-bold text-text-primary">Enviar feedback</DialogTitle>
-              <DialogDescription className="text-sm text-text-secondary">
-                Cuéntanos qué podemos mejorar de tu experiencia.
-              </DialogDescription>
-              <textarea
-                rows={4}
-                placeholder="Escribe tu comentario…"
-                className="w-full resize-none rounded-xl border border-border/70 bg-surface p-3 text-sm text-text-primary outline-none transition-colors placeholder:text-text-muted focus:border-primary"
-              />
-              <button
-                onClick={() => setFeedbackSent(true)}
-                className={cn(
-                  "w-full rounded-xl bg-primary py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--color-brand-hover)]"
+        {/* Mobile scrim behind the drawer */}
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] lg:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <AppHeader
+            breadcrumb={headerBreadcrumb}
+            onToggleSidebar={toggleSidebar}
+            isDark={isDark}
+            onToggleDark={() => setIsDark((value) => !value)}
+            onOpenNews={() => {/* handled inside AppHeader */}}
+            onSlotRef={setHeaderSlot}
+          />
+
+          <main className="relative flex min-h-0 flex-1 flex-col">
+            <ShellHeaderSlotProvider value={headerSlot}>
+              <ShellRailSlotProvider value={railSlot}>
+                {isAgent ? (
+                  <AgentView />
+                ) : scrollContent ? (
+                  <div className="min-h-0 flex-1 overflow-y-auto flex flex-col">
+                    {/* Full available width, on the same gutters the app-like
+                        screens use — the sidebar already narrows the column, so a
+                        max-width on top of it reads as an extra pair of margins.
+                        Padding matches the header's own px-1 so the content
+                        column lines up with the sidebar toggle above it. */}
+                    <div className="w-full flex-1 flex flex-col px-1 pb-6 pt-1">{children}</div>
+                  </div>
+                ) : (
+                  <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
                 )}
-              >
-                Enviar
+              </ShellRailSlotProvider>
+            </ShellHeaderSlotProvider>
+
+            {/* Floating-rail anchor: outside the scroller, so a screen's rail
+                stays put while its content scrolls underneath. */}
+            <div
+              ref={setRailSlot}
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-50 flex justify-center"
+            />
+          </main>
+
+          {(showFooter ?? (scrollContent || isAgent)) && (
+            <footer className="flex shrink-0 flex-wrap items-center justify-center gap-2 px-4 py-2.5 text-xs text-text-muted">
+              <UbitsLogo size={16} color="var(--color-text-muted)" className="hover:scale-100" />
+              <span className="font-bold tracking-tight">UBITS</span>
+              <span className="opacity-50">|</span>
+              <button className="transition-colors hover:text-text-secondary hover:underline">
+                Términos y condiciones de uso de la plataforma
               </button>
-            </>
+              <span className="opacity-50">|</span>
+              <button className="transition-colors hover:text-text-secondary hover:underline">
+                Política de privacidad
+              </button>
+            </footer>
           )}
-        </DialogContent>
-      </Dialog>
-    </div>
+        </div>
+
+        {/* Docked beside the content column, not over it — a flex sibling of
+            the main column above rather than an overlay, so opening it
+            narrows the page instead of covering it. */}
+        <AiAgentPanel
+          open={aiPanelOpen}
+          context={aiPanelContext}
+          onClose={() => setAiPanelOpen(false)}
+        />
+
+        {/* ---------- Feedback ---------- */}
+        <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
+          <DialogContent className="max-w-sm rounded-3xl border-border/60">
+            {feedbackSent ? (
+              <div className="py-6 text-center">
+                <DialogTitle className="text-base font-bold text-text-primary">¡Gracias por tu feedback!</DialogTitle>
+                <DialogDescription className="mt-2 text-sm text-text-secondary">
+                  Tu comentario nos ayuda a mejorar la plataforma.
+                </DialogDescription>
+              </div>
+            ) : (
+              <>
+                <DialogTitle className="text-base font-bold text-text-primary">Enviar feedback</DialogTitle>
+                <DialogDescription className="text-sm text-text-secondary">
+                  Cuéntanos qué podemos mejorar de tu experiencia.
+                </DialogDescription>
+                <textarea
+                  rows={4}
+                  placeholder="Escribe tu comentario…"
+                  className="w-full resize-none rounded-xl border border-border/70 bg-surface p-3 text-sm text-text-primary outline-none transition-colors placeholder:text-text-muted focus:border-primary"
+                />
+                <button
+                  onClick={() => setFeedbackSent(true)}
+                  className={cn(
+                    "w-full rounded-xl bg-primary py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--color-brand-hover)]"
+                  )}
+                >
+                  Enviar
+                </button>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </AiAgentPanelProvider>
   );
 };

@@ -1,16 +1,20 @@
 import * as React from "react";
-import { DrawerShell } from "@/components/overlays/DrawerShell";
+import { cn } from "@/lib/utils";
 import { MovingBorderBeam } from "@/components/ui/moving-border-beam";
 import { ArrowUp, Plus, Sparkles, X } from "lucide-react";
 import { AI_GRADIENT, CURRENT_USER } from "@/components/app-shell/appShellData";
 
 export type AiAgentContext = "dashboard" | "builder" | "results" | "demographics";
 
-interface AiAgentDrawerProps {
+interface AiAgentPanelProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   context?: AiAgentContext;
 }
+
+/** Panel width once open — fixed so the width transition below has a target
+ *  to animate to, and so the inner content never has to reflow mid-slide. */
+const PANEL_WIDTH = 400;
 
 const CONTEXT_CONFIG = {
   dashboard: {
@@ -52,7 +56,13 @@ const CONTEXT_CONFIG = {
   },
 };
 
-export function AiAgentDrawer({ open, onOpenChange, context = "dashboard" }: AiAgentDrawerProps) {
+/**
+ * The AI assistant, as a panel docked beside the page content rather than a
+ * drawer floating over it — opening it narrows the content column (this is a
+ * flex sibling in `AdminShell`, not a portaled overlay) instead of dimming or
+ * covering whatever the user was looking at.
+ */
+export function AiAgentPanel({ open, onClose, context = "dashboard" }: AiAgentPanelProps) {
   const [prompt, setPrompt] = React.useState("");
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
   const firstName = CURRENT_USER?.name || "Usuario";
@@ -60,18 +70,21 @@ export function AiAgentDrawer({ open, onOpenChange, context = "dashboard" }: AiA
   const config = CONTEXT_CONFIG[context];
 
   return (
-    <DrawerShell
-      open={open}
-      onOpenChange={onOpenChange}
-      side="right"
-      size="md"
-      disablePadding
-      disableScrollbarGutter
-      showCloseButton={false}
-      className="flex flex-col overflow-hidden"
+    <div
+      className={cn(
+        "flex h-full shrink-0 overflow-hidden rounded-2xl border transition-[width,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        open ? "opacity-100 border-border/60" : "w-0 opacity-0 border-transparent"
+      )}
+      style={{ width: open ? PANEL_WIDTH : 0 }}
+      aria-hidden={!open}
     >
-      {/* Todo en un solo div con la malla de fondo — header + contenido sin corte */}
-      <div className="flex flex-col flex-1 min-h-0 bg-ai-mesh-agent">
+      {/* Fixed-width inner shell — the outer wrapper animates 0 → PANEL_WIDTH,
+          but content itself must not reflow mid-slide, so it always lays out
+          at full width and just gets clipped by the outer `overflow-hidden`. */}
+      <div
+        className="flex h-full min-w-0 flex-col bg-ai-mesh-agent"
+        style={{ width: PANEL_WIDTH }}
+      >
         {/* Header */}
         <div className="shrink-0 flex items-center gap-3 px-5 py-3.5 border-b border-border/20">
           <span
@@ -85,7 +98,7 @@ export function AiAgentDrawer({ open, onOpenChange, context = "dashboard" }: AiA
             <p className="text-[11px] text-text-muted">{config.title}</p>
           </div>
           <button
-            onClick={() => onOpenChange(false)}
+            onClick={onClose}
             className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-black/5 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             aria-label="Cerrar"
           >
@@ -163,6 +176,6 @@ export function AiAgentDrawer({ open, onOpenChange, context = "dashboard" }: AiA
           </div>
         </div>
       </div>
-    </DrawerShell>
+    </div>
   );
 }

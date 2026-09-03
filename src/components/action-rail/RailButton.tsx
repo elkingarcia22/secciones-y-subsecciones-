@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRailIsVertical, useRailPopoutSide } from "./railOrientation";
 
 /**
  * One icon action inside a floating rail.
@@ -25,6 +26,7 @@ export function RailButton({
   tone?: "default" | "danger";
 }) {
   const disabled = blockedReason !== null;
+  const side = useRailPopoutSide();
 
   return (
     <Tooltip>
@@ -44,7 +46,7 @@ export function RailButton({
           {icon}
         </button>
       </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-[220px]">
+      <TooltipContent side={side} className="max-w-[220px]">
         {blockedReason ?? label}
       </TooltipContent>
     </Tooltip>
@@ -109,3 +111,49 @@ export function AnimatedActionItem({
     </div>
   );
 }
+
+/**
+ * The one filled call-to-action a rail is allowed: "Crear encuesta", "Crear
+ * demográfico".
+ *
+ * Upright, the bar is one icon wide and the words have nowhere to go, so the
+ * label steps back into a tooltip and the button becomes the same square as
+ * its neighbours. It stays the primary colour either way — losing the label
+ * should not also lose which button the screen is pointing at.
+ *
+ * Forwards its ref and spare props so it can sit inside a `PopoverTrigger
+ * asChild` the way the plain markup it replaces did.
+ */
+export const RailPrimaryAction = React.forwardRef<
+  HTMLButtonElement,
+  { icon: React.ReactNode; label: string } & React.ComponentPropsWithoutRef<"button">
+>(function RailPrimaryAction({ icon, label, className, ...props }, ref) {
+  const isVertical = useRailIsVertical();
+  const side = useRailPopoutSide();
+
+  const button = (
+    <button
+      ref={ref}
+      type="button"
+      aria-label={label}
+      className={cn(
+        "hover-icon-pop relative flex h-10 items-center justify-center gap-2 rounded-xl bg-primary text-[13px] font-semibold text-white transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 active:scale-95",
+        isVertical ? "w-10 px-0" : "px-4",
+        className
+      )}
+      {...props}
+    >
+      {icon}
+      {!isVertical && label}
+    </button>
+  );
+
+  if (!isVertical) return button;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent side={side}>{label}</TooltipContent>
+    </Tooltip>
+  );
+});
