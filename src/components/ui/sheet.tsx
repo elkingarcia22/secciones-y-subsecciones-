@@ -86,7 +86,10 @@ function SheetContent({
         data-slot="sheet-content"
         data-side={side}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 overflow-hidden bg-popover bg-clip-padding text-sm text-popover-foreground shadow-drawer will-change-transform",
+          // `gap-4` leaves seams between header/body/footer that this
+          // background shows through — bg-background instead of bg-popover
+          // so those seams read as the app's own tone, not raw white.
+          "fixed z-50 flex flex-col gap-4 overflow-hidden bg-background bg-clip-padding text-sm text-popover-foreground shadow-drawer will-change-transform",
           sidePositionClasses[side],
           sideMotionClasses[side],
           className

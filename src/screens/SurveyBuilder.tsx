@@ -90,6 +90,10 @@ interface SurveyBuilderProps {
 /** Fixed blocks that can be switched on and off. */
 type ToggleableBlockId = "welcome" | "closing";
 
+/** What the "Información" card shows for participants before the author has
+ * ever reached that step — see `hasVisitedParticipants` below. */
+const EMPTY_PARTICIPANTS_BREAKDOWN = { groups: [], outsideCount: 0, importedCount: 0 } as const;
+
 const buildEmptySection = (title: string): SurveySection => ({
   id: `section-${(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15))}`,
   title,
@@ -269,10 +273,15 @@ export function SurveyBuilder({
   // matters once there's at least one question to round up from zero.
   const estimatedMinutes =
     questionCount === 0 ? 0 : Math.max(1, Math.round(questionCount * MINUTES_PER_QUESTION));
-  const participantsTotal = totalParticipantCount(draft.participants);
+  // "Toda la empresa" is the default audience so the participants step opens
+  // already answered (see DEFAULT_PARTICIPANTS) — but that default shouldn't
+  // read as a real headcount in the "Información" card before the author has
+  // actually reached that step and could have narrowed it.
+  const hasVisitedParticipants = visitedSteps.has("participants");
+  const participantsTotal = hasVisitedParticipants ? totalParticipantCount(draft.participants) : 0;
   const participantsBreakdown = React.useMemo(
-    () => participantsGroupBreakdown(draft.participants),
-    [draft.participants]
+    () => (hasVisitedParticipants ? participantsGroupBreakdown(draft.participants) : EMPTY_PARTICIPANTS_BREAKDOWN),
+    [hasVisitedParticipants, draft.participants]
   );
 
   const hasSectionWithQuestion = React.useMemo(

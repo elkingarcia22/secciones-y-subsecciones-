@@ -4,6 +4,7 @@ import {
   ChevronDown,
   Download,
   FileDown,
+  FileText,
   Filter,
   History,
   Info,
@@ -13,6 +14,7 @@ import {
   MessageSquareText,
   Share2,
   Table2,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toneChip, toneSelected } from "@/lib/tone";
@@ -406,7 +408,7 @@ export function DownloadReportsDrawer({
              anatomía que los drawers de demográficos: chip del icono, título,
              la línea que explica para qué sirve y, bajo una divisoria, sus
              controles. */
-          <div className="flex min-h-full flex-col gap-3 bg-background p-4">
+          <div className="flex flex-1 flex-col gap-3 bg-background px-4 py-3">
             <DrawerSection
               icon={FileDown}
               tone="brand"
@@ -688,30 +690,37 @@ function DrawerTabs({
   onTabChange: (tab: "reports" | "downloads") => void;
   downloadsBadge: number;
 }) {
-  const tab = (id: "reports" | "downloads", label: string, badge?: number) => (
-    <button
-      type="button"
-      onClick={() => onTabChange(id)}
-      className={cn(
-        "relative -mb-px inline-flex items-center gap-1.5 border-b-2 px-1 pb-2.5 pt-1 text-[14px] font-semibold transition-colors",
-        activeTab === id
-          ? "border-primary text-primary"
-          : "border-transparent text-muted-foreground hover:text-text-primary"
-      )}
-    >
-      {label}
-      {badge !== undefined && badge > 0 && (
-        <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-white">
-          {badge}
-        </span>
-      )}
-    </button>
-  );
+  const tab = (id: "reports" | "downloads", label: string, Icon: LucideIcon, badge?: number) => {
+    const selected = activeTab === id;
+    return (
+      <button
+        type="button"
+        onClick={() => onTabChange(id)}
+        aria-pressed={selected}
+        className={cn(
+          "relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors",
+          selected
+            ? "bg-surface text-primary shadow-sm"
+            : "text-muted-foreground hover:text-text-primary"
+        )}
+      >
+        <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
+        {label}
+        {badge !== undefined && badge > 0 && (
+          <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-white">
+            {badge}
+          </span>
+        )}
+      </button>
+    );
+  };
 
   return (
-    <div className="flex shrink-0 items-center gap-6 border-b border-border/60 bg-surface px-4 pt-3">
-      {tab("reports", "Reportes")}
-      {tab("downloads", "Descargas", downloadsBadge)}
+    <div className="flex shrink-0 items-center bg-background px-4 py-3">
+      <div className="inline-flex items-center gap-1 rounded-full bg-muted p-1">
+        {tab("reports", "Reportes", FileText)}
+        {tab("downloads", "Descargas", Download, downloadsBadge)}
+      </div>
     </div>
   );
 }
@@ -1258,7 +1267,7 @@ function DownloadsList({
   )?.id;
 
   return (
-    <div className="flex min-h-full flex-col gap-3 bg-background p-4">
+    <div className="flex flex-1 flex-col gap-3 bg-background px-4 py-3">
       <DrawerSection
         icon={History}
         tone="brand"
