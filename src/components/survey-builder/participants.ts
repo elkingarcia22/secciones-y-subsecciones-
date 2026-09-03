@@ -180,14 +180,25 @@ export interface ParticipantsGroupBreakdown {
  * anyone picked by hand on top, and anyone brought in from an import — the
  * same distinction "Por colaborador"'s own caption reads, surfaced here for
  * the "Información" card so it isn't one flat number whenever groups or an
- * import are involved. The group/individual split is empty for "company" and
- * "import" modes, where there is nothing to break down, but an import's count
- * still shows up there since it always adds to the total (see
- * `totalParticipantCount`).
+ * import are involved.
+ *
+ * Selected groups and hand-picked ids are kept when switching modes (see
+ * `selectedIds` above), so they keep contributing to `totalParticipantCount`
+ * no matter which mode tab happens to be active — "Importar con IA" doesn't
+ * discard a "Por grupos"/"Por colaborador" pick made earlier, it only adds to
+ * it. The split is empty only for "company" mode, the one case where the
+ * total truly ignores groups/individuals in favor of every collaborator.
+ *
+ * Each part here is that source's own raw contribution, not deduplicated
+ * against the others — `importedCount` in particular can include rows that
+ * `totalParticipantCount` doesn't add a second head for, because they
+ * resolved to someone a group or a hand-pick already brought in. This
+ * function answers "how big was each source", not "how many of those are
+ * new" — for that, compare against the deduplicated total.
  */
 export function participantsGroupBreakdown(participants: ParticipantsSelection): ParticipantsGroupBreakdown {
   const importedCount = participants.importedCount;
-  if (participants.mode !== "groups" && participants.mode !== "individual") {
+  if (participants.mode === "company") {
     return { groups: [], outsideCount: 0, importedCount };
   }
   const counts = segmentCounts(participants.groupSegmentBy);
@@ -195,9 +206,6 @@ export function participantsGroupBreakdown(participants: ParticipantsSelection):
     label: value,
     count: counts.get(value) ?? 0,
   }));
-  if (participants.mode === "groups") {
-    return { groups, outsideCount: 0, importedCount };
-  }
   const covered = groupMemberIds(participants.groupSegmentBy, participants.selectedGroups);
   const outsideCount = participants.selectedIds.filter((id) => !covered.has(id)).length;
   return { groups, outsideCount, importedCount };
@@ -208,14 +216,23 @@ export function participantsGroupBreakdown(participants: ParticipantsSelection):
  * whichever mode tab happens to be open: "Toda la empresa" already means
  * everyone, so it stands alone, but groups, hand-picked collaborators, and an
  * imported file all add to one running total regardless of which of them is
- * the active mode. Sources are summed as-is — an imported row that happens to
- * match a collaborator already selected elsewhere is still counted once per
- * source, not deduplicated.
+ * the active mode. A real person is counted once even when more than one
+ * source brings them in — an imported row that resolves to a collaborator
+ * already selected via a group or picked by hand doesn't add a second
+ * head; only rows the directory has no match for (truly new people) are
+ * guaranteed to be additional, since they carry no id to have been counted
+ * under already.
  */
 export function totalParticipantCount(participants: ParticipantsSelection): number {
-  const audienceBase =
-    participants.mode === "company" ? COLLABORATOR_COUNT : effectiveIndividualIds(participants).size;
-  return audienceBase + participants.importedCount;
+  if (participants.mode === "company") return COLLABORATOR_COUNT;
+
+  const matchedIds = new Set(effectiveIndividualIds(participants));
+  let importedNewCount = 0;
+  resolveImportedRows(participants.importedUsers, COLLABORATORS).forEach((row) => {
+    if (row.person) matchedIds.add(row.person.id);
+    else importedNewCount += 1;
+  });
+  return matchedIds.size + importedNewCount;
 }
 
 /**

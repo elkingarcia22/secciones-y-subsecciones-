@@ -179,7 +179,7 @@ export function RichTextEditor({ value, onChange, placeholder, ariaLabel }: Rich
           onFocus={refreshToolbarState}
           onKeyUp={refreshToolbarState}
           onMouseUp={refreshToolbarState}
-          className="min-h-[280px] px-5 py-4 text-[13px] leading-relaxed text-text-primary outline-none [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-text-secondary [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[12px] [&_h1]:text-lg [&_h1]:font-bold [&_h1]:tracking-tight [&_hr]:my-3 [&_hr]:border-border [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:text-[12px] [&_ul]:list-disc [&_ul]:pl-5"
+          className="min-h-[120px] px-5 py-4 text-[13px] leading-relaxed text-text-primary outline-none [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-text-secondary [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[12px] [&_h1]:text-lg [&_h1]:font-bold [&_h1]:tracking-tight [&_hr]:my-3 [&_hr]:border-border [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:text-[12px] [&_ul]:list-disc [&_ul]:pl-5"
         />
         {isEmpty && (
           <p className="pointer-events-none absolute left-5 top-4 text-[13px] text-muted-foreground/70">

@@ -40,10 +40,15 @@ export function PagesEditor({
   };
 
   return (
-    <section className="mb-20 flex min-w-0 flex-1 flex-col self-stretch rounded-2xl border border-border/60 bg-surface shadow-card">
+    <section className="mb-20 flex min-w-0 flex-1 flex-col rounded-2xl border border-border/60 bg-surface shadow-card">
       {/* `mb-20` clears the floating side rail: with both messages always on
           screen (no more tab hiding one), this card is tall enough to scroll
-          its own bottom edge behind the rail without it. */}
+          its own bottom edge behind the rail without it. No `self-stretch`:
+          that overrode the workspace's `items-start` to pin this card's
+          height to the scroll container's own viewport height, so on a
+          shorter window the two editors' real content overflowed past the
+          card's rounded bottom border instead of the container just
+          scrolling further to reveal it. */}
       <div className="flex flex-col gap-6 p-5">
         <PageMessageBlock
           icon={Home}

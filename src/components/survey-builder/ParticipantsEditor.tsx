@@ -16,6 +16,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { AiAnalyzingState } from "@/components/ai-interaction";
 import { UploadZone } from "@/components/upload";
@@ -206,15 +207,19 @@ export function ParticipantsEditor({
           : `${formatCount(breakdown.outsideCount)} individuales`
       );
     }
-    if (breakdown.importedCount > 0) {
+    // Reads "colaboradores nuevos" the same way the import card's own badge
+    // does — the raw row count (`breakdown.importedCount`) also includes
+    // rows that matched an existing collaborator, which would make this add
+    // up to more new heads than the total above actually gained.
+    if (participants.importedNewCount > 0) {
       parts.push(
-        breakdown.importedCount === 1
-          ? "1 usuario importado"
-          : `${formatCount(breakdown.importedCount)} usuarios importados`
+        participants.importedNewCount === 1
+          ? "1 colaborador nuevo"
+          : `${formatCount(participants.importedNewCount)} colaboradores nuevos`
       );
     }
     return parts.join(" · ");
-  }, [breakdown]);
+  }, [breakdown, participants.importedNewCount]);
 
   // "Por colaborador" checked set = group carry-over union with ad-hoc picks
   // — see the class doc above.
@@ -302,6 +307,88 @@ export function ParticipantsEditor({
     }
   };
 
+  // Loads one more file on top of an already-successful import. Unlike
+  // `handleFiles`, this never replaces what's already there: parsed rows
+  // merge in (deduped by username+email) and demographic columns union their
+  // option lists, so a second upload only ever adds to the table.
+  const handleAddFile = async (file: File) => {
+    setIsAnalyzing(true);
+    setAnalyzingProgress(0);
+
+    const interval = setInterval(() => {
+      setAnalyzingProgress((p) => {
+        if (p >= 95) {
+          clearInterval(interval);
+          return p;
+        }
+        return p + 5;
+      });
+    }, 150);
+
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    clearInterval(interval);
+    setAnalyzingProgress(100);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    try {
+      const { users: newUsers, demographics: newDemographics } = await readImportedUsers(file);
+      if (newUsers.length === 0) {
+        toast.error("No encontramos usuarios en el archivo", {
+          description: `"${file.name}" es válido, pero no tiene una columna "nombre" o "username" con datos.`,
+        });
+        return;
+      }
+
+      const existingIds = new Set(
+        participants.importedUsers.map((user) => user.username + "|" + user.email)
+      );
+      const addedUsers = newUsers.filter(
+        (user) => !existingIds.has(user.username + "|" + user.email)
+      );
+      const mergedUsers = [...participants.importedUsers, ...addedUsers];
+
+      const demographicsByKey = new Map(
+        participants.importedDemographics.map((demographic) => [demographic.key, demographic])
+      );
+      newDemographics.forEach((incoming) => {
+        const current = demographicsByKey.get(incoming.key);
+        demographicsByKey.set(
+          incoming.key,
+          current
+            ? { ...current, optionLabels: [...new Set([...current.optionLabels, ...incoming.optionLabels])] }
+            : incoming
+        );
+      });
+
+      const resolved = resolveImportedRows(mergedUsers, COLLABORATORS);
+      const newCount = resolved.filter((row) => row.person === null).length;
+
+      onChange({
+        importedFileName: participants.importedFileName
+          ? `${participants.importedFileName} + ${file.name}`
+          : file.name,
+        importedUsers: mergedUsers,
+        importedCount: mergedUsers.length,
+        importedNewCount: newCount,
+        importedDemographics: [...demographicsByKey.values()],
+        importedFailed: false,
+      });
+
+      toast.success("Archivo añadido", {
+        description:
+          addedUsers.length > 0
+            ? `Se añadieron ${formatCount(addedUsers.length)} persona${addedUsers.length === 1 ? "" : "s"} de "${file.name}".`
+            : `"${file.name}" no aportó personas nuevas: todas ya estaban cargadas.`,
+      });
+    } catch {
+      toast.error("No pudimos leer el archivo", {
+        description: `"${file.name}" parece estar corrupto o no ser una planilla válida.`,
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   // The parsed rows and the corrupt-flag live in the draft (see
   // `importedUsers`/`importedFailed`), so leaving this step and coming back
   // restores the preview instead of resetting it. The chip in the dropzone
@@ -313,12 +400,36 @@ export function ParticipantsEditor({
     return files;
   }, [files, participants.importedFileName]);
 
+  // Whether the import panel has a table worth showing instead of the
+  // dropzone — a failed parse or a valid-but-empty file still needs the
+  // dropzone to let the author retry.
+  const hasSuccessfulImport =
+    participants.importedUsers.length > 0 && !participants.importedFailed;
+
   const handleRemoveImportedUsers = (identifiers: string[]) => {
     const toRemove = new Set(identifiers);
     const updatedUsers = participants.importedUsers.filter(u => {
       const id = u.username + "|" + u.email;
       return !toRemove.has(id);
     });
+
+    if (updatedUsers.length === 0) {
+      // Deleting every row is the same as never having imported anything —
+      // fall back to the bare dropzone instead of leaving a file chip
+      // pointing at nothing plus the "structure has no users" empty state,
+      // which is meant for a bad file, not an intentional clear-out.
+      setFiles([]);
+      onChange({
+        importedFileName: null,
+        importedUsers: [],
+        importedCount: 0,
+        importedNewCount: 0,
+        importedDemographics: [],
+        importedFailed: false,
+      });
+      return;
+    }
+
     const resolved = resolveImportedRows(updatedUsers, COLLABORATORS);
     const newCount = resolved.filter((row) => row.person === null).length;
     onChange({
@@ -340,9 +451,14 @@ export function ParticipantsEditor({
 
         {/* The running total is the one number that survives every mode, so it
             lives in the header rather than inside whichever panel is open. The
-            source breakdown underneath only appears once more than one source
-            is actually feeding the total. */}
-        <div className="flex shrink-0 flex-col items-end gap-1">
+            source breakdown sits right beside it, only once more than one
+            source is actually feeding the total. */}
+        <div className="flex shrink-0 items-center gap-2">
+          {breakdownLabel && (
+            <span className="hidden truncate text-[11px] font-medium text-muted-foreground sm:inline">
+              {breakdownLabel}
+            </span>
+          )}
           <span
             className={cn(
               "shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold tabular-nums",
@@ -351,9 +467,6 @@ export function ParticipantsEditor({
           >
             {total === 1 ? "1 participante" : `${formatCount(total)} participantes`}
           </span>
-          {breakdownLabel && (
-            <span className="truncate text-[11px] font-medium text-muted-foreground">{breakdownLabel}</span>
-          )}
         </div>
       </div>
 
@@ -439,17 +552,23 @@ export function ParticipantsEditor({
               <AnalyzingState progress={analyzingProgress} />
             ) : (
               <>
-                <UploadZone
-                  isAI={true}
-                  value={displayedFiles}
-                  onChange={handleFiles}
-                  accept=".csv,.xlsx"
-                  maxFiles={1}
-                  maxSizeMB={5}
-                  idleText="Arrastra el archivo aquí o haz clic para buscarlo"
-                  activeText="Suelta el archivo para cargarlo"
-                  description="Un archivo .csv o .xlsx con nombre o username como mínimo, hasta 5 MB."
-                />
+                {/* Once a file loaded successfully, the table itself carries
+                    the "Subir otro archivo" button — the dropzone would just
+                    be a second, redundant way to do the same thing, and its
+                    replace-on-drop behavior doesn't fit "add more" anyway. */}
+                {!hasSuccessfulImport && (
+                  <UploadZone
+                    isAI={true}
+                    value={displayedFiles}
+                    onChange={handleFiles}
+                    accept=".csv,.xlsx"
+                    maxFiles={1}
+                    maxSizeMB={5}
+                    idleText="Arrastra el archivo aquí o haz clic para buscarlo"
+                    activeText="Suelta el archivo para cargarlo"
+                    description="Un archivo .csv o .xlsx con nombre o username como mínimo, hasta 5 MB."
+                  />
+                )}
 
                 {participants.importedFileName &&
                   (participants.importedFailed ? (
@@ -465,6 +584,7 @@ export function ParticipantsEditor({
                       collaborators={COLLABORATORS}
                       onRemoveUsers={handleRemoveImportedUsers}
                       onSelectionChange={onSelectionChange}
+                      onAddFile={handleAddFile}
                     />
                   ))}
               </>
@@ -509,21 +629,30 @@ function modeState(mode: ParticipantMode, participants: ParticipantsSelection): 
       return participants.selectedGroups.length === 0
         ? { label: "Ningún grupo seleccionado" }
         : {
-            label: `${formatCount(participants.selectedGroups.length)} grupos · ${formatCount(participantCountForMode("groups", participants))} personas`,
+            label: `${formatCount(participants.selectedGroups.length)} grupos · ${formatCount(participantCountForMode("groups", participants))} colaboradores`,
           };
     case "individual": {
+      // Own tally only — how many people this card currently has checked,
+      // whether they got there by hand or rode in on a shared group. No
+      // "X grupos + Y individuales" breakdown: that math belongs to "Por
+      // grupos", not to this card's chip.
       const total = participantCountForMode("individual", participants);
-      if (total === 0) return { label: "Sin seleccionar" };
-      const groupCount = participants.selectedGroups.length;
-      // No groups feeding in: the plain, pre-existing reading.
-      if (groupCount === 0) return { label: `${formatCount(total)} de ${formatCount(COLLABORATOR_COUNT)} seleccionados` };
-      const fromGroups = groupMemberIds(participants.groupSegmentBy, participants.selectedGroups).size;
-      const extra = total - fromGroups;
-      const groupsLabel = `${formatCount(groupCount)} ${groupCount === 1 ? "grupo" : "grupos"} (${formatCount(fromGroups)})`;
-      return { label: extra > 0 ? `${groupsLabel} + ${formatCount(extra)} individuales` : groupsLabel };
+      return total === 0 ? { label: "Sin seleccionar" } : { label: `${formatCount(total)} colaboradores` };
     }
-    case "import":
-      return { label: participants.importedFileName ?? "Ningún archivo cargado" };
+    case "import": {
+      if (!participants.importedFileName) return { label: "Ningún archivo cargado" };
+      // New hires the file itself brings in are the headline number — the
+      // rest of the rows already exist in the directory and just get
+      // matched to their account, nothing new to load for them.
+      const newCount = participants.importedNewCount;
+      return {
+        label: participants.importedFileName,
+        selectedLabel:
+          newCount > 0
+            ? `${formatCount(newCount)} ${newCount === 1 ? "colaborador nuevo" : "colaboradores nuevos"}`
+            : `${formatCount(participants.importedCount)} colaboradores`,
+      };
+    }
   }
 }
 
@@ -640,23 +769,31 @@ function ModeCard({
       </div>
 
       <div className="mt-auto pt-1 w-full">
-        {isMarked ? (
-          <span
-            className="inline-flex items-center gap-2 rounded-full py-1.5 pl-2 pr-3"
-            style={toneChip(tone)}
-          >
-            <span className="flex size-5 shrink-0 items-center justify-center rounded-full" style={toneSolid(tone)}>
-              <CheckIcon className="size-3" strokeWidth={3} />
+        {/* Same wash-chip recipe as the icon square above (see tone.ts):
+            a flat gray pill until this mode actually holds people, then a
+            light tint of its own state color with the accent carrying the
+            text and check — positive green for the three plain modes, the
+            AI gradient's own hue for the import card. Active-but-empty (e.g.
+            "Por grupos" open with nothing ticked yet) stays gray so it never
+            reads as already selected. */}
+        <span
+          className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1", !hasSelection && "bg-surface-muted")}
+          style={hasSelection ? toneChip(isAI ? "ai" : "positive") : undefined}
+        >
+          {!hasSelection && (
+            <span className="text-[11px] font-medium leading-none tracking-tight text-text-secondary">
+              {state.label}
             </span>
-            <span className="text-[12.5px] font-extrabold leading-none tracking-tight" style={toneText(tone)}>
-              {state.selectedLabel ?? state.label}
-            </span>
-          </span>
-        ) : (
-          <span className="inline-flex rounded-full bg-surface-muted px-2 py-0.5 text-[9.5px] font-bold tracking-tight text-text-secondary">
-            {state.label}
-          </span>
-        )}
+          )}
+          {hasSelection && (
+            <>
+              <CheckIcon className="size-3 shrink-0" strokeWidth={2.5} />
+              <span className="text-[11px] font-medium leading-none tracking-tight">
+                {state.selectedLabel ?? state.label}
+              </span>
+            </>
+          )}
+        </span>
       </div>
     </MagicCard>
   );

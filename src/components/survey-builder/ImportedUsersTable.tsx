@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { TableSelectionActions } from "@/components/action-rail";
-import { BadgeCheck, UserPlus, UserRoundX, Search, X, ChevronDown, MinusIcon, CheckIcon, Trash2 } from "lucide-react";
+import { BadgeCheck, FileUp, UserPlus, UserRoundX, Search, X, ChevronDown, MinusIcon, CheckIcon, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -43,6 +43,10 @@ interface ImportedUsersTableProps {
   /** Deletes specific rows by their identifiers (username + email). */
   onRemoveUsers?: (identifiers: string[]) => void;
   onSelectionChange?: (count: number, actions: TableSelectionActions) => void;
+  /** Loads one more file on top of what's already imported — rows merge in
+   * rather than replacing this table's contents. Omitted, the "Subir otro
+   * archivo" button doesn't render. */
+  onAddFile?: (file: File) => void;
 }
 
 type Tab = "new" | "existing";
@@ -83,6 +87,12 @@ function areaKey(row: ResolvedImportRow): string {
 /** The string a row is filtered by for the Líder column. */
 function leaderKey(row: ResolvedImportRow): string {
   return row.person ? (row.person.leader ?? "—") : row.user.leader || "—";
+}
+
+/** Stable identity for a row — username plus email, since neither alone is
+ * guaranteed on every file. */
+function rowId(row: ResolvedImportRow): string {
+  return row.user.username + "|" + row.user.email;
 }
 
 function fold(value: string): string {
@@ -131,6 +141,7 @@ export function ImportedUsersTable({
   collaborators,
   onRemoveUsers,
   onSelectionChange,
+  onAddFile,
 }: ImportedUsersTableProps) {
   const [tab, setTab] = React.useState<Tab>("new");
   const [sortKey, setSortKey] = React.useState<SortKey | null>(null);
@@ -143,7 +154,13 @@ export function ImportedUsersTable({
   const [query, setQuery] = React.useState("");
   const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
-  const [selected, setSelected] = React.useState<ReadonlySet<string>>(() => new Set());
+  // Every row a file brings in is already headed for the survey — nothing
+  // here is opt-in the way a hand-picked "Por colaborador" list is — so the
+  // table opens with everyone checked instead of making the author reselect
+  // what importing already decided.
+  const [selected, setSelected] = React.useState<ReadonlySet<string>>(
+    () => new Set(resolveImportedRows(users, collaborators).map(rowId))
+  );
 
   // Resolved once, with the same rule the editor uses to count new users — a
   // row is "existing" when its username or its email matches an entry in the
@@ -170,8 +187,10 @@ export function ImportedUsersTable({
     setLeaderFilter(new Set());
     setQuery("");
     setIsSearchExpanded(false);
-    setSelected(new Set());
     setPage(1);
+    // `selected` spans both tabs on purpose — everyone starts checked, and
+    // switching tabs is just a different filter on the same list, not a
+    // reason to lose what's checked on the tab left behind.
   };
 
   // Filter options come from the rows the active tab shows, so each tab's
@@ -251,8 +270,6 @@ export function ImportedUsersTable({
     });
     setPage(1);
   };
-
-  const rowId = (row: ResolvedImportRow) => row.user.username + "|" + row.user.email;
 
   const callbacksRef = React.useRef({ onSelectionChange, onRemoveUsers });
   React.useEffect(() => {
@@ -419,6 +436,8 @@ export function ImportedUsersTable({
                   {onlySelected ? "Ver todos" : `Ver seleccionados (${formatCount(selected.size)})`}
                 </button>
               </div>
+
+              {onAddFile && <AddFileButton onAddFile={onAddFile} />}
             </div>
           </div>
         </>
@@ -512,6 +531,8 @@ export function ImportedUsersTable({
                 {onlySelected ? "Ver todos" : `Ver seleccionados (${formatCount(selected.size)})`}
               </button>
             </div>
+
+            {onAddFile && <AddFileButton onAddFile={onAddFile} />}
           </div>
         </div>
       )}
@@ -714,6 +735,36 @@ export function ImportedUsersTable({
         </div>
       </div>
     </div>
+  );
+}
+
+/** Loads one more file on top of an existing import — a plain file picker
+ * behind a button, standing in for the big dropzone once there's already a
+ * table to add to. */
+function AddFileButton({ onAddFile }: { onAddFile: (file: File) => void }) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".csv,.xlsx"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (file) onAddFile(file);
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-border px-3 text-[13px] font-semibold text-text-secondary transition-colors hover:border-primary/30 hover:text-primary"
+      >
+        <FileUp className="h-3.5 w-3.5" strokeWidth={2} />
+        Subir otro archivo
+      </button>
+    </>
   );
 }
 
