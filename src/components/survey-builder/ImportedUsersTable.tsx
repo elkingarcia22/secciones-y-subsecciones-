@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { TableSelectionActions } from "@/components/action-rail";
-import { BadgeCheck, FileUp, UserPlus, UserRoundX, Search, X, ChevronDown, MinusIcon, CheckIcon, Trash2 } from "lucide-react";
+import { BadgeCheck, FileUp, UserPlus, UserRoundX, Search, X, ChevronDown, MinusIcon, CheckIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -293,6 +293,16 @@ export function ImportedUsersTable({
     }
   }, [selected]);
 
+  // This table can vanish out from under a live selection — deleting every
+  // row falls back to the bare dropzone, and switching to another
+  // participant mode unmounts it outright. Either way the floating rail
+  // needs to hear the selection is gone, since nothing else will tell it.
+  React.useEffect(() => {
+    return () => {
+      callbacksRef.current.onSelectionChange?.(0, { clear: () => {} });
+    };
+  }, []);
+
   const selectedOnPage = visible.filter((row) => selected.has(rowId(row))).length;
   const headerState =
     visible.length > 0 && selectedOnPage === visible.length
@@ -566,23 +576,6 @@ export function ImportedUsersTable({
                     )}
                     {showDeselectAll && (
                       <DropdownMenuItem onClick={deselectAll}>Desmarcar todo</DropdownMenuItem>
-                    )}
-                    {selected.size > 0 && (
-                      <>
-                        <div className="my-1 h-px bg-border" role="separator" />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            if (onRemoveUsers) {
-                              onRemoveUsers(Array.from(selected));
-                              setSelected(new Set());
-                            }
-                          }}
-                          className="text-status-negative focus:text-status-negative focus:bg-status-negative/10"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar seleccionados
-                        </DropdownMenuItem>
-                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>

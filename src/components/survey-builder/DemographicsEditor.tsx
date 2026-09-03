@@ -234,7 +234,10 @@ export function DemographicsEditor({
 
   return (
     <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/60 bg-surface shadow-card">
-      <div className="flex items-center gap-3 border-b border-border/60 px-6 py-4">
+      {/* Sticky against the workspace's own scroll container (no nested
+          overflow here) so it stays put while the panel below scrolls, with
+          just the one scrollbar the workspace already owns. */}
+      <div className="sticky top-0 z-10 flex items-center gap-3 rounded-t-2xl border-b border-border/60 bg-surface px-6 py-4">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary">
           <BarChart3 className="h-[18px] w-[18px]" strokeWidth={2} />
         </span>

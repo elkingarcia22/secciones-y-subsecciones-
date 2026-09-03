@@ -133,8 +133,11 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
     <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/60 bg-surface shadow-card">
       {/* The same header the participants and demographics steps carry — icon
           chip, title, and the one figure worth reading from here — so the five
-          panels of the wizard read as five pages of one document. */}
-      <div className="flex items-center gap-3 border-b border-border/60 px-6 py-4">
+          panels of the wizard read as five pages of one document.
+          Sticky against the workspace's own scroll container (no nested
+          overflow here) so it stays put while the fields below scroll, with
+          just the one scrollbar the workspace already owns. */}
+      <div className="sticky top-0 z-10 flex items-center gap-3 rounded-t-2xl border-b border-border/60 bg-surface px-6 py-4">
         <span
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
           style={toneChip(kindTone)}

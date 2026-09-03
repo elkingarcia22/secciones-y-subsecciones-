@@ -15,6 +15,7 @@ import {
   UploadCloud,
   Users,
   Save,
+  ArrowLeft,
   ArrowRight,
   Check,
   Pin,
@@ -119,6 +120,10 @@ interface BuilderSideRailProps {
   canContinue: boolean;
   continueLabel?: string;
   continueDisabledReason?: string;
+  /** Returns to the previous wizard step — hidden on the first step, where
+   * there is nowhere to go back to. */
+  onBack?: () => void;
+  canGoBack?: boolean;
   /** The current wizard step id — drives the open-on-entry and staggered
    * animation of contextual action buttons. */
   activeStep: string;
@@ -286,6 +291,8 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
       canContinue,
       continueLabel = "Continuar",
       continueDisabledReason,
+      onBack,
+      canGoBack = false,
       activeStep,
       participantsSelectionCount = 0,
       onClearParticipantsSelection,
@@ -303,11 +310,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
     const [isExpanded, setIsExpanded] = React.useState(true);
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // The pin toggle's "keep the bar open" state doubles as its "fixed"
-    // state — same reasoning as the other floating rails: only while
-    // autoHide won't yank the bar away is picking it up safe.
-    const isFixed = !autoHide;
-    const { barRef, position, isDragging, gripHandlers } = useDraggableRail(isFixed);
+    const { barRef, position, isDragging, gripHandlers } = useDraggableRail();
 
     // ── Step-change detection ──────────────────────────────
     // Tracks the previous step to detect real transitions and drive the
@@ -351,13 +354,14 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
 
     const startCollapseTimer = React.useCallback(() => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      // Do not collapse if a menu is open or autoHide is disabled
-      if (isSubnivelMenuOpen || isAddQuestionMenuOpen || isImporting || !autoHide) return;
+      // Do not collapse if a menu is open, autoHide is disabled, or the
+      // rail is mid-drag (the grip can't survive being yanked away).
+      if (isSubnivelMenuOpen || isAddQuestionMenuOpen || isImporting || !autoHide || isDragging) return;
 
       timeoutRef.current = setTimeout(() => {
         setIsExpanded(false);
       }, 150);
-    }, [isSubnivelMenuOpen, isAddQuestionMenuOpen, isImporting, autoHide]);
+    }, [isSubnivelMenuOpen, isAddQuestionMenuOpen, isImporting, autoHide, isDragging]);
 
     React.useEffect(() => {
       if (forceMinimized) {
@@ -400,6 +404,14 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
       // Mount-only grace period — must run once, not on every autoHide flip.
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Keep the rail open for the whole gesture — autoHide collapsing it out
+    // from under a drag in progress would strand the grip mid-move.
+    React.useEffect(() => {
+      if (!isDragging) return;
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setIsExpanded(true);
+    }, [isDragging]);
 
     const handleMouseEnter = () => {
       if (forceMinimized) return;
@@ -495,7 +507,7 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                 isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
               )}
             >
-              {isFixed && (
+              {isExpanded && (
                 <>
                   <RailDragHandle isDragging={isDragging} {...gripHandlers} />
                   <div className={cn("self-stretch bg-white/10", isRight ? "mx-2 my-1 h-px w-auto" : "mx-1 my-2 w-px")} />
@@ -924,6 +936,18 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                 label="Guardar encuesta"
                 onClick={onSave}
               />
+
+              {canGoBack && onBack && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onBack}
+                  className="hover-icon-pop relative h-10 gap-2 rounded-full border-white/15 bg-transparent px-4 text-[13px] text-white/70 hover:bg-white/10 hover:text-white"
+                >
+                  <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+                  Atrás
+                </Button>
+              )}
 
               {canContinue ? (
                 <Button

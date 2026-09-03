@@ -41,21 +41,26 @@ export function ActionRailShell({
   const [isExpanded, setIsExpanded] = React.useState(true);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // The pin toggle's "keep the bar open" state doubles as its "fixed" state —
-  // only while autoHide won't yank the rail away is picking it up safe.
-  const isFixed = !autoHide;
-  const { barRef, position, isDragging, gripHandlers } = useDraggableRail(isFixed);
+  const { barRef, position, isDragging, gripHandlers } = useDraggableRail();
 
   const startCollapseTimer = React.useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (!autoHide || keepOpen) return;
+    if (!autoHide || keepOpen || isDragging) return;
     timeoutRef.current = setTimeout(() => setIsExpanded(false), 150);
-  }, [autoHide, keepOpen]);
+  }, [autoHide, keepOpen, isDragging]);
 
   React.useEffect(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setIsExpanded(!autoHide || keepOpen);
   }, [autoHide, keepOpen]);
+
+  // Keep the rail open for the whole gesture — autoHide collapsing it out
+  // from under a drag in progress would strand the grip mid-move.
+  React.useEffect(() => {
+    if (!isDragging) return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsExpanded(true);
+  }, [isDragging]);
 
   React.useEffect(() => () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -100,7 +105,7 @@ export function ActionRailShell({
               isExpanded ? "scale-100 opacity-100 transition-opacity duration-300" : "pointer-events-none scale-95 opacity-0 transition-opacity duration-150"
             )}
           >
-            {isFixed && (
+            {isExpanded && (
               <>
                 <RailDragHandle isDragging={isDragging} {...gripHandlers} />
                 <RailDivider />

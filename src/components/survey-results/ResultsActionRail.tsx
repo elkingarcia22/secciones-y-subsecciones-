@@ -83,10 +83,7 @@ export function ResultsActionRail({
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const forceOpenTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // The pin toggle's "keep the bar open" state doubles as its "fixed" state —
-  // only while autoHide won't yank the rail away is picking it up safe.
-  const isFixed = !autoHide;
-  const { barRef, position, isDragging, gripHandlers } = useDraggableRail(isFixed);
+  const { barRef, position, isDragging, gripHandlers } = useDraggableRail();
 
   // ── Step-change detection (contextual actions) ──────────
   const prevSelectedRef = React.useRef(selectedCount > 0);
@@ -98,13 +95,14 @@ export function ResultsActionRail({
 
   const startCollapseTimer = React.useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    // Do not collapse if autoHide is disabled OR there is an active selection
-    if (!autoHide || selectedCount > 0) return;
-    
+    // Do not collapse if autoHide is disabled, there is an active selection,
+    // or the rail is mid-drag (the grip can't survive being yanked away).
+    if (!autoHide || selectedCount > 0 || isDragging) return;
+
     timeoutRef.current = setTimeout(() => {
       setIsExpanded(false);
     }, 150);
-  }, [autoHide, selectedCount]);
+  }, [autoHide, selectedCount, isDragging]);
 
   React.useEffect(() => {
     const hasSelection = selectedCount > 0;
@@ -165,6 +163,14 @@ export function ResultsActionRail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keep the rail open for the whole gesture — autoHide collapsing it out
+  // from under a drag in progress would strand the grip mid-move.
+  React.useEffect(() => {
+    if (!isDragging) return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsExpanded(true);
+  }, [isDragging]);
+
   const handleMouseEnter = () => {
     setIsExpanded(true);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -209,7 +215,7 @@ export function ResultsActionRail({
               isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
             )}
           >
-            {isFixed && (
+            {isExpanded && (
               <>
                 <RailDragHandle isDragging={isDragging} {...gripHandlers} />
                 <div className="self-stretch bg-white/10 mx-1 my-2 w-px" />

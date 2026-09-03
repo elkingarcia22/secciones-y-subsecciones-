@@ -13,7 +13,6 @@ import {
   EyeOff,
   MinusIcon,
   Search,
-  Trash2,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -441,7 +440,10 @@ export function ParticipantsEditor({
 
   return (
     <section className="flex min-w-0 flex-1 flex-col self-start rounded-2xl border border-border/60 bg-surface shadow-card">
-      <div className="flex items-center gap-3 border-b border-border/60 px-6 py-4">
+      {/* Sticky against the workspace's own scroll container (no nested
+          overflow here) so it stays put while the panel below scrolls, with
+          just the one scrollbar the workspace already owns. */}
+      <div className="sticky top-0 z-10 flex items-center gap-3 rounded-t-2xl border-b border-border/60 bg-surface px-6 py-4">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary">
           <Users className="h-[18px] w-[18px]" strokeWidth={2} />
         </span>
@@ -885,25 +887,6 @@ function CompanySummary({
         description="Si alguien se une a la empresa después de lanzar la encuesta, se agrega solo a la lista de participantes."
       />
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 rounded-xl border border-border/60 bg-muted/20 px-5 py-4">
-        <div className="flex shrink-0 items-center gap-2.5 rounded-lg border border-primary/15 bg-primary/10 px-3 py-2">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-            <Users className="h-3.5 w-3.5" strokeWidth={2.5} />
-          </span>
-          <p className="leading-tight">
-            <span className="block text-[10px] font-medium text-text-secondary">Se asignarán</span>
-            <span className="text-[15px] font-bold tracking-tight text-primary">
-              {formatCount(COLLABORATOR_COUNT)}{" "}
-              <span className="text-[11px] font-semibold text-text-secondary">colaboradores</span>
-            </span>
-          </p>
-        </div>
-        <div className="hidden sm:block w-px h-10 bg-border/60" />
-        <p className="flex-1 text-[13px] leading-relaxed text-muted-foreground">
-          La lista de destinatarios se cerrará de forma automática al momento de lanzar la encuesta. Quienes entren a la empresa antes de esa fecha también la recibirán.
-        </p>
-      </div>
-
       <div className="flex flex-col gap-4 pt-2">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-[13px] font-bold text-text-primary">
@@ -1104,11 +1087,6 @@ function GroupsPanel({
     onSelectAll(selectedGroups.filter((g) => !toRemove.has(g)));
   };
 
-  const clearSelection = () => {
-    onClearAll();
-    setOnlySelected(false);
-  };
-
   const allMatchesSelected = filtered.length > 0 && filtered.every(([group]) => selectedSet.has(group));
   const showSelectAll = filtered.length > 0 && !allMatchesSelected;
   const showDeselectAll = allMatchesSelected;
@@ -1268,18 +1246,6 @@ function GroupsPanel({
                           <DropdownMenuItem onClick={deselectAllMatches}>
                             Deseleccionar todos los grupos
                           </DropdownMenuItem>
-                        )}
-                        {selectedGroups.length > 0 && (
-                          <>
-                            <div className="my-1 h-px bg-border" role="separator" />
-                            <DropdownMenuItem
-                              onClick={clearSelection}
-                              className="text-status-negative focus:text-status-negative focus:bg-status-negative/10"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Eliminar seleccionados ({selectedGroups.length})
-                            </DropdownMenuItem>
-                          </>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>

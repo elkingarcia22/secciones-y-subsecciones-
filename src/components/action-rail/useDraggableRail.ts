@@ -7,15 +7,16 @@ function clamp(value: number, min: number, max: number): number {
 
 /**
  * Lets a floating rail be picked up by its grip and dropped anywhere on
- * screen, while it is pinned open ("estado fijo") — a rail that could still
- * auto-collapse mid-gesture would leave the pointer holding nothing, so
- * `enabled` should be the screen's `!autoHide`.
+ * screen. Works whether the rail is pinned open or in auto-hide mode — the
+ * caller is responsible for keeping the rail expanded (and its collapse
+ * timer suspended) for as long as `isDragging` is true, so the grip doesn't
+ * vanish out from under the pointer mid-gesture.
  *
  * `barRef` must land on the element whose box the drag repositions — the same
  * one the caller applies the returned `position` to via `left`/`top` once it
  * is non-null, so the pointer stays glued to the spot it grabbed.
  */
-export function useDraggableRail(enabled: boolean) {
+export function useDraggableRail() {
   const [storedPosition, setStoredPosition] = useRailPosition();
   const [dragPosition, setDragPosition] = React.useState<RailPosition | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
@@ -47,7 +48,6 @@ export function useDraggableRail(enabled: boolean) {
   }, [storedPosition, setStoredPosition]);
 
   const onGripPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
-    if (!enabled) return;
     const rect = barRef.current?.getBoundingClientRect();
     if (!rect) return;
     dragOffsetRef.current = { x: event.clientX - rect.left, y: event.clientY - rect.top };

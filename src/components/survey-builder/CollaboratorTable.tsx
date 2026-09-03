@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { TableSelectionActions } from "@/components/action-rail";
-import { CheckIcon, ChevronDown, Eye, EyeOff, MinusIcon, Search, TriangleAlert, Trash2, UserRoundX, X } from "lucide-react";
+import { CheckIcon, ChevronDown, Eye, EyeOff, MinusIcon, Search, TriangleAlert, UserRoundX, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -458,18 +458,6 @@ export function CollaboratorTable({
                       <DropdownMenuItem onClick={clearSelection}>
                         Deseleccionar todos los colaboradores
                       </DropdownMenuItem>
-                    )}
-                    {selected.size > 0 && (
-                      <>
-                        <div className="my-1 h-px bg-border" role="separator" />
-                        <DropdownMenuItem
-                          onClick={() => setSelection(new Set())}
-                          className="text-status-negative focus:text-status-negative focus:bg-status-negative/10"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar seleccionados ({selected.size})
-                        </DropdownMenuItem>
-                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>

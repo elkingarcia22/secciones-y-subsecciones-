@@ -1316,6 +1316,9 @@ export function SurveyBuilder({
   // is next in that list, gated by the same reachability check as a direct
   // click on the menu.
   const nextStep = STEPPER_ORDER[STEPPER_ORDER.indexOf(activeStep) + 1] ?? null;
+  // Going back never needs a completeness check — reaching the current step
+  // already proved every step before it is complete.
+  const previousStep = STEPPER_ORDER[STEPPER_ORDER.indexOf(activeStep) - 1] ?? null;
 
   const isPagesStep = activeStep === "pages";
 
@@ -1340,6 +1343,12 @@ export function SurveyBuilder({
     }
 
     handleFinalize();
+  };
+
+  /** "Volver" just re-selects the previous step — it's already complete, so
+   * there's nothing to validate on the way back. */
+  const handleBack = () => {
+    if (previousStep) handleSelectStep(previousStep);
   };
 
   /**
@@ -1510,6 +1519,8 @@ export function SurveyBuilder({
             canContinue={canContinue}
             continueLabel={continueLabel}
             continueDisabledReason={continueDisabledReason}
+            onBack={handleBack}
+            canGoBack={previousStep !== null}
             activeStep={activeStep}
             participantsSelectionCount={participantsSelectionCount}
             onClearParticipantsSelection={clearParticipantsSelection}
