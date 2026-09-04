@@ -672,6 +672,27 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                               type="button"
                               onClick={() => {
                                 setIsAddQuestionMenuOpen(false);
+                                onOpenQuestionBank();
+                              }}
+                              className="group flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-white/5"
+                            >
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/60 transition-colors group-hover:bg-white/10 group-hover:text-white">
+                                <Library className="h-5 w-5" strokeWidth={2} />
+                              </div>
+                              <span className="flex min-w-0 flex-col gap-0.5">
+                                <span className="block text-[14px] font-bold tracking-tight text-white">
+                                  Banco de preguntas
+                                </span>
+                                <span className="block text-[11px] font-medium text-white/45 truncate">
+                                  Elige preguntas ya creadas.
+                                </span>
+                              </span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsAddQuestionMenuOpen(false);
                                 onAddQuestion();
                               }}
                               className="group flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-white/5"
@@ -700,14 +721,6 @@ export const BuilderSideRail = React.forwardRef<HTMLDivElement, BuilderSideRailP
                         ignoreOutsideClick
                       />
                     )}
-                  </AnimatedActionItem>
-                  <AnimatedActionItem animKey={stepChangeKey} staggerIndex={3}>
-                    <RailButton tooltipSide={isRight ? "left" : "top"}
-                      icon={<Library className="h-[20px] w-[20px]" strokeWidth={2} />}
-                      label="Banco de preguntas"
-                      onClick={onOpenQuestionBank}
-                      blockedReason={addQuestionBlockedReason}
-                    />
                   </AnimatedActionItem>
                   <AnimatedActionItem animKey={stepChangeKey} staggerIndex={4}>
                     <RailButton tooltipSide={isRight ? "left" : "top"}

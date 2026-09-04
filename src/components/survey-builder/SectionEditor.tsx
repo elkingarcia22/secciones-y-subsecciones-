@@ -1,6 +1,6 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronUp, CornerDownRight, Layers, Plus, Trash2, GripVertical } from "lucide-react";
+import { ChevronUp, CornerDownRight, Layers, Library, Plus, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toneBar, toneBorder, toneSolid, toneText, type Tone } from "@/lib/tone";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -43,6 +43,11 @@ interface SectionEditorProps extends SubsectionAccordionHandlers {
    */
   onAddSubsectionWithQuestion: (parentId: string) => void;
   /**
+   * Level 1's empty-state bank option: opens the question bank drawer with
+   * this section as the insert target.
+   */
+  onOpenQuestionBank: (sectionId: string) => void;
+  /**
    * Level 1's third empty-state option: hands the section over to the AI
    * drawer, which proposes the subsections and questions to fill it with.
    */
@@ -67,6 +72,7 @@ export function SectionEditor({
   onToggleCardCollapse,
   canDelete,
   onAddSubsectionWithQuestion,
+  onOpenQuestionBank,
   onGenerateWithAi,
   aiComposer,
   ...handlers
@@ -281,6 +287,14 @@ export function SectionEditor({
                   >
                     Crear pregunta
                   </EmptyStateActionButton>
+                  {!chromeLocked && (
+                    <EmptyStateActionButton
+                      onClick={() => onOpenQuestionBank(section.id)}
+                      icon={<Library className="size-4" strokeWidth={2.5} />}
+                    >
+                      Elegir una del banco
+                    </EmptyStateActionButton>
+                  )}
                   {!chromeLocked && (
                     <AiCreateChip
                       onClick={() => onGenerateWithAi(section.id)}

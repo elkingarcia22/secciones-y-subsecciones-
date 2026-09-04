@@ -494,6 +494,7 @@ export function SurveyBuilder({
     setScrollToAnchorTick((tick) => tick + 1);
   };
 
+
   /**
    * Applies the tree parsed from an imported file. The sections are appended
    * without touching what is already there, and the first imported root gets
@@ -986,6 +987,18 @@ export function SurveyBuilder({
     handleOpenAiSections(selectedSection.id);
   };
 
+  /**
+   * "Elegir una del banco" from a section's own empty state.
+   *
+   * The bank drawer always inserts into whichever section is selected, so
+   * this selects the section the button was clicked in before opening it —
+   * same pairing `handleAddQuestionWithAi` does for the AI route.
+   */
+  const handleOpenQuestionBankForSection = (sectionId: string) => {
+    applySelectSection(sectionId);
+    setIsQuestionBankOpen(true);
+  };
+
   const handleAddBankQuestions = (texts: string[]) => {
     if (!selectedSection || !selectedEntry) {
       toast.info("Selecciona una sección para añadir preguntas.");
@@ -1261,6 +1274,7 @@ export function SurveyBuilder({
             onToggleCardCollapse={() => handleToggleCardExpanded(rootSection.id)}
             canDelete={draft.sections.length > 1}
             onAddSubsectionWithQuestion={handleAddSubsectionWithQuestion}
+            onOpenQuestionBank={handleOpenQuestionBankForSection}
             onGenerateWithAi={handleOpenAiSections}
             {...accordionHandlers}
           />
