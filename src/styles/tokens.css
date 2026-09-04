@@ -42,7 +42,13 @@
      the anonymous-visibility card and anything else that needs a hue of its
      own without claiming a status. */
   --color-indigo: #6366f1;
-  
+
+  /* A flat accent for things that live in the same neighborhood as "IA"
+     without being an actual AI action — the gradient stays reserved for
+     real AI features (Generar con IA, AI badges, the mesh cards), so
+     anything merely themed around AI gets a solid color of its own. */
+  --color-violet: #7c3aed;
+
   --color-info: #4A74EE;
   
   /* AI Features */

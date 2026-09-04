@@ -20,12 +20,12 @@ import type { TemplateSize, TemplateTone } from "./templateCatalog";
 type ClassTone = "positive" | "brand" | "warning";
 
 /** Tones whose tint is computed with `color-mix()` in a `style` prop instead
- *  of a Tailwind opacity class — both are one fixed accent rather than a
- *  token that already carries an alpha-ready hsl triple. */
-type StyleTone = "ai" | "neutral";
+ *  of a Tailwind opacity class — none of the three are a token that already
+ *  carries an alpha-ready hsl triple. */
+type StyleTone = "ai" | "neutral" | "violet";
 
 function isStyleTone(tone: TemplateTone): tone is StyleTone {
-  return tone === "ai" || tone === "neutral";
+  return tone === "ai" || tone === "neutral" || tone === "violet";
 }
 
 /** Flat badge treatment per tone — every tile reads as the same object. */
@@ -81,6 +81,9 @@ function toneMix(color: string, badgeAlpha: number, lineAlpha: number, stageAlph
 const STYLE_TONE_MIX: Readonly<Record<StyleTone, ToneMix>> = {
   ai: toneMix("var(--color-ai-gradient-start)", 14, 70, 7),
   neutral: toneMix(NEUTRAL_ACCENT, 14, 65, 10),
+  // "Evaluación y adopción de IA" — a solid violet rather than the `ai`
+  // gradient, which stays reserved for actual AI actions.
+  violet: toneMix("var(--color-violet)", 14, 70, 7),
 };
 
 type ThumbSize = "sm" | "md" | "lg";

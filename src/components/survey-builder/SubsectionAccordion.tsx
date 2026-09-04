@@ -1,11 +1,12 @@
-import type * as React from "react";
+import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, Trash2, GripVertical } from "lucide-react";
+import { BookPlus, ChevronRight, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toneChip, type Tone } from "@/lib/tone";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AiGeneratedBadge } from "@/components/ai-interaction";
 import { ANCHOR_ATTRIBUTE } from "@/hooks/useAnchorOffset";
+import { useFocusOnCreate } from "@/hooks/useFocusOnCreate";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
 import { MoveToPopover } from "./MoveToPopover";
 import { SectionQuestions, type QuestionListHandlers } from "./SectionQuestions";
@@ -28,7 +29,14 @@ export interface SubsectionAccordionHandlers extends QuestionListHandlers {
   onTitleChange: (id: string, title: string) => void;
   onDescriptionChange: (id: string, description: string) => void;
   onDelete: (id: string) => void;
+  /** The section/subsection just created — its title field grabs focus on
+   *  mount so its name can be typed with no extra click. */
+  renamingId: string | null;
+  /** Clears `renamingId` once the title field has been focused and left. */
+  onRenamingHandled: () => void;
   onAddSubsection: (parentId: string) => void;
+  /** Opens the "guardar sección en el banco de preguntas" flow for this section. */
+  onSaveSectionToBank: (id: string) => void;
   /** Whole tree, so a subsection can compute everywhere it may be moved to. */
   sections: readonly SurveySection[];
   /** Moves a subsection (level 2/3) to sit just below `targetId` as its sibling. */
@@ -80,15 +88,21 @@ export function SubsectionAccordion({ entry, tone = "brand", readOnly, index, co
     onTitleChange,
     onDescriptionChange,
     onDelete,
+    onSaveSectionToBank,
     onMoveSection,
     pendingDeleteId,
     pendingDeleteMessage,
     onConfirmDeleteSection,
     onCancelDeleteSection,
     isRowLocked,
+    renamingId,
+    onRenamingHandled,
   } = handlers;
 
   const { section, depth, numbering } = entry;
+  const titleRef = React.useRef<HTMLInputElement>(null);
+  const shouldAutoFocusTitle = renamingId === section.id;
+  useFocusOnCreate(titleRef, shouldAutoFocusTitle);
   const isExpanded = expandedIds.has(section.id);
   const isSelected = selectedId === section.id;
   const isPendingDelete = pendingDeleteId === section.id;
@@ -202,10 +216,12 @@ export function SubsectionAccordion({ entry, tone = "brand", readOnly, index, co
               </div>
 
               <input
+                ref={titleRef}
                 value={section.title}
                 readOnly={chromeLocked}
                 onChange={(event) => onTitleChange(section.id, event.target.value)}
                 onFocus={() => onSelect(section.id)}
+                onBlur={() => shouldAutoFocusTitle && onRenamingHandled()}
                 placeholder={`${depthLabel(depth)} ${numbering}`}
                 aria-label={`Título de ${depthLabel(depth)} ${numbering}`}
                 className={cn(
@@ -242,6 +258,21 @@ export function SubsectionAccordion({ entry, tone = "brand", readOnly, index, co
                   onMove={onMoveSection}
                 />
               )}
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={chromeLocked}
+                    onClick={() => onSaveSectionToBank(section.id)}
+                    aria-label={`Guardar ${depthLabel(depth)} ${numbering} en el banco de preguntas`}
+                    className="rounded-lg p-1.5 text-muted-foreground/70 transition-all hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <BookPlus className="h-3.5 w-3.5" strokeWidth={2} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Guardar en el banco de preguntas</TooltipContent>
+              </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -301,6 +332,7 @@ export function SubsectionAccordion({ entry, tone = "brand", readOnly, index, co
               onAddQuestion={handlers.onAddQuestion}
               onDuplicateQuestion={handlers.onDuplicateQuestion}
               onRemoveQuestion={handlers.onRemoveQuestion}
+              onSaveQuestionToBank={handlers.onSaveQuestionToBank}
               onReorderQuestions={handlers.onReorderQuestions}
               sections={handlers.sections}
               onMoveQuestion={handlers.onMoveQuestion}

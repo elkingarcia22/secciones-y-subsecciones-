@@ -1,9 +1,10 @@
 import * as React from "react";
 import { motion } from "framer-motion";
-import { GripVertical, Trash2 } from "lucide-react";
+import { BookPlus, GripVertical, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toneChip } from "@/lib/tone";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AiGeneratedBadge } from "@/components/ai-interaction";
 import { InlineDeleteConfirm } from "./InlineDeleteConfirm";
 import { useHoldDeleteConfirmLock } from "./deleteConfirmLock";
@@ -21,6 +22,8 @@ interface QuestionCardProps {
   isDropTarget: boolean;
   onOpen: () => void;
   onRemove: () => void;
+  /** Opens the "guardar en el banco de preguntas" flow for this question. */
+  onSaveToBank: () => void;
   /** Everywhere this question could be moved to, for the row's "Mover a…". */
   moveDestinations: readonly SectionTreeEntry[];
   /** Runs with the destination's section id when a destination is picked. */
@@ -42,6 +45,7 @@ export function QuestionCard({
   isDropTarget,
   onOpen,
   onRemove,
+  onSaveToBank,
   moveDestinations,
   onMove,
   handleProps,
@@ -166,19 +170,49 @@ export function QuestionCard({
       )}
 
       {!readOnly && (
-        <button
-          type="button"
-          onClick={() => setIsConfirmingRemove(true)}
-          aria-label={`Eliminar pregunta ${index + 1}`}
-          className={cn(
-            "shrink-0 rounded-lg p-1.5 text-status-negative opacity-0 transition-all",
-            "hover:bg-status-negative/10",
-            "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30",
-            "group-hover:opacity-100"
-          )}
-        >
-          <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onSaveToBank();
+              }}
+              data-click-outside-ignore
+              aria-label={`Guardar pregunta ${index + 1} en el banco de preguntas`}
+              className={cn(
+                "shrink-0 rounded-lg p-1.5 text-muted-foreground/60 opacity-0 transition-all",
+                "hover:bg-primary/10 hover:text-primary",
+                "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                "group-hover:opacity-100"
+              )}
+            >
+              <BookPlus className="h-3.5 w-3.5" strokeWidth={2} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Guardar en el banco de preguntas</TooltipContent>
+        </Tooltip>
+      )}
+
+      {!readOnly && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => setIsConfirmingRemove(true)}
+              aria-label={`Eliminar pregunta ${index + 1}`}
+              className={cn(
+                "shrink-0 rounded-lg p-1.5 text-status-negative opacity-0 transition-all",
+                "hover:bg-status-negative/10",
+                "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-negative/30",
+                "group-hover:opacity-100"
+              )}
+            >
+              <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Eliminar pregunta</TooltipContent>
+        </Tooltip>
       )}
     </motion.li>
   );

@@ -33,6 +33,12 @@ interface AiStatementFieldProps {
    * tomada en el rail, y volver a pedirla aquí sería preguntar dos veces.
    */
   autoStart?: boolean;
+  /**
+   * Abre el campo con el foco puesto, sin pedir contexto — para una pregunta
+   * recién creada a mano, donde escribir el enunciado es el siguiente paso
+   * obvio y no hace falta un clic más para llegar a él.
+   */
+  autoFocus?: boolean;
 }
 
 /**
@@ -61,6 +67,7 @@ export function AiStatementField({
   rows = 2,
   disabled = false,
   autoStart = false,
+  autoFocus = false,
 }: AiStatementFieldProps) {
   // `autoStart` solo decide con qué fase se monta: una vez dentro, el campo
   // manda sobre sí mismo y volver a montarlo no debe reabrir la pregunta.
@@ -71,9 +78,13 @@ export function AiStatementField({
   const fieldRef = React.useRef<HTMLTextAreaElement>(null);
 
   // El foco va al campo en cuanto se abre pidiendo contexto, para poder
-  // escribir sin buscar dónde.
+  // escribir sin buscar dónde. Una pregunta recién creada a mano —sin pasar
+  // por la IA— recibe el mismo foco directo sobre el enunciado.
   React.useEffect(() => {
-    if (phase === "context") fieldRef.current?.focus();
+    if (phase === "context" || (phase === "idle" && autoFocus)) {
+      fieldRef.current?.focus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   const isWorking = phase === "working";

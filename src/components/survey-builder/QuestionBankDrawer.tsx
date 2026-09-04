@@ -8,7 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { EmptyState } from "@/components/feedback/EmptyState"
 import { cn } from "@/lib/utils"
 import { toneAccent, toneBar, toneBorder, toneChip, toneForIndex, toneWash, type Tone } from "@/lib/tone"
-import { questionBankData } from "./questionBankData"
+import { questionBankData, type QuestionBankType } from "./questionBankData"
+import { useQuestionBankLibrary } from "./questionBankLibrary"
 
 export interface QuestionBankDrawerProps {
   open: boolean
@@ -26,18 +27,20 @@ interface BankEntry {
   sectionId: string
   sectionName: string
   tone: Tone
+  origin: "ubits" | "custom"
 }
 
 /**
- * Todo el banco aplanado, con un tono por sección repartido por posición —
+ * El banco entero aplanado, con un tono por sección repartido por posición —
  * igual que las secciones de una encuesta — para que el chip de una pregunta
  * tenga color propio y una sección se reconozca antes por el tinte que por el
- * nombre. Se calcula una vez: el catálogo es estático.
+ * nombre. Incluye lo guardado por el autor (`useQuestionBankLibrary`), no
+ * solo las semillas de UBITS.
  */
-const BANK_ENTRIES: readonly BankEntry[] = (() => {
+function flattenBankTypes(types: readonly QuestionBankType[]): BankEntry[] {
   const entries: BankEntry[] = []
   let sectionIndex = 0
-  questionBankData.forEach((type) => {
+  types.forEach((type) => {
     type.sections.forEach((section) => {
       const tone = toneForIndex(sectionIndex++)
       section.questions.forEach((question) => {
@@ -49,16 +52,13 @@ const BANK_ENTRIES: readonly BankEntry[] = (() => {
           sectionId: section.id,
           sectionName: section.name,
           tone,
+          origin: question.origin ?? section.origin ?? "ubits",
         })
       })
     })
   })
   return entries
-})()
-
-const SECTION_TONE: ReadonlyMap<string, Tone> = new Map(
-  BANK_ENTRIES.map((entry) => [entry.sectionId, entry.tone])
-)
+}
 
 const matchesQuery = (entry: BankEntry, query: string) =>
   entry.text.toLowerCase().includes(query) ||
@@ -106,6 +106,13 @@ function QuestionBankBody({
   onAddQuestions: (questions: string[]) => void
   onClose: () => void
 }) {
+  const types = useQuestionBankLibrary()
+  const bankEntries = React.useMemo(() => flattenBankTypes(types), [types])
+  const sectionTones = React.useMemo(
+    () => new Map<string, Tone>(bankEntries.map((entry) => [entry.sectionId, entry.tone])),
+    [bankEntries]
+  )
+
   const [typeId, setTypeId] = React.useState(questionBankData[0].id)
   const [sectionId, setSectionId] = React.useState(questionBankData[0].sections[0].id)
   const [query, setQuery] = React.useState("")
@@ -114,10 +121,10 @@ function QuestionBankBody({
   // recortada a lo que ya está marcado, en lugar de una pestaña aparte.
   const [onlySelected, setOnlySelected] = React.useState(false)
 
-  const currentType = questionBankData.find((type) => type.id === typeId) ?? questionBankData[0]
+  const currentType = types.find((type) => type.id === typeId) ?? types[0]
   const currentSection =
     currentType.sections.find((section) => section.id === sectionId) ?? currentType.sections[0]
-  const sectionTone = SECTION_TONE.get(currentSection.id) ?? "brand"
+  const sectionTone = sectionTones.get(currentSection.id) ?? "brand"
 
   const normalizedQuery = query.trim().toLowerCase()
 
@@ -127,16 +134,16 @@ function QuestionBankBody({
   // viene. Sin búsqueda, se mira la sección y ya.
   const visibleEntries = React.useMemo(() => {
     if (onlySelected) {
-      const picked = BANK_ENTRIES.filter((entry) => selected.has(entry.id))
+      const picked = bankEntries.filter((entry) => selected.has(entry.id))
       return normalizedQuery ? picked.filter((entry) => matchesQuery(entry, normalizedQuery)) : picked
     }
     if (normalizedQuery) {
-      return BANK_ENTRIES.filter(
+      return bankEntries.filter(
         (entry) => entry.typeId === currentType.id && matchesQuery(entry, normalizedQuery)
       )
     }
-    return BANK_ENTRIES.filter((entry) => entry.sectionId === currentSection.id)
-  }, [onlySelected, selected, currentType.id, currentSection.id, normalizedQuery])
+    return bankEntries.filter((entry) => entry.sectionId === currentSection.id)
+  }, [bankEntries, onlySelected, selected, currentType.id, currentSection.id, normalizedQuery])
 
   const allVisibleSelected =
     visibleEntries.length > 0 && visibleEntries.every((entry) => selected.has(entry.id))
@@ -159,7 +166,7 @@ function QuestionBankBody({
   }
 
   const handleAdd = () => {
-    const texts = BANK_ENTRIES.filter((entry) => selected.has(entry.id)).map((entry) => entry.text)
+    const texts = bankEntries.filter((entry) => selected.has(entry.id)).map((entry) => entry.text)
     onAddQuestions(texts)
     onClose()
   }
@@ -191,7 +198,7 @@ function QuestionBankBody({
             <p className="mt-0.5 text-[12.5px] text-text-secondary">
               {onlySelected
                 ? "Estas son las que se añadirán a la encuesta. Desmarca cualquiera para quitarla."
-                : `${pluralize(BANK_ENTRIES.length, "pregunta lista", "preguntas listas")} para usar, escritas y validadas por UBITS.`}
+                : `${pluralize(bankEntries.length, "pregunta lista", "preguntas listas")} para usar, escritas y validadas por UBITS.`}
             </p>
           </div>
 
@@ -233,7 +240,7 @@ function QuestionBankBody({
               value={typeId}
               onValueChange={(value) =>
                 navigate(() => {
-                  const type = questionBankData.find((item) => item.id === value)
+                  const type = types.find((item) => item.id === value)
                   setTypeId(value)
                   setSectionId(type?.sections[0]?.id ?? "")
                 })
@@ -243,7 +250,7 @@ function QuestionBankBody({
                 <SelectValue placeholder="Selecciona el tipo" />
               </SelectTrigger>
               <SelectContent>
-                {questionBankData.map((type) => (
+                {types.map((type) => (
                   <SelectItem key={type.id} value={type.id}>
                     {type.name}
                   </SelectItem>
@@ -461,7 +468,7 @@ function QuestionRow({
         <span className="flex items-start justify-between gap-3">
           <span className="min-w-0 text-[13px] font-medium leading-snug text-text-primary">{entry.text}</span>
           <span className="mt-px inline-flex shrink-0 items-center rounded-full bg-surface-muted px-2 py-0.5 text-[10.5px] font-medium text-text-muted ring-1 ring-inset ring-border/40">
-            Creada por UBITS
+            {entry.origin === "custom" ? "Personalizada" : "Creada por UBITS"}
           </span>
         </span>
         {showOrigin && (

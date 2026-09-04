@@ -1,7 +1,8 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronUp, CornerDownRight, Layers, Library, Plus, Trash2, GripVertical } from "lucide-react";
+import { BookPlus, ChevronUp, CornerDownRight, Layers, Library, Plus, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFocusOnCreate } from "@/hooks/useFocusOnCreate";
 import { toneBar, toneBorder, toneSolid, toneText, type Tone } from "@/lib/tone";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/feedback/EmptyState";
@@ -84,15 +85,21 @@ export function SectionEditor({
     onTitleChange,
     onDescriptionChange,
     onDelete,
+    onSaveSectionToBank,
     onAddSubsection,
     pendingDeleteId,
     pendingDeleteMessage,
     onConfirmDeleteSection,
     onCancelDeleteSection,
     isRowLocked,
+    renamingId,
+    onRenamingHandled,
   } = handlers;
 
   const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
+  const titleRef = React.useRef<HTMLInputElement>(null);
+  const shouldAutoFocusTitle = renamingId === section.id;
+  useFocusOnCreate(titleRef, shouldAutoFocusTitle);
   const children = childEntries(entry);
   const isSelected = selectedId === section.id;
   const isPendingDelete = pendingDeleteId === section.id;
@@ -201,10 +208,12 @@ export function SectionEditor({
                 {section.isAiGenerated && <AiGeneratedBadge />}
               </div>
               <input
+                ref={titleRef}
                 value={section.title}
                 readOnly={chromeLocked}
                 onChange={(event) => onTitleChange(section.id, event.target.value)}
                 onFocus={() => onSelect(section.id)}
+                onBlur={() => shouldAutoFocusTitle && onRenamingHandled()}
                 placeholder={`${depthLabel(depth)} ${numbering}`}
                 aria-label="Título de la sección"
                 className="w-full cursor-text rounded-lg bg-transparent px-1.5 py-0.5 text-[14px] font-bold tracking-tight text-text-primary outline-none transition-colors hover:bg-border/30 focus:bg-border/40 placeholder:text-muted-foreground/70 disabled:opacity-70 disabled:cursor-default"
@@ -223,6 +232,21 @@ export function SectionEditor({
             </div>
 
             <div className="flex shrink-0 items-start gap-1 p-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => onSaveSectionToBank(section.id)}
+                    disabled={chromeLocked}
+                    aria-label="Guardar sección en el banco de preguntas"
+                    className="rounded-lg border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <BookPlus className="h-3.5 w-3.5" strokeWidth={2} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Guardar en el banco de preguntas</TooltipContent>
+              </Tooltip>
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -321,6 +345,7 @@ export function SectionEditor({
                   onAddQuestion={handlers.onAddQuestion}
                   onDuplicateQuestion={handlers.onDuplicateQuestion}
                   onRemoveQuestion={handlers.onRemoveQuestion}
+                  onSaveQuestionToBank={handlers.onSaveQuestionToBank}
                   onReorderQuestions={handlers.onReorderQuestions}
                   sections={handlers.sections}
                   onMoveQuestion={handlers.onMoveQuestion}

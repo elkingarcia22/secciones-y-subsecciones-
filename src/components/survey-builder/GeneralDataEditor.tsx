@@ -98,8 +98,9 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
 
   const startDate = parseISODate(draft.startDate);
   const isAnonymous = draft.visibility === "anonymous";
-  // The header wears whatever the survey is about — brand blue until the
-  // author has decided.
+  // Only the kind label chip wears the survey's own accent — the header icon
+  // stays brand blue like every other step's, instead of repainting itself
+  // by what was picked here.
   const kindTone = draft.kind ? KIND_VISUAL[draft.kind].tone : "brand";
 
   // Local to the form: whether the description field is shown at all. Starts
@@ -138,10 +139,7 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
           overflow here) so it stays put while the fields below scroll, with
           just the one scrollbar the workspace already owns. */}
       <div className="sticky top-0 z-10 flex items-center gap-3 rounded-t-2xl border-b border-border/60 bg-surface px-6 py-4">
-        <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-          style={toneChip(kindTone)}
-        >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary">
           <Settings2 className="h-[18px] w-[18px]" strokeWidth={2} />
         </span>
         <h2 className="min-w-0 flex-1 truncate text-[14px] font-bold tracking-tight text-text-primary">
@@ -176,6 +174,7 @@ export function GeneralDataEditor({ draft, onChange, showValidation = false }: G
               placeholder="Escribe el nombre de la encuesta"
               aria-label="Nombre de la encuesta"
               aria-invalid={!!nameError}
+              autoFocus
               className={cn(
                 "h-10 min-w-0 flex-1 rounded-md border bg-surface px-3 text-[13px] text-text-primary outline-none transition-all focus:ring-2 placeholder:text-muted-foreground/70",
                 nameError

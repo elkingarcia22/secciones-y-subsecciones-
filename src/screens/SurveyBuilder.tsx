@@ -62,6 +62,9 @@ import {
 } from "@/components/survey-builder";
 import { SurveyPreviewDrawer, canPreview } from "@/components/survey-preview";
 import { QuestionBankDrawer } from "@/components/survey-builder/QuestionBankDrawer";
+import { AddQuestionToBankDrawer, type SaveQuestionToBankInput } from "@/components/survey-builder/AddQuestionToBankDrawer";
+import { AddSectionToBankDrawer, type SaveSectionToBankInput } from "@/components/survey-builder/AddSectionToBankDrawer";
+import { addQuestionToBank, addSectionToBank } from "@/components/survey-builder/questionBankLibrary";
 import { useDeleteConfirmLock } from "@/components/survey-builder/deleteConfirmLock";
 import { AiSectionsComposer } from "@/components/survey-builder/AiSectionsComposer";
 import { AiGenerationReviewBar } from "@/components/survey-builder/AiGenerationReviewBar";
@@ -195,6 +198,10 @@ export function SurveyBuilder({
   // nothing to hand over when it opens — only whether it is on screen.
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
   const [isQuestionBankOpen, setIsQuestionBankOpen] = React.useState(false);
+  // La pregunta o sección que se está guardando en el banco — controla qué
+  // drawer de "guardar en el banco" está abierto y con qué contenido.
+  const [bankSaveQuestion, setBankSaveQuestion] = React.useState<{ id: string; statement: string } | null>(null);
+  const [bankSaveSectionId, setBankSaveSectionId] = React.useState<string | null>(null);
 
   // The participants step's table owns its own ticks; the rail only needs the
   // count and the two ways to act on it (see `TableSelectionActions`).
@@ -1111,7 +1118,39 @@ export function SurveyBuilder({
     toast.success("Pregunta movida");
   };
 
+  /** Opens "guardar en el banco de preguntas" for one question. */
+  const handleOpenSaveQuestionToBank = (questionId: string) => {
+    const owner = findQuestionOwner(draft.sections, questionId);
+    const question = owner?.section.questions.find((item) => item.id === questionId);
+    if (!question) return;
+    setBankSaveQuestion({ id: question.id, statement: question.statement.replace(/<[^>]*>?/gm, "").trim() });
+  };
 
+  const handleSaveQuestionToBank = (input: SaveQuestionToBankInput) => {
+    const saved = bankSaveQuestion
+      ? addQuestionToBank({ ...input, text: bankSaveQuestion.statement })
+      : null;
+    toast[saved ? "success" : "error"](
+      saved ? "Pregunta guardada en el banco." : "No se pudo guardar la pregunta en el banco."
+    );
+    setBankSaveQuestion(null);
+  };
+
+  /** Opens "guardar en el banco de preguntas" para una sección completa. */
+  const handleOpenSaveSectionToBank = (sectionId: string) => {
+    if (!findSection(draft.sections, sectionId)) return;
+    setBankSaveSectionId(sectionId);
+  };
+
+  const bankSaveSection = bankSaveSectionId ? findSection(draft.sections, bankSaveSectionId)?.section ?? null : null;
+
+  const handleSaveSectionToBank = (input: SaveSectionToBankInput) => {
+    const saved = addSectionToBank(input);
+    toast[saved ? "success" : "error"](
+      saved ? "Sección guardada en el banco." : "No se pudo guardar la sección en el banco."
+    );
+    setBankSaveSectionId(null);
+  };
 
   const handleFixedBlockContentChange = React.useCallback((id: ToggleableBlockId, content: string) => {
     setDraft((current) =>
@@ -1131,7 +1170,10 @@ export function SurveyBuilder({
     onDescriptionChange: (id: string, description: string) =>
       updateSection(id, { description }),
     onDelete: handleDeleteRequest,
+    onSaveSectionToBank: handleOpenSaveSectionToBank,
     onAddSubsection: handleAddSubsection,
+    renamingId,
+    onRenamingHandled: () => setRenamingId(null),
     sections: draft.sections,
     onMoveSection: handleMoveSection,
     pendingDeleteId,
@@ -1149,6 +1191,7 @@ export function SurveyBuilder({
     aiStartQuestionId: aiQuestionId,
     onDuplicateQuestion: handleDuplicateQuestion,
     onRemoveQuestion: handleRemoveQuestion,
+    onSaveQuestionToBank: handleOpenSaveQuestionToBank,
     onReorderQuestions: handleReorderQuestions,
     onMoveQuestion: handleMoveQuestion,
     draggingSectionId,
@@ -1562,6 +1605,22 @@ export function SurveyBuilder({
 
       <SurveyPreviewDrawer draft={draft} open={isPreviewOpen} onOpenChange={setIsPreviewOpen} />
       <QuestionBankDrawer open={isQuestionBankOpen} onOpenChange={setIsQuestionBankOpen} onAddQuestions={handleAddBankQuestions} />
+      <AddQuestionToBankDrawer
+        open={bankSaveQuestion !== null}
+        onOpenChange={(open) => {
+          if (!open) setBankSaveQuestion(null);
+        }}
+        statement={bankSaveQuestion?.statement ?? ""}
+        onSave={handleSaveQuestionToBank}
+      />
+      <AddSectionToBankDrawer
+        open={bankSaveSectionId !== null}
+        onOpenChange={(open) => {
+          if (!open) setBankSaveSectionId(null);
+        }}
+        section={bankSaveSection}
+        onSave={handleSaveSectionToBank}
+      />
     </div>
   );
 }

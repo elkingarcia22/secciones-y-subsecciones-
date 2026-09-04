@@ -28,6 +28,7 @@ export interface QuestionListHandlers {
   onAddQuestion: (sectionId: string) => void;
   onDuplicateQuestion: (questionId: string) => void;
   onRemoveQuestion: (questionId: string) => void;
+  onSaveQuestionToBank: (questionId: string) => void;
   onReorderQuestions: (fromId: string, toId: string) => void;
   /** Whole tree, so a question can compute everywhere it may be moved to. */
   sections: readonly SurveySection[];
@@ -74,6 +75,7 @@ export function SectionQuestions({
   onAddQuestion,
   onDuplicateQuestion,
   onRemoveQuestion,
+  onSaveQuestionToBank,
   onReorderQuestions,
   sections,
   onMoveQuestion,
@@ -112,6 +114,7 @@ export function SectionQuestions({
           isDropTarget={overId === question.id && draggingId !== question.id}
           onOpen={() => onOpenQuestion(question.id)}
           onRemove={() => onRemoveQuestion(question.id)}
+          onSaveToBank={() => onSaveQuestionToBank(question.id)}
           moveDestinations={moveDestinations}
           onMove={(targetId) => onMoveQuestion(question.id, targetId)}
           handleProps={getHandleProps(question.id)}
@@ -149,6 +152,7 @@ export function SectionQuestions({
           onClose={onCloseQuestion}
           onDuplicate={() => onDuplicateQuestion(questions[editingIndex].id)}
           onRemove={() => onRemoveQuestion(questions[editingIndex].id)}
+          onSaveToBank={() => onSaveQuestionToBank(questions[editingIndex].id)}
           startWithAi={aiStartQuestionId === questions[editingIndex].id}
           tone={tone}
         />

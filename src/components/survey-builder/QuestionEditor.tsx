@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronUp, Copy, Trash2 } from "lucide-react";
+import { BookPlus, ChevronUp, Copy, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toneAccent, toneBorder, toneChip, toneText, type Tone } from "@/lib/tone";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,8 @@ interface QuestionEditorProps {
   onClose: () => void;
   onDuplicate: () => void;
   onRemove: () => void;
+  /** Opens the "guardar en el banco de preguntas" flow for this question. */
+  onSaveToBank: () => void;
   /** La pregunta nació de "crear pregunta con IA": el enunciado se abre ya
    * pidiendo contexto en vez de en blanco. */
   startWithAi?: boolean;
@@ -83,6 +85,7 @@ export function QuestionEditor({
   onClose,
   onDuplicate,
   onRemove,
+  onSaveToBank,
   startWithAi = false,
   tone = "brand",
 }: QuestionEditorProps) {
@@ -160,6 +163,21 @@ export function QuestionEditor({
             <TooltipTrigger asChild>
               <button
                 type="button"
+                onClick={onSaveToBank}
+                disabled={isConfirmingRemove}
+                aria-label={`Guardar pregunta ${index + 1} en el banco de preguntas`}
+                className="shrink-0 rounded-md border border-border/70 p-1.5 text-muted-foreground/70 transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border/70 disabled:hover:bg-transparent disabled:hover:text-muted-foreground/70"
+              >
+                <BookPlus className="h-3.5 w-3.5" strokeWidth={2} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">Guardar en el banco de preguntas</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
                 onClick={() => setIsConfirmingRemove(true)}
                 disabled={isConfirmingRemove}
                 aria-label={`Eliminar pregunta ${index + 1}`}
@@ -205,6 +223,7 @@ export function QuestionEditor({
           }
           error={statementError}
           autoStart={startWithAi}
+          autoFocus={!startWithAi && question.statement.trim() === ""}
           disabled={isConfirmingRemove}
         />
         {/* Type selectors as Cards. */}

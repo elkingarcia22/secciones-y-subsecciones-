@@ -20,6 +20,9 @@ export const KIND_VISUAL: Readonly<Record<SurveyKind, KindVisual>> = {
   cultura: { icon: Heart, tone: "positive" },
   clima: { icon: Sprout, tone: "brand" },
   enps: { icon: Gauge, tone: "warning" },
-  ia: { icon: BrainCircuit, tone: "ai" },
+  // Not `"ai"`: that tone's gradient is reserved for real AI actions
+  // (Generar con IA, AI badges) — this is a survey topic, not an AI
+  // feature, so it gets its own flat color instead of borrowing that look.
+  ia: { icon: BrainCircuit, tone: "violet" },
   otros: { icon: Shapes, tone: "neutral" },
 };

@@ -1,7 +1,7 @@
 import type * as React from "react";
 
 /**
- * The app's accent palette, as five named tones.
+ * The app's accent palette, as named tones.
  *
  * The home already speaks this language: a template tile, a pulse card and a
  * status pill all take one accent and wash it down to a tint for the surface,
@@ -10,10 +10,10 @@ import type * as React from "react";
  * get the same three weights out of it.
  *
  * Every tone resolves to a real CSS color, so `color-mix()` can produce the
- * whole ramp — including for the two tones (`neutral`, `ai`) whose accent is
- * not a token with an alpha-ready hsl triple behind it.
+ * whole ramp — including for the tones (`neutral`, `ai`, `violet`) whose
+ * accent is not a token with an alpha-ready hsl triple behind it.
  */
-export type Tone = "brand" | "positive" | "warning" | "neutral" | "ai";
+export type Tone = "brand" | "positive" | "warning" | "neutral" | "ai" | "violet";
 
 /**
  * The "official / other" indigo. A flat gray (tried first, on the template
@@ -39,6 +39,11 @@ const TONES: Readonly<Record<Tone, ToneDefinition>> = {
   warning: { accent: "var(--color-warning)" },
   neutral: { accent: NEUTRAL_ACCENT },
   ai: { accent: "var(--color-ai-gradient-start)", accentEnd: "var(--color-ai-gradient-end)" },
+  // Flat on purpose — the gradient is reserved for real AI actions, so
+  // anything only *themed* around AI (like the "Evaluación y adopción de
+  // IA" survey kind) gets its own solid color instead of borrowing that
+  // treatment.
+  violet: { accent: "var(--color-violet)" },
 };
 
 /** @param alpha 0–100. `100` returns the accent itself. */

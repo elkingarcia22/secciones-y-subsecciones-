@@ -1,12 +1,18 @@
 export interface QuestionBankItem {
   id: string;
   text: string;
+  /** UBITS content when absent. Set to "custom" for what an author saved
+   * into the bank from their own survey. */
+  origin?: "ubits" | "custom";
 }
 
 export interface QuestionBankSection {
   id: string;
   name: string;
   questions: QuestionBankItem[];
+  /** UBITS content when absent. Set to "custom" for a section an author
+   * created by saving one of their own into the bank. */
+  origin?: "ubits" | "custom";
 }
 
 export interface QuestionBankType {
